@@ -2,7 +2,7 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='8137ce544a91a31f6e1484e1b3486e20016de8a6'
+revision='575134a17f9a18447fb6aa073589f8aac8ea6c9e'
 branch='main'
 installer_sha256='0fbf2969c12b9ef9c90b81519814865faa9ee4e22056e2a9a4d0b1d5e59966e8'
 repository='https://github.com/mithril-lang/mithril-agent-runtime.git'
@@ -44,7 +44,8 @@ command -v bash >/dev/null 2>&1 || fail 'bash is required'
 
 # An existing Hermes home is shared through an alias, never copied or moved while services run.
 if [ "$profile_home" = "$HOME/.mithril" ] && [ ! -e "$profile_home" ] && [ ! -L "$profile_home" ] \
-    && [ -f "$HOME/.hermes/config.yaml" ]; then
+    && { [ -f "$HOME/.hermes/config.yaml" ] || [ -f "$HOME/.hermes/state.db" ] \
+        || [ -e "$HOME/.hermes/profiles" ] || [ -e "$HOME/.hermes/active_profile" ]; }; then
     ln -s "$HOME/.hermes" "$profile_home"
 fi
 if [ -L "$profile_home" ] && [ ! -d "$profile_home" ]; then
