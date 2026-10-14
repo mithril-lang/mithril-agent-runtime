@@ -23755,6 +23755,132 @@
       "mode": "100644"
     },
     {
+      "path": "docker/SOUL.md",
+      "sourceBlob": "25b87e38c6bd5b32964e4e96f9c97a4a3788954a",
+      "sha256": "3bd38ef92efb90d0fdda1bb73036185d4a4bc11079963cb0e2db71c84281e64e",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/build_agent.py",
+      "sourceBlob": "3b0c2572b084f2a91c7809d52fbb202885cd1151",
+      "sha256": "6beeadbba598993deee54019759cc567c05cb8fd035d4fe3c93e657925e59742",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/cont-init.d/015-supervise-perms",
+      "sourceBlob": "8d7b473d29ca5cae8da6e24150cec18c8c9284b7",
+      "sha256": "8b99cf1f4479da7084ec4560ff5d6af8d6aacb4147da857808913d1fad52221d",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/cont-init.d/02-reconcile-profiles",
+      "sourceBlob": "ced666cff41080028514e0163befa91240bc7c47",
+      "sha256": "ed54309bdda54ec78243751b011f726fb9f87a3d6e46a103d7045903e7e18340",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/entrypoint-dispatch.sh",
+      "sourceBlob": "927ed032f6d821e5bc9d047aed10e37f125d5a6a",
+      "sha256": "d6f8e569fd2bfbf8d1f45619243681b9a1390c5bd3c9c584532692893b1d4fcd",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/entrypoint.sh",
+      "sourceBlob": "30cff58f4a7b5e2c52837c0a3050675f62859a5e",
+      "sha256": "6b158947ab0083de092058835f91ba5b94cea88eeaedc3bc6d891c69ec8b088a",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/hermes-exec-shim.sh",
+      "sourceBlob": "7f4c5c3c0a0e9216b262e6ecf7b96cf868f0a4ce",
+      "sha256": "57637e73c8db76aa84a38e4a2edb1b155bfd86a2e89a8d4c38c4546ee1175985",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/main-wrapper.sh",
+      "sourceBlob": "1a99c15f4e18e75f698cec3553a67cf9005cd9d8",
+      "sha256": "9aa0d6e3d3d08ed14b9a7a48fe7cca0535ec614472cc3fc752eb4772e2beb745",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/s6-rc.d/dashboard/dependencies.d/base",
+      "sourceBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/s6-rc.d/dashboard/finish",
+      "sourceBlob": "a618c671bc86e9a662ae360424f0c47e6ef2d790",
+      "sha256": "5971f24a3e19aff1249fae8ec9fa26d19e3cbd0fa375e9d0c701930b413d0597",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/s6-rc.d/dashboard/run",
+      "sourceBlob": "3317546561e15dc2932550e34d8107060cb7d1f9",
+      "sha256": "676529be5a58c490fead000973ebb0f1363b3abc2553bfa6671e51c77a55d27e",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/s6-rc.d/dashboard/type",
+      "sourceBlob": "5883cff0cd1514b2836f4ffa39fdac769a5213cb",
+      "sha256": "d0001a150b83f68f09004c5059045cb76a3f064eed4d42ce072bc3722c118006",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/s6-rc.d/main-hermes/dependencies.d/base",
+      "sourceBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/s6-rc.d/main-hermes/run",
+      "sourceBlob": "488e5251415960a86d502a7235f2ebfd975ae9b2",
+      "sha256": "dbc6680fc3f6ac89ad66ce5c0aa15660717edced4ec133de83834a6688b519e6",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/s6-rc.d/main-hermes/type",
+      "sourceBlob": "5883cff0cd1514b2836f4ffa39fdac769a5213cb",
+      "sha256": "d0001a150b83f68f09004c5059045cb76a3f064eed4d42ce072bc3722c118006",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/s6-rc.d/user/contents.d/dashboard",
+      "sourceBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/s6-rc.d/user/contents.d/main-hermes",
+      "sourceBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/sandbox-desktop-smoke.sh",
+      "sourceBlob": "df2011e1eb5aa50f82da96b157153d20fe77df91",
+      "sha256": "5605faa397d47bd3dcb9b871144fb1c4c714661c8af2c3e837fa1f322b4d706a",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/sandbox-desktop.Dockerfile",
+      "sourceBlob": "b8225b1c82789232e2771466c040eafdacb4afea",
+      "sha256": "16b5ae1968e9625e7cf92172d1f479df02f9c4346aafc2ff588b3b9ca99805e4",
+      "mode": "100644"
+    },
+    {
+      "path": "docker/stage2-hook.sh",
+      "sourceBlob": "48eb36f5a9ed02f8332936fb96a25e5fcc199bfd",
+      "sha256": "38e0f442c3cb01469536555713f0c9cb31823d8503552704de43d478c0565b6b",
+      "mode": "100755"
+    },
+    {
+      "path": "docker/tini-shim.sh",
+      "sourceBlob": "573737b03e5f17814e3e3c42876e1011fecbc390",
+      "sha256": "c69e6b6004cabe7fbd18594c0db83a16482b1551109d7dc7490363d85a4d0a6e",
+      "mode": "100755"
+    },
+    {
       "path": "eslint.config.shared.mjs",
       "sourceBlob": "827f2fcbb6f393cc7db5f1e6cc2c3c6108188201",
       "sha256": "9ec870b511f516477a6f032349516432b78b9e94cbb963348c65a3a564e80e8b",
@@ -49572,5 +49698,23 @@
       "sha256": "e3d63afa78721a98fac02b0701d0b0d2f395a8a6ee75e738d15a45ecbbf150f4",
       "mode": "100644"
     }
-  ]
+  ],
+  "sessionController": {
+    "repository": "mithril-lang/mithril-fund",
+    "sourceRevision": "fb8d5a3662ed1bd3652fabed34199a85ce84b230",
+    "files": [
+      {
+        "path": "scripts/mithril-runtime/session.py",
+        "sourcePath": "scripts/agent-runtime/session.py",
+        "sourceBlob": "93574553a42920fef6787f5472fbe4d403cbda5e",
+        "sha256": "92acb0b209d3a09adc5e57c5d76592112cef4632598b3bd85fd6aa519f17e132"
+      },
+      {
+        "path": "scripts/mithril-runtime/backend.py",
+        "sourcePath": "scripts/agent-runtime/backend.py",
+        "sourceBlob": "10c363a0ebaf20069e59ba6c58e3b3648234d5fb",
+        "sha256": "2d8a4e29774581cde771dcda5e462f6601a09646cae85b13c12346c6052eb12f"
+      }
+    ]
+  }
 }
