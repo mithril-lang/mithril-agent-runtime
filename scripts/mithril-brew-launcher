@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+installer="$(dirname "$0")/install-mithril.sh"
+if [ "${1:-}" = '--installer-help' ]; then
+    exec sh "$installer" --help
+fi
+export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
+runtime="$HERMES_HOME/agent/.hermes/bin/hermes"
+if [ ! -x "$runtime" ]; then
+    sh "$installer"
+fi
+if [ "${1:-}" = 'session' ]; then
+    shift
+    helper="$HERMES_HOME/agent/scripts/mithril-runtime/session.py"
+    [ -f "$helper" ] || { printf '%s\n' 'Mithril Agent: update the runtime to enable API Profile container sessions' >&2; exit 1; }
+    exec python3 -I "$helper" "$@"
+fi
+exec "$runtime" "$@"
