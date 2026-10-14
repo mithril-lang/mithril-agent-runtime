@@ -1,0 +1,104 @@
+{
+  "name": "mithril",
+  "description": "Mithril Agent crystal mark and Mithril blue",
+  "colors": {
+    "banner_border": "#9db7f9",
+    "banner_title": "#9db7f9",
+    "banner_accent": "#b8ccff",
+    "banner_dim": "#8e9bb8",
+    "banner_text": "#e3e9f7",
+    "ui_accent": "#9db7f9",
+    "ui_label": "#b8ccff",
+    "ui_ok": "#81c9a8",
+    "ui_error": "#f08c99",
+    "ui_warn": "#eac38a",
+    "prompt": "#e3e9f7",
+    "input_rule": "#6f8fd1",
+    "response_border": "#9db7f9",
+    "session_label": "#b8ccff",
+    "session_border": "#8e9bb8",
+    "status_bar_bg": "#0b0e15",
+    "status_bar_text": "#d3dcf1",
+    "status_bar_strong": "#9db7f9",
+    "status_bar_dim": "#8e9bb8",
+    "status_bar_good": "#81c9a8",
+    "status_bar_warn": "#eac38a",
+    "status_bar_bad": "#f08c99",
+    "status_bar_critical": "#ff7188",
+    "voice_status_bg": "#0b0e15",
+    "selection_bg": "#30456f",
+    "completion_menu_bg": "#111725",
+    "completion_menu_current_bg": "#263a61",
+    "completion_menu_meta_bg": "#111725",
+    "completion_menu_meta_current_bg": "#263a61",
+    "shell_dollar": "#9db7f9"
+  },
+  "light_colors": {
+    "banner_border": "#466aa8",
+    "banner_title": "#355a9f",
+    "banner_accent": "#355a9f",
+    "banner_dim": "#61708b",
+    "banner_text": "#26334d",
+    "ui_accent": "#355a9f",
+    "ui_label": "#355a9f",
+    "prompt": "#26334d",
+    "input_rule": "#466aa8",
+    "response_border": "#355a9f",
+    "session_label": "#355a9f",
+    "session_border": "#61708b",
+    "status_bar_bg": "#edf2fc",
+    "status_bar_text": "#26334d",
+    "status_bar_strong": "#355a9f",
+    "status_bar_dim": "#61708b",
+    "status_bar_good": "#237553",
+    "status_bar_warn": "#8b641d",
+    "status_bar_bad": "#ae334a",
+    "status_bar_critical": "#ae334a",
+    "ui_ok": "#237553",
+    "ui_warn": "#8b641d",
+    "ui_error": "#ae334a",
+    "voice_status_bg": "#edf2fc",
+    "selection_bg": "#c4d5f3",
+    "completion_menu_bg": "#edf2fc",
+    "completion_menu_current_bg": "#c4d5f3",
+    "completion_menu_meta_bg": "#edf2fc",
+    "completion_menu_meta_current_bg": "#c4d5f3",
+    "shell_dollar": "#355a9f"
+  },
+  "branding": {
+    "agent_name": "Mithril Agent",
+    "welcome": "Welcome to Mithril Agent! Type your message or /help for commands.",
+    "goodbye": "Goodbye! ◇",
+    "response_label": " ◇ Mithril ",
+    "prompt_symbol": "◇",
+    "help_header": "◇ Mithril Agent Commands"
+  },
+  "spinner": {
+    "waiting_faces": [
+      "◇",
+      "◈",
+      "◇",
+      "✦"
+    ],
+    "thinking_faces": [
+      "◇",
+      "◈",
+      "✦"
+    ],
+    "thinking_verbs": [
+      "thinking",
+      "reading",
+      "planning",
+      "working"
+    ],
+    "wings": [
+      [
+        "‹",
+        "›"
+      ]
+    ]
+  },
+  "tool_prefix": "│",
+  "banner_logo": "[bold #9db7f9]MITHRIL AGENT[/]",
+  "banner_hero": "[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣦⡀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⢿⡿⣿⣦⡀⠀⠀⠀⢀⣠⣿⣤⣀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⠟⠁⢸⡇⠈⠻⣿⣦⡀⠀⠀⠉⢿⠉⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⣴⣿⠟⠁⠀⠀⢸⡇⠀⠀⠈⠻⣿⣦⠀⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⠷⣶⣤⣀⡀⢸⡇⢀⣀⣤⣶⠾⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠉⠙⠻⢿⡿⠟⠋⠉⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⢸⣿⣄⡀⠀⠀⠀⢸⡇⠀⠀⠀⢀⣠⣿⡇⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠻⣿⣿⡿⣶⣤⣼⣧⣤⣶⢿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣦⡈⢹⡏⢁⣴⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣾⣷⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]\n[#9db7f9]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]\n\n[bold #9db7f9]      MITHRIL AGENT[/]\n"
+}

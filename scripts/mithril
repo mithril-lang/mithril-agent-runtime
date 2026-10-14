@@ -1,0 +1,8 @@
+#!/bin/sh
+# Keep Mithril's profile path at the launcher boundary; use the existing Hermes runtime.
+export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
+hermes_launcher="$(dirname "$0")/hermes"
+if [ -x "$hermes_launcher" ]; then
+    exec "$hermes_launcher" "$@"
+fi
+exec hermes "$@"

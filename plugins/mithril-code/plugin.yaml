@@ -1,0 +1,18 @@
+name: mithril-code
+version: "0.3.0"
+description: "Mithril API bounded System One coding: Mithril language source, actual bounded compiler and source receipts."
+author: Mithril
+provides_tools:
+  - mithril_code
+requires_env:
+  - MITHRIL_API_KEY
+config_schema:
+  runner_url:
+    type: str
+    required: false
+    description: "Explicitly trusted runner origin; HTTPS or HTTP loopback only."
+
+  code_service_url:
+    type: str
+    required: false
+    description: "Owned Code verification service (default https://code.mithril.fund); HTTP loopback allowed for local tests. Inference stays on api.mithril.fund."

@@ -1,0 +1,282 @@
+"""Spaces control plane: authenticated HTTP/WS and encrypted profile checkpoints."""
+import argparse
+import asyncio
+import hashlib
+import hmac
+import importlib.util
+import json
+import os
+import subprocess
+from pathlib import Path
+from urllib.parse import urlencode
+
+from aiohttp import ClientSession, ClientTimeout, WSMsgType, web
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+spec = importlib.util.spec_from_file_location('persistence', Path(__file__).with_name('gateway-persistence.py'))
+persistence = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(persistence)
+tenant_spec = importlib.util.spec_from_file_location('native_tenant', Path(__file__).with_name('gateway-tenant.py'))
+tenant_module = importlib.util.module_from_spec(tenant_spec)
+tenant_spec.loader.exec_module(tenant_module)
+
+
+def native_socket_hop(target, headers, token):
+    """Translate an admitted native connection into Hermes' private loopback gate."""
+    return target + '?' + urlencode({'token': token}), {
+        k: v for k, v in headers.items()
+        if k.lower() not in {'origin', 'forwarded', 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'sec-websocket-protocol'}
+    }
+MAGIC = b'HERMES-ENCRYPTED-V1\0'
+
+
+class HandoffCheckpointBarrier:
+    """Gate transfer replies on durable encrypted storage, including retry replies."""
+    def __init__(self):
+        self.pending = set()
+
+    async def observe(self, data, *, response, checkpoint):
+        for line in data.splitlines():
+            try:
+                frame = json.loads(line)
+            except (ValueError, TypeError):
+                continue
+            if not isinstance(frame, dict) or not isinstance(frame.get('id'), (str, int)):
+                continue
+            params = frame.get('params')
+            # Initial gateway discovery creates its durable identity. A source
+            # may freeze against that ID as soon as this reply is delivered.
+            if not response and frame.get('method') == 'profiles.handoff' and isinstance(params, dict) and params.get('action') != 'status':
+                self.pending.add(frame['id'])
+            elif response and frame.get('id') in self.pending:
+                await checkpoint()
+                self.pending.discard(frame['id'])
+
+
+class EncryptedStore:
+    def __init__(self, store, key, *, require_encrypted=False):
+        self.store = store
+        self.cipher = AESGCM(bytes.fromhex(key))
+        self.plaintext_digest = None
+        self.stored_digest = None
+        self.require_encrypted = require_encrypted
+
+    def load(self):
+        data, digest = self.store.load()
+        if data is None:
+            return None, None
+        if hashlib.sha256(data).hexdigest() != digest:
+            raise ValueError('Checkpoint digest mismatch')
+        if self.require_encrypted and not data.startswith(MAGIC):
+            raise ValueError('Encrypted checkpoint required')
+        if data.startswith(MAGIC):
+            offset = len(MAGIC)
+            data = self.cipher.decrypt(data[offset:offset + 12], data[offset + 12:], MAGIC)
+            self.plaintext_digest = hashlib.sha256(data).hexdigest()
+            self.stored_digest = digest
+        # The first deployment migrates the previous non-secret trial archive.
+        return data, hashlib.sha256(data).hexdigest()
+
+    def save(self, data):
+        digest = hashlib.sha256(data).hexdigest()
+        if digest == self.plaintext_digest:
+            return self.stored_digest
+        nonce = os.urandom(12)
+        stored = self.store.save(MAGIC + nonce + self.cipher.encrypt(nonce, data, MAGIC))
+        self.plaintext_digest, self.stored_digest = digest, stored
+        return stored
+
+
+async def run(location):
+    home = Path('/opt/data')
+    api_key = os.environ['API_SERVER_KEY']
+    token = os.environ['HERMES_DASHBOARD_SESSION_TOKEN']
+    native_config = os.environ.get('MITHRIL_NATIVE_TENANT')
+    store = EncryptedStore(persistence.Store(location, os.environ.get('CHECKPOINT_STORE_KEY', api_key)), os.environ['CHECKPOINT_ENCRYPTION_KEY'], require_encrypted=native_config is not None)
+    data, digest = await asyncio.to_thread(store.load)
+    if data is not None:
+        persistence.restore(home, data, digest, include_secrets=True)
+    tenant = tenant_module.NativeTenant(json.loads(native_config), home) if native_config is not None else None
+    # Only platform-injected operator credentials enter the default profile.
+    # Named profiles receive credentials through the existing profile management APIs.
+    provider_env = home / '.env'
+    if native_config is not None or not provider_env.exists():
+        key = os.environ['CUSTOM_PROVIDER_MITHRIL_KEY']
+        if '\n' in key or '\r' in key:
+            raise ValueError('Invalid injected provider credential')
+        lines = provider_env.read_text().splitlines() if provider_env.exists() else []
+        lines = [line for line in lines if not line.startswith('CUSTOM_PROVIDER_MITHRIL_KEY=')]
+        provider_env.write_text('\n'.join([*lines, 'CUSTOM_PROVIDER_MITHRIL_KEY=' + key]) + '\n')
+        provider_env.chmod(0o600)
+    children = []
+    env = {**os.environ, 'API_SERVER_HOST': '127.0.0.1', 'API_SERVER_PORT': '7861'}
+    for argv in [
+        ['/opt/hermes/.venv/bin/python', '/opt/hermes/gateway-trial-start.py'],
+        ['/opt/hermes/.venv/bin/hermes', 'serve', '--host', '127.0.0.1', '--port', '7862', '--no-open', '--isolated'],
+    ]:
+        children.append(await asyncio.create_subprocess_exec(*argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+
+    async def logs(child):
+        values = [value for key, value in env.items() if ('KEY' in key or 'TOKEN' in key) and len(value) > 8]
+        async for line in child.stdout:
+            message = line.decode(errors='replace')
+            for value in values:
+                message = message.replace(value, '[redacted]')
+            print(message, end='', flush=True)
+
+    for child in children:
+        asyncio.create_task(logs(child))
+    lock = asyncio.Lock()
+    draining = False
+    active_connections = 0
+
+    async def checkpoint():
+        async with lock:
+            data = await asyncio.to_thread(persistence.snapshot, home, True)
+            return await asyncio.to_thread(store.save, data)
+
+    async with ClientSession(timeout=ClientTimeout(total=180)) as client:
+        for port, path in [(7861, '/health'), (7862, '/api/profiles')]:
+            for _ in range(180):
+                if any(child.returncode is not None for child in children):
+                    raise RuntimeError('Hosted Hermes process exited')
+                try:
+                    async with client.get(f'http://127.0.0.1:{port}{path}', headers={'Authorization': 'Bearer ' + token}) as response:
+                        if response.status == 200:
+                            break
+                except Exception:
+                    pass
+                await asyncio.sleep(1)
+            else:
+                raise RuntimeError('Hosted Hermes readiness timed out')
+        await checkpoint()
+
+        async def periodic():
+            while True:
+                await asyncio.sleep(5)
+                await checkpoint()
+
+        async def handler(request):
+            nonlocal draining, active_connections
+            if request.path == '/' and request.method in {'GET', 'HEAD'}:
+                return web.Response(text='Hermes Desktop gateway is running. Connect with the dedicated session token.', content_type='text/plain')
+            if request.path == '/health':
+                ready = not draining and all(child.returncode is None for child in children)
+                return web.json_response({'ready': ready}, status=200 if ready else 503)
+            if request.path == '/_native/quiesce' and request.method == 'POST':
+                supplied = request.headers.get('Authorization', '').removeprefix('Bearer ')
+                if not tenant or not hmac.compare_digest(supplied, api_key):
+                    return web.Response(status=401)
+                if active_connections:
+                    return web.Response(status=409, text='Runtime has active connections')
+                draining = True
+                try:
+                    return web.json_response({'sha256': await checkpoint()})
+                except Exception:
+                    draining = False
+                    return web.Response(status=503, text='Durable checkpoint unavailable')
+            if draining:
+                return web.Response(status=503, text='Runtime is sleeping')
+            native_path = request.path.startswith(('/users/', '/organizations/'))
+            target_path = request.rel_url.path_qs
+            if native_path:
+                supplied = request.headers.get('Authorization', '').removeprefix('Bearer ')
+                if not tenant or not hmac.compare_digest(supplied, api_key):
+                    return web.Response(status=401)
+                status, mapped = tenant.route(request.path, request.method, request.headers.get('X-Mithril-Actor-Id'), request.headers.get('X-Mithril-Runtime-Id'), bool(request.query))
+                if status != 200:
+                    return web.Response(status=status)
+                if mapped is None:
+                    return web.json_response({'running': all(child.returncode is None for child in children), 'sandboxId': tenant.generation}, headers={'Cache-Control': 'private, no-store'})
+                if request.headers.get('Upgrade', '').lower() != 'websocket':
+                    return web.Response(status=400)
+                target_path = mapped
+            desktop = request.path.startswith('/api/')
+            desktop = desktop or native_path
+            expected = token if desktop else api_key
+            supplied = request.headers.get('X-Hermes-Session-Token') or request.headers.get('Authorization', '').removeprefix('Bearer ')
+            if desktop and not supplied:
+                supplied = request.query.get('token', '')
+            if not native_path and not hmac.compare_digest(supplied, expected):
+                return web.Response(status=401, text='Unauthorized')
+            if request.path == '/_trial/checkpoint' and request.method == 'POST':
+                return web.json_response({'sha256': await checkpoint()})
+            if request.path.startswith('/_trial/'):
+                return web.Response(status=404)
+            port = 7862 if desktop else 7861
+            target = f'http://127.0.0.1:{port}' + target_path
+            headers = {k: v for k, v in request.headers.items() if k.lower() not in {'host', 'connection', 'content-length', 'upgrade', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions'}}
+            headers['Authorization'] = 'Bearer ' + expected
+            if request.headers.get('Upgrade', '').lower() == 'websocket':
+                if native_path:
+                    # Hermes' loopback WebSocket gate accepts its internal token
+                    # in the query, not an HTTP bearer. Never expose that URL or
+                    # trust forwarded peer/origin headers on the private hop.
+                    target, headers = native_socket_hop(target, headers, token)
+                active_connections += 1
+                try:
+                    remote = await client.ws_connect(target, headers=headers, timeout=180)
+                except Exception:
+                    active_connections -= 1
+                    return web.Response(status=503, text='Hermes socket unavailable')
+                local = web.WebSocketResponse()
+                await local.prepare(request)
+                handoffs = HandoffCheckpointBarrier()
+
+                async def relay(source, destination):
+                    async for message in source:
+                        if message.type == WSMsgType.TEXT:
+                            await handoffs.observe(message.data, response=source is remote, checkpoint=checkpoint)
+                            await destination.send_str(message.data)
+                        elif message.type == WSMsgType.BINARY:
+                            await destination.send_bytes(message.data)
+                        elif message.type in {WSMsgType.CLOSE, WSMsgType.ERROR}:
+                            break
+
+                tasks = [asyncio.create_task(relay(local, remote)), asyncio.create_task(relay(remote, local))]
+                try:
+                    await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                finally:
+                    for task in tasks:
+                        task.cancel()
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    await remote.close()
+                    await local.close()
+                    try:
+                        await checkpoint()
+                    finally:
+                        active_connections -= 1
+                return local
+            async with client.request(request.method, target, headers=headers, data=await request.read()) as response:
+                result = await response.read()
+                if request.method not in {'GET', 'HEAD', 'OPTIONS'}:
+                    await checkpoint()
+                return web.Response(status=response.status, body=result, headers={k: v for k, v in response.headers.items() if k.lower() not in {'connection', 'transfer-encoding', 'content-length', 'content-encoding'}})
+
+        app = web.Application(client_max_size=8 * 1024 * 1024)
+        app.router.add_route('*', '/{path:.*}', handler)
+        runner = web.AppRunner(app, access_log=None)
+        await runner.setup()
+        await web.TCPSite(runner, '0.0.0.0', 7860).start()
+        periodic_task = asyncio.create_task(periodic())
+        wait_tasks = [asyncio.create_task(child.wait()) for child in children]
+        try:
+            done, _ = await asyncio.wait([periodic_task, *wait_tasks], return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                task.result()
+            raise RuntimeError('Hosted Hermes supervisor stopped')
+        finally:
+            await runner.cleanup()
+            periodic_task.cancel()
+            for child in children:
+                if child.returncode is None:
+                    child.terminate()
+            await asyncio.gather(*(child.wait() for child in children))
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--store', default=os.environ.get('CHECKPOINT_STORE_URL'))
+    if not os.environ.get('CHECKPOINT_STORE_URL') and '--store' not in os.sys.argv:
+        parser.error('--store or CHECKPOINT_STORE_URL is required')
+    asyncio.run(run(parser.parse_args().store))
