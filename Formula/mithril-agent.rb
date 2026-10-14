@@ -3,8 +3,8 @@ class MithrilAgent < Formula
   homepage "https://console.mithril.fund/agent"
   url "https://github.com/mithril-lang/mithril-agent-runtime.git",
       using: :git,
-      revision: "55eefbe99058bd32de26c26fa0b6a1e419d53ff1"
-  version "0.1.0-preview.2"
+      revision: "35aa26f15a273f7d3cb974262bdc2ba262bb2d0b"
+  version "0.1.0-preview.3"
   license "MIT"
 
   def install
