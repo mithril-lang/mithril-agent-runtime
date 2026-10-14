@@ -107,8 +107,8 @@ class Runner:
     def command(self, args):
         command = ['docker', *args]
         return ['ssh', '-o', 'BatchMode=yes', '-o', 'ForwardAgent=no', '-p', str(self.port), *(['-i', self.key_path] if self.key_path else []), self.host, shlex.join(command)] if self.host else command
-    def control(self, code, value):
-        command = ['python3', '-c', code, value]
+    def control(self, code, *values):
+        command = ['python3', '-I', '-c', code, *values]
         command = ['ssh', '-o', 'BatchMode=yes', '-o', 'ForwardAgent=no', '-p', str(self.port), *(['-i', self.key_path] if self.key_path else []), self.host, shlex.join(command)] if self.host else command
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30)
         if result.returncode: raise ValueError('Runtime credential binding could not be prepared')

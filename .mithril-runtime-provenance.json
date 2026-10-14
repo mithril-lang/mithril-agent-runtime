@@ -49701,13 +49701,13 @@
   ],
   "sessionController": {
     "repository": "mithril-lang/mithril-fund",
-    "sourceRevision": "fb8d5a3662ed1bd3652fabed34199a85ce84b230",
+    "sourceRevision": "ccb30bfb12abef31a6972ca15223908c48f4c6e7",
     "files": [
       {
         "path": "scripts/mithril-runtime/session.py",
         "sourcePath": "scripts/agent-runtime/session.py",
-        "sourceBlob": "93574553a42920fef6787f5472fbe4d403cbda5e",
-        "sha256": "92acb0b209d3a09adc5e57c5d76592112cef4632598b3bd85fd6aa519f17e132"
+        "sourceBlob": "9b2aa41deee4a1ad847c7374b56b993b00cf43f3",
+        "sha256": "e7e2b88ede5b177cf04016ea67940083dd14b0b952e2fc719135eab674f3bc47"
       },
       {
         "path": "scripts/mithril-runtime/backend.py",
