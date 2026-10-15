@@ -3,8 +3,8 @@ class MithrilAgent < Formula
   homepage "https://console.mithril.fund/agent"
   url "https://github.com/mithril-lang/mithril-agent-runtime.git",
       using: :git,
-      revision: "35aa26f15a273f7d3cb974262bdc2ba262bb2d0b"
-  version "0.1.0-preview.3"
+      revision: "9c1bd5994e4d0568b95c5ab979c2b56a984133cd"
+  version "0.1.0-preview.4"
   license "MIT"
 
   def install
@@ -19,6 +19,8 @@ class MithrilAgent < Formula
       The profile defaults to ~/.mithril; existing Hermes state is shared by an alias.
       Provider setup, API keys, and messaging services are not created by installation.
       Use mithril update for the runtime and brew upgrade mithril-agent for this wrapper.
+      Sign in to Mithril Fund in your browser with mithril login.
+      Check the account with mithril account status; use mithril logout to sign out locally.
       Container sessions use API-managed Profiles through mithril session.
     EOS
   end
