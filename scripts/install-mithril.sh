@@ -2,7 +2,7 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='575134a17f9a18447fb6aa073589f8aac8ea6c9e'
+revision='762c7e8cb0a7cb7f2866e72ccc9c773680e2afa3'
 branch='main'
 installer_sha256='0fbf2969c12b9ef9c90b81519814865faa9ee4e22056e2a9a4d0b1d5e59966e8'
 repository='https://github.com/mithril-lang/mithril-agent-runtime.git'
@@ -92,6 +92,21 @@ staged="$bin_dir/.mithril-install.$$"
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
     printf '    exec python3 -I %s "$@"\n' "$(quote "$install_dir/scripts/mithril-runtime/session.py")"
     printf '%s\n' 'fi'
+    printf '%s\n' 'case "${1:-}" in' \
+        '    login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '    auth)' \
+        '        case "${2:-}" in' \
+        '            login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '        esac;;' \
+        '    -p|--profile)' \
+        '        case "${3:-}" in' \
+        '            login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '            auth)' \
+        '                case "${4:-}" in' \
+        '                    login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '                esac;;' \
+        '        esac;;' \
+        'esac'
     printf 'exec %s "$@"\n' "$(quote "$runtime")"
 } > "$staged"
 chmod 755 "$staged"
@@ -100,4 +115,4 @@ if [ -e "$bin_dir/mithril" ] || [ -L "$bin_dir/mithril" ]; then
 fi
 mv "$staged" "$bin_dir/mithril"
 printf 'Mithril Agent is ready. Run %s/mithril\n' "$bin_dir"
-printf '%s\n' 'Configure a provider and model with mithril setup when needed.'
+printf '%s\n' 'Sign in with mithril login, or configure another provider with mithril setup.'
