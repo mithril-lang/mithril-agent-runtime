@@ -15,4 +15,19 @@ if [ "${1:-}" = 'session' ]; then
     [ -f "$helper" ] || { printf '%s\n' 'Mithril Agent: update the runtime to enable API Profile container sessions' >&2; exit 1; }
     exec python3 -I "$helper" "$@"
 fi
+case "${1:-}" in
+    login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+    auth)
+        case "${2:-}" in
+            login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+        esac;;
+    -p|--profile)
+        case "${3:-}" in
+            login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+            auth)
+                case "${4:-}" in
+                    login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+                esac;;
+        esac;;
+esac
 exec "$runtime" "$@"
