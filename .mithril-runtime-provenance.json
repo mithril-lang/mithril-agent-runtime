@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "product": "Mithril Agent",
-  "sourceRevision": "b8526667f6035167c286545b16d17cfe06d6cb25",
-  "sourceTree": "b8526667f6035167c286545b16d17cfe06d6cb25",
+  "sourceRevision": "38909f1e4a7fb079277820f214d3638b472f1c52",
+  "sourceTree": "842a6dc35c4b3ed1918371844114386629bffa36",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -26515,6 +26515,12 @@
       "mode": "100644"
     },
     {
+      "path": "hermes_cli/mithril_auth.py",
+      "sourceBlob": "32bff2293dca63b1bcb3548febd82dd65f20217f",
+      "sha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
+      "mode": "100644"
+    },
+    {
       "path": "hermes_cli/moa_cmd.py",
       "sourceBlob": "61ac497ee0988c1da27daa49ba54ab88d0814025",
       "sha256": "23ff776285df94fbc053fc426ae732957a5d5a7ae819f6c70d5cc865a9cc9e23",
@@ -39709,6 +39715,12 @@
       "mode": "100644"
     },
     {
+      "path": "scripts/export-mithril-runtime.py",
+      "sourceBlob": "920f37054b2c9031e7bba02e063e87beeee613a1",
+      "sha256": "a7082729b8f95a9148cedccc09d76e950ca2c3dac33d45e44104325fd9b0a1b8",
+      "mode": "100644"
+    },
+    {
       "path": "scripts/gen-bootstrap-pins.py",
       "sourceBlob": "9e856bfbea2841701a1b5565ff2475478ba50353",
       "sha256": "b5ff2e529dd9a145350b1b66667c671168a9838b58717fae4908d4078967363a",
@@ -39800,8 +39812,8 @@
     },
     {
       "path": "scripts/mithril",
-      "sourceBlob": "1d608e2e4e9bb20c5cf151e29770487315fbccad",
-      "sha256": "41e57036bc940eef5d6acfc3a4d537b69d5f5b5fd012d627e1b98a28cf95f55d",
+      "sourceBlob": "2fa6c0a0c6795e5b533a250e23015b742e6a6280",
+      "sha256": "718fa123ad84b8b6a875de009e3b598eabc6d3f51e418532b18ba924d56860e3",
       "mode": "100755"
     },
     {
@@ -40070,8 +40082,8 @@
     },
     {
       "path": "scripts/standalone/README.md",
-      "sourceBlob": "37ce3b55e5fd4723be0e28fc0869148095d37582",
-      "sha256": "f2af2383b4fb576779e139dc1443d751c632d1484f19720929fa3e7f3afeb637",
+      "sourceBlob": "2838ddfe0fdb9723109cb1384411fa49458c8806",
+      "sha256": "467f41a26e1058c63c541fb624f657eb3c90993a500f9c4e7c8c2c64fa3aa1c9",
       "mode": "100644"
     },
     {
@@ -40142,8 +40154,8 @@
     },
     {
       "path": "scripts/standalone/gateway-contract.mjs",
-      "sourceBlob": "07b90231688af86e1393a736d71767589b576f4e",
-      "sha256": "7342b490d13970f8e6b0b1e8941ed49212e95a1b58427be3aa14eeed03adf8b4",
+      "sourceBlob": "21f976a639965e899fcf76ed88c09999189db9e3",
+      "sha256": "ddd7f1d15dbb924a133a733ee0e07ee9fb9d93e68a0732c733cf1d403c32f1ba",
       "mode": "100644"
     },
     {
@@ -40178,8 +40190,8 @@
     },
     {
       "path": "scripts/standalone/gateway-test.Dockerfile",
-      "sourceBlob": "55d41c534f425488537eee31ef0c798611da4b8a",
-      "sha256": "8f65519aaf3bbc041aa9d9a75998b114f6dfe10d7c55e88eafb2e14f37f6c8c7",
+      "sourceBlob": "5fc4da8e3778952d1c25b045e2d8fd8001ebc612",
+      "sha256": "cdd8ef9331619cc61d63bbae17e69cee60e57cfe30e9d343e7322d736e2e77c0",
       "mode": "100644"
     },
     {

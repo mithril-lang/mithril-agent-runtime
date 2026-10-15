@@ -3,6 +3,23 @@
 export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
 hermes_launcher="$(dirname "$0")/hermes"
 if [ -x "$hermes_launcher" ]; then
-    exec "$hermes_launcher" "$@"
+    runtime="$hermes_launcher"
+else
+    runtime=hermes
 fi
-exec hermes "$@"
+case "${1:-}" in
+    login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+    auth)
+        case "${2:-}" in
+            login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+        esac;;
+    -p|--profile)
+        case "${3:-}" in
+            login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+            auth)
+                case "${4:-}" in
+                    login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
+                esac;;
+        esac;;
+esac
+exec "$runtime" "$@"
