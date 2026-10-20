@@ -338,7 +338,9 @@ def recommended_update_command_for_method(method: str) -> str:
     """Return the update command or guidance for a given install method."""
     if is_nix_install_method(method):
         return _NIX_UPDATE_MSG
-    return _UPDATE_COMMAND_BY_METHOD.get(method, "hermes update")
+    default_command = ("mithril update" if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1"
+                       else "hermes update")
+    return _UPDATE_COMMAND_BY_METHOD.get(method, default_command)
 
 
 def recommended_update_command() -> str:

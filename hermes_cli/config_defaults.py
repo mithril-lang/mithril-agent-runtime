@@ -2346,6 +2346,9 @@ DEFAULT_CONFIG = {
     "updates": {
         # Passive version/banner checks only; explicit `hermes update --check` remains enabled.
         "check": True,
+        # Mithril launcher only: apply a clean runtime update before a new interactive session.
+        # The launcher marker keeps ordinary Hermes installs on the explicit update path.
+        "auto_apply": True,
         # Pre-update backup. quick = snapshot small critical state (pairing JSONs, cron jobs,
         # config.yaml, .env, auth.json, profile DBs) into <HERMES_HOME>/state-snapshots/, skipping
         # files >1 GiB; restore via ``/snapshot``. full = quick PLUS a ``hermes backup`` zip in

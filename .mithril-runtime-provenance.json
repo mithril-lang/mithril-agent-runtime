@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "product": "Mithril Agent",
   "sourceRevision": "38909f1e4a7fb079277820f214d3638b472f1c52",
   "sourceTree": "842a6dc35c4b3ed1918371844114386629bffa36",
@@ -49728,5 +49728,91 @@
         "sha256": "2d8a4e29774581cde771dcda5e462f6601a09646cae85b13c12346c6052eb12f"
       }
     ]
+  },
+  "runtimeOverrides": {
+    "baseRuntimeRevision": "3f8b9eb0f5257f161301111fda2ff73fcf7bc472",
+    "files": [
+      {
+        "path": "Formula/mithril-agent.rb",
+        "baseSha256": "ece38d57b606135c2bdc47b5efc0258dcb71f7fc88927420938f874223b774e8",
+        "sha256": "c0d82f4df32bf6f454fa691f1ed05d50e0d3df9015936de3964dba5bab8da896"
+      },
+      {
+        "path": "README.md",
+        "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
+        "sha256": "2e89f4bdc467190594817fd00db4fcd6b02a6120164bc344ecea59d6bfdfde4f"
+      },
+      {
+        "path": "agent/auxiliary_client.py",
+        "baseSha256": "4a1173a9ffe898c987e8abaf6e9e5b2fcba8745089ed6a504f6f420c837bff6d",
+        "sha256": "3a29b054523fa2aeb914f5d868fb07a60dde2eeb64c99dc1234d0e62dfd89fb1"
+      },
+      {
+        "path": "docs/operations/mithril-account-login.md",
+        "baseSha256": null,
+        "sha256": "6eacb4d3454a98f6177abd76dbd80d40c1940861f2b8f261a34a713b8d33c8d8"
+      },
+      {
+        "path": "hermes_cli/config.py",
+        "baseSha256": "d13588bb376ac915349e344ebb86f23b1684b6d2409d6f35216184ebb6d471fe",
+        "sha256": "a3c5e60dd7bc1aa41c9b5912d414d7f2ca2f3d41b0fb7ce8dda8eef0378c2df1"
+      },
+      {
+        "path": "hermes_cli/config_defaults.py",
+        "baseSha256": "807e1334c7ba8911172e2cb516eb7e15e1820899c3578cb087bf71deeb9c04d7",
+        "sha256": "8adf9f050e6b950f644442091ed72a6a0ce25165e77fe4cc37e1b0905cbd0f04"
+      },
+      {
+        "path": "hermes_cli/main.py",
+        "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
+        "sha256": "dd4324fafe974d992fbb4e0a2cb9b274ab1cac2566b93310aca544a0cb162189"
+      },
+      {
+        "path": "hermes_cli/mithril_account.py",
+        "baseSha256": null,
+        "sha256": "24bd54c205a04d1197a669b69e54683a39fa5107f4e75ec85c788c625bc47bcb"
+      },
+      {
+        "path": "hermes_cli/mithril_auth.py",
+        "baseSha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
+        "sha256": "a8426bc06dab3d33b5a4c5550081871e80b445692b6c54f2669770ac685d02f9"
+      },
+      {
+        "path": "hermes_cli/mithril_startup.py",
+        "baseSha256": null,
+        "sha256": "05ff5340b86c05da4e00ca95f1329385c0e514858a732a222981b05ac5b3f5c3"
+      },
+      {
+        "path": "hermes_cli/runtime_provider_custom.py",
+        "baseSha256": "eebf063c777306996f4f0f088f51e46977b8d4dcb519bc7106f17665a28f58c1",
+        "sha256": "317b5bc7a038a13dae3f7d46704fa6b11496de78a1d0d6a75f24083c729625d1"
+      },
+      {
+        "path": "hermes_cli/subcommands/update.py",
+        "baseSha256": "5c5db83b6dc0ddb90a53dcb407816dd6830052d772650ed2486629401a52abf0",
+        "sha256": "6b1537d124ee0794cec5a57640bd56c3e8e34e86be9f750d6f9b4785416fec9f"
+      },
+      {
+        "path": "scripts/export-mithril-runtime.py",
+        "baseSha256": "a7082729b8f95a9148cedccc09d76e950ca2c3dac33d45e44104325fd9b0a1b8",
+        "sha256": "522fc7c0b218983663f167556d275331a05d23e20271036253f98582a0494d89"
+      },
+      {
+        "path": "scripts/install-mithril.sh",
+        "baseSha256": "b4e6a79be9c50c144282b395aaed260dd368625b9395c00876d2983b7120b3e5",
+        "sha256": "3238440a6de8f4c86a022f0b6291f0a0e6afeb478a7fe74cbd91a6615477c868"
+      },
+      {
+        "path": "scripts/mithril",
+        "baseSha256": "718fa123ad84b8b6a875de009e3b598eabc6d3f51e418532b18ba924d56860e3",
+        "sha256": "d7a398bccd9bab4540a6922f798900753f573e7a855ba6c54a58885b903c0117"
+      },
+      {
+        "path": "scripts/mithril-brew-launcher",
+        "baseSha256": "b6af778c52399c0143a2acbb966351752e834961685cc0087fa5ef3d80094c6a",
+        "sha256": "5c13ec1335efd10aab8a99079ef84be99f7c3e3891a676274073da8b8cf2e04e"
+      }
+    ],
+    "sha256": "8682bccf7a7384d79abd48511791a52508ef52bc2fa53ae08043fdfe055f41fa"
   }
 }

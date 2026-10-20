@@ -214,7 +214,45 @@ def uses_existing_provider_auth(argv):
             and len(stripped) > 2 and not stripped[2].startswith("-"))
 
 
-def main(argv=None):
+def _profile_from_argv(argv):
+    profile = None
+    for index, arg in enumerate(argv):
+        if arg in ("-p", "--profile") and index + 1 < len(argv):
+            profile = argv[index + 1]
+        elif arg.startswith("--profile="):
+            profile = arg.split("=", 1)[1]
+    return profile
+
+
+def startup_login(argv=None):
+    """Sign this launcher into Mithril before its first interactive chat.
+
+    Only the selected Profile's persisted token counts. An inherited shell
+    variable must not authenticate another ``-p`` Profile.
+    """
+    argv = list(sys.argv[1:] if argv is None else argv)
+    profile = _profile_from_argv(argv)
+    select_home(profile)
+    try:
+        from hermes_cli.config import is_managed, load_env
+        if is_managed() or load_env().get(TOKEN_ENV, "").strip():
+            return 0
+    except Exception:
+        # The normal login path reports guarded config and .env read failures.
+        pass
+
+    login_argv = ["login"]
+    if profile:
+        login_argv.extend(["--profile", profile])
+    for index, arg in enumerate(argv):
+        if arg in ("-m", "--model") and index + 1 < len(argv):
+            login_argv.extend(["--model", argv[index + 1]])
+        elif arg.startswith("--model="):
+            login_argv.extend(["--model", arg.split("=", 1)[1]])
+    return main(login_argv, continue_on_login=True)
+
+
+def main(argv=None, *, continue_on_login=False):
     argv = list(sys.argv[1:] if argv is None else argv)
     if uses_existing_provider_auth(argv):
         previous = sys.argv
@@ -281,7 +319,8 @@ def main(argv=None):
         if not verified_identity(identity):
             raise SignInError("Mithril could not verify this account. No local settings were changed.")
         persist(token, model)
-        print(f"Signed in to Mithril Fund. Model: {model}\nRun mithril to start a new conversation.")
+        suffix = " Continuing to your session." if continue_on_login else " Run mithril to start a new conversation."
+        print(f"Signed in to Mithril Fund. Model: {model}.{suffix}")
         return 0
     except KeyboardInterrupt:
         print("\nSign-in cancelled. Run mithril account status to check this Profile.", file=sys.stderr)

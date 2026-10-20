@@ -4779,6 +4779,10 @@ def _named_custom_api_key(custom_entry: Dict[str, Any], provider: str, custom_ba
                 if str(pool_api_key).strip():
                     custom_key = str(pool_api_key).strip()
                     break
+    # Reuse the Profile's device-approved token only for the canonical Mithril API.
+    with contextlib.suppress(Exception):
+        from hermes_cli.mithril_account import mithril_inference_token_for_base_url
+        custom_key = mithril_inference_token_for_base_url(custom_base) or custom_key
     return custom_key or "no-key-required"
 
 
