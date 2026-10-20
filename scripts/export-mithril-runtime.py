@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 EXCLUDED_ROOTS = {
-    ".github", "Formula", "contributors", "docker", "docs", "evals", "nix",
+    ".circleci", ".github", "Formula", "contributors", "docker", "docs", "evals", "nix",
     "tests", "tests-js", "website", "workflows",
 }
 EXCLUDED_NAMES = {"AGENTS.md", "case-study.md", ".envrc"}
@@ -40,7 +40,9 @@ def selected(path, include_docker=False):
         return False
     parts = path.split("/")
     excluded = EXCLUDED_ROOTS - {"docker"} if include_docker else EXCLUDED_ROOTS
-    if parts[0] in excluded or any(part in EXCLUDED_NAMES for part in parts):
+    if (parts[0] in excluded and path != "docs/operations/mithril-account-login.md") or any(
+        part in EXCLUDED_NAMES for part in parts
+    ):
         return False
     if any(part in {"tests", "tests-js", "__pycache__", ".git"} for part in parts):
         return False
@@ -130,18 +132,8 @@ def export_runtime(source_archive, source_tree, revision, destination, include_d
             entries.append({"path": target, "sourcePath": source, "sourceBlob": blob, "sha256": hashlib.sha256(data).hexdigest()})
         manifest["sessionController"] = {"repository": "mithril-lang/mithril-fund", "sourceRevision": controller_revision, "files": entries}
     files[".mithril-runtime-provenance.json"] = ((json.dumps(manifest, indent=2) + "\n").encode(), "100644")
-    readme = """# Mithril Agent runtime
+    readme = "# Mithril Agent runtime\n\nThe MIT-licensed runtime used by the Mithril CLI and Mithril Desktop, built on\nHermes Agent by Nous Research. Configuration and conversations use `~/.mithril`.\n\nThis is a candidate runtime source snapshot for installation qualification.\nPublic installer availability is announced at https://console.mithril.fund/agent.\n\n## Sign in to Mithril Fund\n\nAfter installation, run:\n\n```sh\nmithril login\nmithril account status\nmithril\n```\n\nApprove the code shown in the terminal in your own browser. You do not need to\ncopy an API key. For a remote terminal, use `mithril login --no-browser` and open\nthe displayed approval address on another device. `mithril logout` removes this\nProfile's local account credential. Revoke device access in the\n[Console account page](https://console.mithril.fund/account) when needed.\nExisting API keys, other providers and conversations are preserved.\n\n## Runtime updates\n\n`mithril update --check` reports whether the installed runtime is behind its\nselected update channel. The Mithril launcher applies available updates before a\nnew interactive session by default. It updates only a clean, self-updatable\nruntime in a TTY session, honors `updates.check: false`, and stops before chat if\nan update fails. Set `updates.auto_apply: false` in the Profile's `config.yaml`\nto turn automatic updates off. See\n[the sign-in and update policy](docs/operations/mithril-account-login.md).\n\nThe runtime provenance manifest binds source files to their source revision and\nlists any distribution-owned runtime overrides separately.\n\nUpstream project: https://github.com/NousResearch/hermes-agent\nLicense: [MIT](LICENSE).\n"
 
-The MIT-licensed runtime used by the Mithril CLI and Mithril Desktop, built on
-Hermes Agent by Nous Research. Configuration and conversations use `~/.mithril`.
-
-This is a candidate runtime source snapshot for installation qualification.
-Public installer availability is announced at https://console.mithril.fund/agent.
-The runtime provenance manifest binds each original file to its source revision.
-
-Upstream project: https://github.com/NousResearch/hermes-agent
-License: [MIT](LICENSE).
-"""
     files["README.md"] = (readme.encode(), "100644")
     destination = Path(destination)
     if destination.exists():

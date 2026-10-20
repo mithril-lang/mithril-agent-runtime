@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import os
 from typing import Callable
 
 
 def build_update_parser(subparsers, *, cmd_update: Callable) -> None:
     """Attach the ``update`` subcommand to ``subparsers``."""
     from hermes_cli.release_channels import validate_name
+    mithril_launcher = os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1"
+    product = "Mithril Agent" if mithril_launcher else "Hermes Agent"
     update_parser = subparsers.add_parser(
-        "update", help="Update Hermes Agent to the latest version",
-        description="Pull the latest changes from git and reinstall dependencies")
+        "update", help=f"Update {product} to the latest version",
+        description=f"Pull the latest {product} changes from git and reinstall dependencies")
     update_parser.add_argument(
         "--gateway", action="store_true", default=False,
         help="Gateway mode: use file-based IPC for prompts instead of stdin (used internally by /update)",

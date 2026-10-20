@@ -3640,6 +3640,39 @@ def main():
 
         logging.getLogger(__name__).debug("pm startup check failed", exc_info=True)
 
+    # Mithril can apply an opted-in runtime update before a new interactive session.
+    # The launcher marker and Profile config keep this out of ordinary Hermes runs.
+    try:
+        from hermes_cli.mithril_startup import maybe_auto_update
+        maybe_auto_update(sys.argv[1:])
+    except SystemExit:
+        raise
+    except Exception:
+        import logging
+        logging.getLogger(__name__).debug("Mithril startup update check failed", exc_info=True)
+
+    # A device approval is required before this Profile's first Mithril chat.
+    if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1":
+        first = _first_positional_argv()
+        argv = sys.argv[1:]
+        if first in (None, "chat") and not any(flag in argv for flag in (
+            "-h", "--help", "-V", "--version", "-q", "--query", "-z", "--oneshot",
+            "--safe-mode", "--ignore-user-config",
+        )) and not any(arg.startswith("--query=") for arg in argv) and not any(
+            arg == "--provider" or arg.startswith("--provider=") for arg in argv
+        ):
+            try:
+                if sys.stdin.isatty() and sys.stdout.isatty():
+                    from hermes_cli.mithril_auth import startup_login
+                    result = startup_login(argv)
+                    if isinstance(result, int) and result != 0:
+                        raise SystemExit(result)
+            except SystemExit:
+                raise
+            except Exception:
+                import logging
+                logging.getLogger(__name__).debug("Mithril device sign-in startup failed", exc_info=True)
+
     if _try_termux_fast_tui_launch():
         return
     if _try_termux_fast_cli_launch():

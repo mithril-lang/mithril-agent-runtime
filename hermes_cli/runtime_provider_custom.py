@@ -486,10 +486,14 @@ def _resolve_direct_alias_runtime(requested_provider: str, explicit_api_key: Opt
     """Bare ``custom`` + explicit base_url (e.g. a ``model_aliases:`` direct alias)."""
     rp = _rp()
     base_url = explicit_base_url.strip().rstrip("/")
+    from hermes_cli.mithril_account import mithril_inference_token_for_base_url
+    mithril_token = mithril_inference_token_for_base_url(base_url)
     # Pool first — mirrors the named-custom path so bare `provider: custom` with a configured
     # custom_providers entry gets its api_key from the pool instead of env fallbacks.
     pool_result = rp._try_resolve_from_custom_pool(base_url, "custom", None)
     if pool_result:
+        if mithril_token:
+            pool_result["api_key"] = mithril_token
         pool_result["source"] = "direct-alias"
         return pool_result
     # OLLAMA_API_KEY gets its own gate here: without it a `model_aliases:` entry pointing at
@@ -498,6 +502,8 @@ def _resolve_direct_alias_runtime(requested_provider: str, explicit_api_key: Opt
     candidates = [(explicit_api_key or "").strip(), _model_cfg_key_env_for(rp._get_model_config(), base_url),
                   *rp._host_gated_env_key_candidates(base_url, ollama=True)]
     api_key = next((c for c in candidates if rp.has_usable_secret(c)), "")
+    if mithril_token:
+        api_key = mithril_token
     return _custom_runtime(rp, base_url, api_key, None, source="direct-alias", requested_provider=requested_provider)
 
 
@@ -548,11 +554,15 @@ def _resolve_named_custom_runtime(*, requested_provider: str, explicit_api_key: 
     base_url = ((explicit_base_url or "").strip() or custom_provider.get("base_url", "")).rstrip("/")
     if not base_url:
         return None
+    from hermes_cli.mithril_account import mithril_inference_token_for_base_url
+    mithril_token = mithril_inference_token_for_base_url(base_url)
     pool_result = rp._try_resolve_from_custom_pool(
         base_url, "custom", custom_provider.get("api_mode"),
         provider_name=custom_provider.get("provider_key") or custom_provider.get("name"),
     )
     if pool_result:
+        if mithril_token:
+            pool_result["api_key"] = mithril_token
         # The pool doesn't know the custom_providers fields — propagate them here too.
         _apply_custom_provider_extras(custom_provider, target_model, pool_result)
         return pool_result
@@ -573,6 +583,9 @@ def _resolve_named_custom_runtime(*, requested_provider: str, explicit_api_key: 
         token_provider = build_command_token_provider(key_cmd, str(custom_provider.get("name", requested_provider) or "custom"))
         if token_provider is not None:
             api_key = token_provider
+    # Device-approved credentials supersede a retained legacy key on Mithril's host.
+    if mithril_token:
+        api_key = mithril_token
     result = _custom_runtime(rp, base_url, api_key, custom_provider.get("api_mode"),
                              source=f"custom_provider:{custom_provider.get('name', requested_provider)}",
                              requested_provider=requested_provider)
