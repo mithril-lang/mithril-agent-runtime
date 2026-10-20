@@ -1,0 +1,30 @@
+version: 2.1
+
+jobs:
+  mithril-account-auth:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Install locked test dependencies
+          command: |
+            python -m pip install --disable-pip-version-check uv==0.12.3
+            uv sync --locked --no-default-groups --group dev
+      - run:
+          name: Verify Mithril account token routing
+          command: uv run pytest -q tests/test_mithril_account_token.py
+  mithril-distribution:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Verify Homebrew formula and shell installer
+          command: python -m unittest discover -s tests -p test_mithril_distribution.py -v
+
+workflows:
+  mithril-agent-runtime:
+    jobs:
+      - mithril-account-auth
+      - mithril-distribution
