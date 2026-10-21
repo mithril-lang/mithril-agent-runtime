@@ -30,3 +30,11 @@ needed. Existing API keys, other providers and conversations are preserved.
 Use `mithril setup` for other providers, or `mithril -p work login` for an existing
 named local Profile. Explicit provider commands, including `mithril auth status
 openrouter`, retain their existing behavior.
+
+## Native Linear connection
+
+Run `mithril login --connectors` to approve connector access for the current
+Profile while preserving its inference model and provider. Then connect Linear
+through `manage_connections` in Mithril. Linear reads, issue creation and
+follow-up comments use your own Linear OAuth grant through `api.mithril.fund`.
+The API must have the native connector provisioned before it can connect.
