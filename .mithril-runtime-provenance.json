@@ -26515,10 +26515,22 @@
       "mode": "100644"
     },
     {
+      "path": "hermes_cli/mithril_account.py",
+      "sourceBlob": "9829c47673b5c642e57e61ba9fe24aa439ade462",
+      "sha256": "f0d6d3b130ae84508edc1540207b57cd6a0554acc623be6db807ee5e37afe721",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/hermes_cli/mithril_account.py"
+    },
+    {
       "path": "hermes_cli/mithril_auth.py",
-      "sourceBlob": "32bff2293dca63b1bcb3548febd82dd65f20217f",
-      "sha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
-      "mode": "100644"
+      "sourceBlob": "00d1c69a1e4157b12b7bd8e9da0888ad654ba4f2",
+      "sha256": "94d868e3e9fea5454133ca9a509ea4c933f0b400d075a452fa5ddd1d2df24fb4",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/hermes_cli/mithril_auth.py"
     },
     {
       "path": "hermes_cli/moa_cmd.py",
@@ -43100,9 +43112,12 @@
     },
     {
       "path": "tools/connectors/gateway/config.py",
-      "sourceBlob": "5a936e95cc2d15c13dc1bc7a7e71aedd5129ce88",
-      "sha256": "127841a91f329ecc6baa453632ae958a67b866dc85be2b0b5ff2d93b5a52b124",
-      "mode": "100644"
+      "sourceBlob": "6e18857088bf56921b3c911f9c7082c3368f059f",
+      "sha256": "28acb3337a4de332747eb1da8fab2a08960ee03656b39d1079ea6cd2bf77db0a",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/connectors/gateway/config.py"
     },
     {
       "path": "tools/connectors/gateway/errors.py",
@@ -43166,9 +43181,12 @@
     },
     {
       "path": "tools/connectors/portal/client.py",
-      "sourceBlob": "6bed3662b320cdc0addaa61fe691b1cdc11e155b",
-      "sha256": "eddba6277e88b2a37753d1f8071d7ed4e32278dd1f9a39f1b4dc98444ed33c8f",
-      "mode": "100644"
+      "sourceBlob": "5211a6b59a837f0e1411d83a6c37fd5ba822c8e9",
+      "sha256": "194c0340903498c31447cb636b42a545d7abb46a29db808b9041a5b0faa82979",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/connectors/portal/client.py"
     },
     {
       "path": "tools/connectors/portal/errors.py",
@@ -43640,9 +43658,12 @@
     },
     {
       "path": "tools/managed_gateway_auth.py",
-      "sourceBlob": "df503fc65bb7994b78bb28c65174f0452c3b6df9",
-      "sha256": "eff014169b867c5ede2201433e51c204918c67d55c032cbe074cace5505186bf",
-      "mode": "100644"
+      "sourceBlob": "a1dbb1b8ec2e81531c39c3e0a0692ea28ef5a1e6",
+      "sha256": "e97c5951c1a1cf6b1213fa2e3036833848164a79ce1b19523a651e0df6e0e3b6",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/managed_gateway_auth.py"
     },
     {
       "path": "tools/managed_tool_gateway.py",
@@ -49728,5 +49749,17 @@
         "sha256": "2d8a4e29774581cde771dcda5e462f6601a09646cae85b13c12346c6052eb12f"
       }
     ]
+  },
+  "nativeConnectorAdaptation": {
+    "repository": "mithril-lang/mithril-fund",
+    "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+    "paths": [
+      "hermes_cli/mithril_account.py",
+      "hermes_cli/mithril_auth.py",
+      "tools/managed_gateway_auth.py",
+      "tools/connectors/gateway/config.py",
+      "tools/connectors/portal/client.py"
+    ],
+    "scope": "native Mithril connector identity and transport"
   }
 }
