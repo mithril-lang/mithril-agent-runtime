@@ -1,0 +1,22 @@
+version: 2.1
+
+jobs:
+  validate-source:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Install pinned uv
+          command: python -m pip install --disable-pip-version-check uv==0.12.3
+      - run:
+          name: Validate the Python dependency lock
+          command: uv lock --check
+      - run:
+          name: Check maintained Python source syntax
+          command: python -m compileall -q agent hermes_cli hermes_platform hermes_constants.py cli.py run_agent.py
+
+workflows:
+  mithril-agent-runtime:
+    jobs:
+      - validate-source
