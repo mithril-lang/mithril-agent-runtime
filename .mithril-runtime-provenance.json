@@ -49743,6 +49743,11 @@
         "sha256": "2e89f4bdc467190594817fd00db4fcd6b02a6120164bc344ecea59d6bfdfde4f"
       },
       {
+        "path": "agent/account_usage.py",
+        "baseSha256": "ee8e0c618df20293c4ee292f8c4260d2c7ce6bedadd876c24fa5c6cd4b2f7591",
+        "sha256": "e6fa7b0b6802928ad546daa569a52ffd2838e6dba10a1adc5aab4539d667762c"
+      },
+      {
         "path": "agent/auxiliary_client.py",
         "baseSha256": "4a1173a9ffe898c987e8abaf6e9e5b2fcba8745089ed6a504f6f420c837bff6d",
         "sha256": "3a29b054523fa2aeb914f5d868fb07a60dde2eeb64c99dc1234d0e62dfd89fb1"
@@ -49751,6 +49756,11 @@
         "path": "agent/billing_links.py",
         "baseSha256": "4693c79ad2c4a692ec8b95632b54c0c3efe5d12ba2304f8a8af7fcfd39e1b37c",
         "sha256": "a06f005141c2c476332ab503d047f52d6348740a651157fd3788086288fab735"
+      },
+      {
+        "path": "agent/billing_usage.py",
+        "baseSha256": "682bb258466966c4afd159edb17c829312fccc24c0c37bb5a811f40d26d359d1",
+        "sha256": "bbdaabe17f435aa6ab8d471eb73f7adeaa96b00f2c1e27e26c66466932afda6b"
       },
       {
         "path": "agent/conversation_loop.py",
@@ -49908,6 +49918,6 @@
         "sha256": "3358a5c3c29079edd7de616dffa5079b4fe22c66e1c554a89bb787d325f41bed"
       }
     ],
-    "sha256": "6b5d753858b7a73b36d6418b4aff2cfb83f7833ff0e83e36f209714564507672"
+    "sha256": "53af40993fe86382a0690aef891762e579976926cb8c6a64b4863deb2edf4e90"
   }
 }

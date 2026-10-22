@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Optional
@@ -180,6 +181,8 @@ def build_nous_credits_snapshot(account_info) -> Optional[AccountUsageSnapshot]:
 
 def _nous_logged_in() -> bool:
     """Cheap local auth-state check: a Nous access token is present. Fail-open False."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         from hermes_cli.auth import get_provider_auth_state
         tok = (get_provider_auth_state("nous") or {}).get("access_token")
@@ -197,6 +200,8 @@ def _fetch_portal_account(timeout: float):
     ``timeout``. The abandoned daemon worker runs on to its own network timeout
     and never blocks the caller or process exit; its eventual exception is
     drained so GC never logs "exception was never retrieved"."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise RuntimeError("Nous Portal account data is unavailable in Mithril Agent.")
     import contextvars
     from hermes_cli.nous_account import get_nous_portal_account_info
     from tools.daemon_pool import DaemonThreadPoolExecutor
@@ -217,6 +222,8 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
     """Rendered Nous-credits /usage lines, or [] when there's nothing to show. Independent of any live agent
     (logged-in gate, then a bounded portal fetch); shared by CLI ``_show_usage`` and the TUI ``session.usage`` RPC.
     Fail-open: any hiccup or timeout → []. HERMES_DEV_CREDITS_FIXTURE renders from the fixture instead of the portal."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from agent.credits_tracker import dev_fixture_credits_state
         fixture = dev_fixture_credits_state()
