@@ -2,27 +2,33 @@
 
 ## Mithril OCI fleet entrypoint
 
-The Mithril-owned OCI image uses
-`scripts/standalone/mithril-gateway-oci-entrypoint.sh` as its command while
-retaining the generic Docker ENTRYPOINT dispatcher. The script sets
-`MITHRIL_AGENT=1` before starting the Agent and runs one multiplexing Gateway
-in the foreground. The OCI operator owns restart, health, stop, rollout, and
-rollback policy; the container must not register a competing per-Profile
-background Gateway service. Keep the marker out of the shared base image.
+The Mithril-owned OCI image uses the explicit `mithril_gateway` target in the
+repository Dockerfile. That target copies
+`scripts/standalone/mithril-gateway-oci-entrypoint.sh`, scopes
+`MITHRIL_AGENT=1` to the Mithril image before `/init` bootstrap, and sets the
+launcher as its command while retaining the generic Docker ENTRYPOINT
+dispatcher. The launcher runs one multiplexing Gateway in the foreground
+with external supervision. The OCI operator owns restart, health, stop,
+rollout, and rollback policy; the container must not register a competing
+per-Profile background Gateway service. The default Docker build and generic
+Compose example remain Hermes-compatible and are not a Mithril Gateway image.
 
 Build and qualification must bind the launcher revision and immutable image
 digest to the exact Fund source/export and catalog snapshot. Profile state and
 credentials remain scoped to the owning Mithril Profile. This launcher is a
 source artifact only; it does not qualify or activate the existing bot fleet.
 
-This Mac-controlled profile qualifies the repository Dockerfile for the
-`linux/amd64` gateway trial. It does not turn the organization's held full
+This Mac-controlled profile qualifies the explicit `mithril_gateway` target
+for the `linux/amd64` gateway trial. It does not turn the organization's held full
 Python/Rust/JS/native release matrix into a completed production pipeline.
 No GitHub Actions execution is used.
 
 The controller runs only a clean committed source. Its fixed recipe streams
-an exact Git archive to a disposable runner directory and builds the repository
-image without controller credentials, host source mounts or registry login.
+an exact Git archive to a disposable runner directory and builds the explicit
+Mithril target without controller credentials, host source mounts or registry
+login. It reads back the target image's dispatcher, command, and Mithril-mode
+environment before admitting the build stage, then runs the image with its
+default command so the qualification exercises the actual Mithril launcher.
 The install stamp records the actual source SHA. Test dependency setup uses
 Hermes PM and the frozen source lock. Mithril branding, launcher, installer and audited runtime-export regressions run alongside the API gateway, configuration, custom-provider and supervision regressions through
 `scripts/run_tests.sh` in a separate container with no external network,
@@ -33,11 +39,12 @@ an isolated home and an explicit Mithril inference provider definition. Its
 foreground gateway delegates supervision to the hosting platform. It copies
 no installed profiles, schedules, message history or messaging credentials.
 
-The controller then drives this trial image as the Hermes user, SQLite WAL
-safety and FTS5, API authentication and persistence across restart. The runtime
-uses a disposable named volume and no external network. There are no provider
-calls. Live inference and platform-specific bot delivery belong to the later
-cloud trial.
+Qualification starts the Mithril target with its baked dispatcher and launcher,
+then separately exercises the derived trial image with its external-supervisor
+Gateway command. Both use disposable named volumes and no external network;
+SQLite WAL/FTS5, API authentication and persistence across restart are read
+back with fixture credentials. There are no provider calls. Live inference
+and platform-specific bot delivery belong to the later cloud trial.
 
 ## Configure the owning Mac
 

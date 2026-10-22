@@ -528,3 +528,18 @@ VOLUME [ "/opt/data" ]
 # intercepted by /init's POSIX shell.
 ENTRYPOINT [ "/opt/hermes/docker/entrypoint-dispatch.sh" ]
 CMD [ ]
+
+# First-party Mithril Gateway image. Keep the shared runtime/default image
+# above unmarked and without a Mithril-specific command. This target scopes
+# Mithril mode to images explicitly built for the multiplexed Gateway fleet;
+# the image ENV is present before /init and stage2 bootstrap can import Agent
+# code, while the launcher repeats the marker for direct invocation safety.
+FROM runtime AS mithril_gateway
+COPY --chmod=0755 scripts/standalone/mithril-gateway-oci-entrypoint.sh /opt/hermes/docker/mithril-gateway-oci-entrypoint.sh
+ENV MITHRIL_AGENT=1
+CMD [ "/opt/hermes/docker/mithril-gateway-oci-entrypoint.sh" ]
+
+# Keep the ordinary `docker build` result identical in behavior to the shared
+# Hermes-compatible runtime. Mithril deployments must opt into
+# `--target mithril_gateway` and qualify that exact target.
+FROM runtime AS default

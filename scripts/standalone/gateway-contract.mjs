@@ -2,7 +2,7 @@ import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 
 export const profile = Object.freeze({
   schema: 1, name: 'gateway-docker-linux-amd64', platform: 'linux/amd64',
-  coverage: ['repository Dockerfile', 'offline API gateway regression suite', 'real image provenance, SQLite, privilege drop and restart', 'Mithril branding, launcher, installer and audited runtime export'],
+  coverage: ['explicit Mithril OCI image target and first-party launcher through the generic dispatcher', 'offline API gateway regression suite', 'real image provenance, SQLite, privilege drop and external-supervisor restart', 'Mithril branding, launcher, installer and audited runtime export'],
   excluded: ['native Desktop and installers', 'messaging adapter delivery', 'other architectures', 'live inference', 'production publication'],
   minimumFreeBytes: 12 * 1024 ** 3,
   offlineTests: ['tests/hermes_cli/test_profile_handoff.py', 'tests/tui_gateway/test_profile_handoff.py', 'tests/tui_gateway/contracts/test_generated.py', 'tests/gateway/test_api_server*.py', 'tests/gateway/test_multiplex_api_server_routing.py', 'tests/gateway/test_config.py', 'tests/gateway/test_custom_provider_request_overrides.py', 'tests/hermes_cli/test_container_boot.py', 'tests/hermes_cli/test_gateway_external_supervisor.py', 'tests/hermes_cli/test_banner_skin_branding.py', 'tests/hermes_cli/test_startup_fast_guards.py', 'tests/hermes_cli/test_cli_skin_integration.py', 'tests/hermes_cli/test_mithril_auth.py', 'tests/hermes_cli/test_mithril_runtime_export.py', 'tests/scripts/test_mithril_install.py', 'tests/scripts/test_mithril_launcher.py'],
