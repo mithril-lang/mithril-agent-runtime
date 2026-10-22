@@ -49768,6 +49768,11 @@
         "sha256": "dd4324fafe974d992fbb4e0a2cb9b274ab1cac2566b93310aca544a0cb162189"
       },
       {
+        "path": "hermes_cli/main_platform_setup.py",
+        "baseSha256": "4e2e7c14556724fb99d163e98ce1e0bc8d1a70c112218cb8db756a08c902840c",
+        "sha256": "b0acfec7e39ad2566feee0c85fe8b13196b1dc45a454f72b09a7f33722d5f23d"
+      },
+      {
         "path": "hermes_cli/mithril_account.py",
         "baseSha256": null,
         "sha256": "24bd54c205a04d1197a669b69e54683a39fa5107f4e75ec85c788c625bc47bcb"
@@ -49793,6 +49798,11 @@
         "sha256": "6b1537d124ee0794cec5a57640bd56c3e8e34e86be9f750d6f9b4785416fec9f"
       },
       {
+        "path": "hermes_cli/web_routers/skills.py",
+        "baseSha256": "5d47cadadc7482a0f6ee84b161a2f1faf2b7bbe5e76585ce54e820a05a42e2a0",
+        "sha256": "365be39954a529b177de3c56d5d2f6fad1c8a3e9d140a491cd532b61c127cfff"
+      },
+      {
         "path": "scripts/export-mithril-runtime.py",
         "baseSha256": "a7082729b8f95a9148cedccc09d76e950ca2c3dac33d45e44104325fd9b0a1b8",
         "sha256": "522fc7c0b218983663f167556d275331a05d23e20271036253f98582a0494d89"
@@ -49811,8 +49821,33 @@
         "path": "scripts/mithril-brew-launcher",
         "baseSha256": "b6af778c52399c0143a2acbb966351752e834961685cc0087fa5ef3d80094c6a",
         "sha256": "5c13ec1335efd10aab8a99079ef84be99f7c3e3891a676274073da8b8cf2e04e"
+      },
+      {
+        "path": "tools/mcp_oauth.py",
+        "baseSha256": "7ee27fa7c1d3a6231d1c6865d5204a8a6679b076ff90b98fe2ca37716cd06746",
+        "sha256": "d9ebe3300ed7e7730317ab6594dbe5d18b881bfc34a4da0db99c5d198d70cd78"
+      },
+      {
+        "path": "tools/skills_hub_official.py",
+        "baseSha256": "2e066e2fac7643a01c7e1b7a29899b9765db7d690f988b8948656709731ebd5c",
+        "sha256": "cc3af235b434fcc634c3519976b8fd88288b108e0a7399eb6871b23dee364d06"
+      },
+      {
+        "path": "tools/skills_hub_search.py",
+        "baseSha256": "e3a9b3394b6920abeae73e3b6ebda92ca06c53b710fba6f3e3695d2ccdcc4c42",
+        "sha256": "adcef6385b59d0014244fa483c58d267fc56dd8a4fbe856c08848de89978932a"
+      },
+      {
+        "path": "tools/skills_sync_client.py",
+        "baseSha256": "eb20a071a1325d1abebcada6ba9d0e9f5611fe5a54a9b1c17b39d8e67847943b",
+        "sha256": "5984b6ff0374abc756e5075cd19b0d7192c2d58983a3112c53dc85ed8ae8ac9e"
+      },
+      {
+        "path": "tools/skills_sync_client_org.py",
+        "baseSha256": "e888296a8cca71200071ae51c82c20da29a53602da626c3ca0642ba47b2e6e2a",
+        "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
       }
     ],
-    "sha256": "8682bccf7a7384d79abd48511791a52508ef52bc2fa53ae08043fdfe055f41fa"
+    "sha256": "7f99b50394dcd94cdf8f554ec76f7dcd5b5d9dbfb286a6c22b5a09ab582974ef"
   }
 }

@@ -55,6 +55,8 @@ def _org_client(identity: Optional[Dict[str, Any]], client: Optional[SyncClient]
     """(identity, client, max_object_bytes) for an org operation; SyncInertError when the base URL is
     missing or the server lacks the ``org`` feature."""
     ssc = _ssc()
+    if ssc.is_mithril_agent_mode():
+        raise ssc.SyncInertError("Mithril organization skill sync is unavailable until a Mithril-owned sync service is provisioned")
     identity = identity or resolve_org_identity()
     if client is None:
         if not (base_url := ssc.resolve_sync_base_url()):
@@ -279,6 +281,8 @@ def maybe_pull_org_skills() -> Optional[Dict[str, Any]]:
     that VERIFIABLY lacks the org claim clears the active-org marker (org skills stop resolving); an
     unresolvable identity (offline, logged out) leaves it alone so pulled org skills keep working."""
     ssc = _ssc()
+    if ssc.is_mithril_agent_mode():
+        return None
     try:
         identity = resolve_org_identity()
     except ssc.SyncInertError:

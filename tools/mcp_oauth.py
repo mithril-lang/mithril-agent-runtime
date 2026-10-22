@@ -985,7 +985,17 @@ def _maybe_use_cimd(cfg: dict, storage: "HermesTokenStorage | None" = None) -> "
     """``(client_id URL, pinned callback port)``, or None to use DCR. Each ineligibility case means the
     redirect URI is not one the document declares, the client identity is already settled, or the
     server is known not to want a document — a metadata URL would be rejected."""
-    url = cfg.get("client_metadata_url") or _CIMD_CLIENT_METADATA_URL
+    configured_url = cfg.get("client_metadata_url")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not configured_url:
+            return None  # use the MCP server's DCR flow until Mithril publishes client metadata
+        configured_host = (urlparse(str(configured_url)).hostname or "").lower()
+        nous_hosts = ("nousresearch.com", "nousresearch.github.io")
+        if any(configured_host == host or configured_host.endswith(f".{host}") for host in nous_hosts):
+            return None
+        url = str(configured_url)
+    else:
+        url = configured_url or _CIMD_CLIENT_METADATA_URL
     ineligible = (
         cfg.get("cimd") is False
         or not _is_valid_cimd_url(url)

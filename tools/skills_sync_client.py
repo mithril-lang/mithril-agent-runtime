@@ -31,6 +31,11 @@ logger = logging.getLogger(__name__)
 NOUS_ADMIN_CLAIM = "tool_gateway_admin"
 
 
+def is_mithril_agent_mode() -> bool:
+    """Whether this runtime must avoid the Hermes/Nous-owned skill-sync service."""
+    return os.environ.get("MITHRIL_AGENT") == "1"
+
+
 class SyncInertError(RuntimeError):
     """Sync must no-op: not logged in, no bearer, or not a Nous admin. Caught by the gate-and-swallow hooks."""
 
@@ -39,6 +44,8 @@ def resolve_identity() -> Dict[str, Any]:
     """``{api_key, base_url, owner, nous_admin, claims}``; SyncInertError if not logged in / no bearer.
     ``owner`` is advisory (local ref naming; the server derives the real one). The JWT is decoded
     WITHOUT verification: safe, the claims only decide whether to attempt sync, never authz."""
+    if is_mithril_agent_mode():
+        raise SyncInertError("Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned")
     try:
         from hermes_cli.auth import resolve_nous_runtime_credentials
         creds = resolve_nous_runtime_credentials() or {}
@@ -78,6 +85,8 @@ def _sync_config(key: str) -> Any:
 def resolve_sync_base_url() -> Optional[str]:
     """HERMES_SYNC_BASE_URL -> ``sync.base_url`` -> production plane, without trailing slash
     (``/v1/sync/`` is appended by the client). None only if the default is blanked out."""
+    if is_mithril_agent_mode():
+        return None
     env = os.getenv("HERMES_SYNC_BASE_URL")
     if env and env.strip():
         return env.strip().rstrip("/")
@@ -104,18 +113,24 @@ def _sync_config_bool(env_var: str, config_key: str, *, default: bool) -> bool:
 
 def sync_feature_enabled() -> bool:
     """Master switch; the gate-and-swallow entrypoints ALSO require the Nous-admin gate and a base URL."""
+    if is_mithril_agent_mode():
+        return False
     return _sync_config_bool("HERMES_SYNC_ENABLED", "enabled", default=False)
 
 
 def sync_org_auto_propose() -> bool:
     """False (default): edits to an org skill stay LOCAL until ``hermes sync propose``. True: every
     edit is proposed right away (an admin still approves unless the editor is one)."""
+    if is_mithril_agent_mode():
+        return False
     return _sync_config_bool("HERMES_SYNC_ORG_AUTO_PROPOSE", "org_auto_propose", default=False)
 
 
 def sync_default_opt_in() -> bool:
     """False (default): opt-IN -- a skill syncs only after ``hermes sync enable`` or a plane manifest
     opting it in. True: opt-OUT -- every eligible skill syncs unless disabled (Hermes Cloud default)."""
+    if is_mithril_agent_mode():
+        return False
     return _sync_config_bool("HERMES_SYNC_DEFAULT_OPT_IN", "default_opt_in", default=False)
 
 
@@ -323,6 +338,8 @@ def user_head_ref(owner: str) -> str:
 def _personal_client(identity: Optional[Dict[str, Any]], client: Optional[SyncClient],
                      ) -> Tuple[Dict[str, Any], Optional[SyncClient]]:
     """Identity + client for a personal sync op; ``client`` is None when no base URL is configured."""
+    if is_mithril_agent_mode():
+        raise SyncInertError("Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned")
     identity = identity if identity is not None else resolve_identity()
     if client is None and (base := resolve_sync_base_url()):
         client = SyncClient(base, identity["api_key"])
@@ -449,6 +466,8 @@ def pull_skills(client: Optional[SyncClient] = None, *, identity: Optional[Dict[
 # Gated public entrypoints (gate-and-swallow, like maybe_run_curator): never raise; dict or None.
 def _gate_and_swallow(op: str, run: Callable[[Dict[str, Any]], Optional[Dict[str, Any]]]):
     """Run *run(identity)* only if all gates hold (Nous admin, feature on, base URL); None if inert/error."""
+    if is_mithril_agent_mode():
+        return None
     try:
         identity = resolve_identity()
         if not identity.get("nous_admin") or not sync_feature_enabled() or not resolve_sync_base_url():
@@ -472,6 +491,15 @@ def maybe_pull_skills() -> Optional[Dict[str, Any]]:
 
 def sync_status() -> Dict[str, Any]:
     """Snapshot for ``hermes sync status``; never raises. ``org_available`` False = not in a shared org."""
+    if is_mithril_agent_mode():
+        return {
+            "mode": "mithril", "available": False,
+            "reason": "Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned.",
+            "nous_admin": False, "logged_in": False, "feature_enabled": False,
+            "default_opt_in": False, "base_url": None, "opted_in_skills": [],
+            "local_head": None, "owner": None, "org_available": False, "org_id": None,
+            "org_role": None, "org_skills": [], "org_skills_modified": [],
+        }
     status: Dict[str, Any] = {"nous_admin": False, "logged_in": False, "feature_enabled": sync_feature_enabled(),
                               "default_opt_in": sync_default_opt_in(), "base_url": resolve_sync_base_url(),
                               "opted_in_skills": [], "local_head": None, "owner": None, "org_available": False,
