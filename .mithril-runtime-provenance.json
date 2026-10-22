@@ -49748,6 +49748,21 @@
         "sha256": "3a29b054523fa2aeb914f5d868fb07a60dde2eeb64c99dc1234d0e62dfd89fb1"
       },
       {
+        "path": "agent/billing_links.py",
+        "baseSha256": "4693c79ad2c4a692ec8b95632b54c0c3efe5d12ba2304f8a8af7fcfd39e1b37c",
+        "sha256": "a06f005141c2c476332ab503d047f52d6348740a651157fd3788086288fab735"
+      },
+      {
+        "path": "agent/conversation_loop.py",
+        "baseSha256": "03ec14765382da39d8b8fd5a10c1ed19235ea4d0277bf10a280b763c2cbf4576",
+        "sha256": "d1ef08428fb32983746f06562f18c0e44f6b7bede86dbcaaecc84a9bad8eb39d"
+      },
+      {
+        "path": "agent/turn_recovery.py",
+        "baseSha256": "aed06c9c6f44df95da421296d266638b9f6af3474739ba90f2b7e80f22b0df03",
+        "sha256": "638c9dcd9909193f05e58844a6ac1d8a7dea2da6904268a57fe80979fcde5b11"
+      },
+      {
         "path": "docs/operations/mithril-account-login.md",
         "baseSha256": null,
         "sha256": "6eacb4d3454a98f6177abd76dbd80d40c1940861f2b8f261a34a713b8d33c8d8"
@@ -49888,6 +49903,6 @@
         "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
       }
     ],
-    "sha256": "4fa98b420d976fc904369c08540b6ea49e5c49f3567368da6a8037bfa50db666"
+    "sha256": "4d9888c62b67698bf484843f98c3ab145aad4ea3656aa5ae67646eebf4085160"
   }
 }

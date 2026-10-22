@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import locale
 import math
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -318,6 +319,13 @@ def recover_before_classification(
 def _print_nous_401_diagnostics(agent: Any, api_error: Exception) -> None:
     """Nous 401 that survived a credential refresh: likely Portal OAuth expired/revoked,
     no credits, or agent key blocked."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _plines(
+            agent,
+            "Nous-managed inference is unavailable in Mithril Agent.",
+            "Choose a supported provider or model with /model. No Nous sign-in or billing action can recover this route.",
+        )
+        return
     from agent.conversation_loop import _print_nous_entitlement_guidance
     from hermes_constants import display_hermes_home
     _body_text = ""
@@ -419,6 +427,9 @@ def _refresh_credentials_after_401(
         and not _retry.nous_auth_retry_attempted
     ):
         _retry.nous_auth_retry_attempted = True
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            _print_nous_401_diagnostics(agent, api_error)
+            return False
         if agent._try_refresh_nous_client_credentials(force=True):
             agent._buffer_vprint("🔐 Nous agent key refreshed after 401. Retrying request...")
             return True
