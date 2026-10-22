@@ -30,6 +30,7 @@ import {
   Plus,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { isMithrilDistribution } from "@/lib/agent-docs";
 import type {
   SkillInfo,
   ToolsetInfo,
@@ -129,6 +130,8 @@ function toolsetIcon(
 /* ------------------------------------------------------------------ */
 
 export default function SkillsPage() {
+  const [distribution, setDistribution] = useState<string | null>(null);
+  const isMithril = isMithrilDistribution(distribution);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   const [toolsets, setToolsets] = useState<ToolsetInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +150,21 @@ export default function SkillsPage() {
   const { toast, showToast } = useToast();
   const { t } = useI18n();
   const { setAfterTitle, setEnd } = usePageHeader();
+
+  useEffect(() => {
+    let mounted = true;
+    void api
+      .getStatus()
+      .then((status) => {
+        if (mounted) setDistribution(status.distribution ?? null);
+      })
+      .catch(() => {
+        if (mounted) setDistribution(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // ── Profile scoping ──
   // The write target comes from the GLOBAL profile switcher (sidebar) via
@@ -682,7 +700,11 @@ export default function SkillsPage() {
               )}
             </>
           ) : (
-            <HubBrowser showToast={showToast} profile={selectedProfile || undefined} />
+            <HubBrowser
+              isMithril={isMithril}
+              showToast={showToast}
+              profile={selectedProfile || undefined}
+            />
           )}
         </div>
       </div>
@@ -706,9 +728,9 @@ export default function SkillsPage() {
           <DialogHeader>
             <DialogTitle>Learn a skill</DialogTitle>
             <DialogDescription>
-              Point Hermes at anything and it will distill a reusable skill —
-              following the house authoring standards. Fill in any combination
-              below; the agent gathers the sources and writes the skill in chat.
+              Provide a URL, source text, or both. The agent gathers the material
+              and drafts a reusable skill in chat according to the authoring
+              standards.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-2">
@@ -887,9 +909,11 @@ const SEVERITY_TONE: Record<string, "destructive" | "warning" | "secondary" | "o
 };
 
 function HubBrowser({
+  isMithril,
   showToast,
   profile,
 }: {
+  isMithril: boolean;
   showToast: (msg: string, kind: "success" | "error") => void;
   /** Optional profile scoping installs + installed-state badges. */
   profile?: string;
@@ -1067,7 +1091,11 @@ function HubBrowser({
           </div>
 
           {/* Connected hubs strip — proves the tab is wired up. */}
-          <ConnectedHubs sources={sources} loading={sourcesLoading} />
+          <ConnectedHubs
+            isMithril={isMithril}
+            sources={sources}
+            loading={sourcesLoading}
+          />
         </CardContent>
       </Card>
 
@@ -1117,7 +1145,9 @@ function HubBrowser({
                   Featured skills
                 </span>
                 <span className="text-xs text-text-tertiary">
-                  from the Hermes index — search above for thousands more
+                  {isMithril
+                    ? "from connected sources — search above for more"
+                    : "from the Hermes index — search above for thousands more"}
                 </span>
               </div>
               {featured.map((r) => (
@@ -1193,9 +1223,11 @@ function HubBrowser({
 
 /* ---- Connected hubs strip ---- */
 function ConnectedHubs({
+  isMithril,
   sources,
   loading,
 }: {
+  isMithril: boolean;
   sources: SkillHubSource[];
   loading: boolean;
 }) {
@@ -1204,11 +1236,20 @@ function ConnectedHubs({
       <p className="text-xs text-muted-foreground">Connecting to skill hubs…</p>
     );
   }
-  if (sources.length === 0) {
+  const visibleSources = isMithril
+    ? sources.filter((source) => source.id !== "hermes-index")
+    : sources;
+  if (visibleSources.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">
-        Results come from the same sources as{" "}
-        <span className="font-mono">hermes skills search</span>.
+        {isMithril ? (
+          "Search above to browse skills from available sources."
+        ) : (
+          <>
+            Results come from the same sources as{" "}
+            <span className="font-mono">hermes skills search</span>.
+          </>
+        )}
       </p>
     );
   }
@@ -1218,7 +1259,7 @@ function ConnectedHubs({
         <Globe className="h-3 w-3" />
         Connected hubs:
       </span>
-      {sources.map((s) => {
+      {visibleSources.map((s) => {
         const down =
           (s.id === "hermes-index" && s.available === false) ||
           (s.id === "github" && s.rate_limited === true);

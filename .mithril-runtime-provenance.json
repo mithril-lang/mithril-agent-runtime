@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "dbc8ca458baba0b3667550d8c3a5bd4ceffacc6f",
-  "sourceTree": "9e44da2623be14fd55111e02ceb5f747f267707d",
+  "sourceRevision": "fca126e0e8252ce32ee312d158980a43bcbcb697",
+  "sourceTree": "67ee9014cbf3c5a127323f4ab462897a429a9fb7",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -49544,8 +49544,8 @@
     },
     {
       "path": "web/src/pages/McpPage.tsx",
-      "sourceBlob": "773479abbba47ba51a721edc58e44ae2826bd45b",
-      "sha256": "897737151545182966b07b32a044c5f6ee9df79923f5982d6821c1b911526f5e",
+      "sourceBlob": "b378720a6c495b2155f27cff1fcceb82425c13c8",
+      "sha256": "bfef2882b2b59533231ce3743cea013b857b8d74c093e9950d19e33f93b3d17d",
       "mode": "100644"
     },
     {
@@ -49598,8 +49598,8 @@
     },
     {
       "path": "web/src/pages/SkillsPage.tsx",
-      "sourceBlob": "65598e90ba9f66729eea2160ccaf8a544c98eb25",
-      "sha256": "9cdb802e1aeb60328e1701663cbb6fbddf7dca9275f946c2e13596b03a287f77",
+      "sourceBlob": "2f8459d32401f9cccc03552e3a72c368fdbbeade",
+      "sha256": "92d9884bd883899c639f81388e72b0f89242650bc91e2aa84adda3bde49ef216",
       "mode": "100644"
     },
     {
