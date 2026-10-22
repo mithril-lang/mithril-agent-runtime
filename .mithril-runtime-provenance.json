@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "ab94a8c72c313298b7c9e38a9ddf00e039a9a40f",
-  "sourceTree": "331b58463e45d0d26058416734a6e03eee724800",
+  "sourceRevision": "85926935bf075001824b530743fbb430b1463aa6",
+  "sourceTree": "1223c1159f7e366357e0c291bbad4016761e542e",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -40094,8 +40094,8 @@
     },
     {
       "path": "scripts/standalone/cloudflare/controller.mjs",
-      "sourceBlob": "72687a14a58cb5608a087214cc6661048491513e",
-      "sha256": "a956f548a1f3488cf7737b966f274ee87fcbd602710298cf41576efe60693dc7",
+      "sourceBlob": "f54d886828065d17035c1a65929253757df3136b",
+      "sha256": "26012bce7183ffd364314e007439075a8d0695e51129d40b30f0fee1993eb2f8",
       "mode": "100644"
     },
     {
@@ -40160,8 +40160,8 @@
     },
     {
       "path": "scripts/standalone/gateway-desktop.py",
-      "sourceBlob": "2a28dd879e67e55a3febdbf02674efb19bc58791",
-      "sha256": "811a7220bb91cb6c26fb63494c94eca0fd5bb594ec5d38d381b502a67b3785a6",
+      "sourceBlob": "81e9dafb3eaddff7b6d455a2388d667e7a0ef50a",
+      "sha256": "0c6c63c8ada7297a97890084ec965d023338e575cae97b1b4977afc0356758d9",
       "mode": "100644"
     },
     {
@@ -40196,8 +40196,8 @@
     },
     {
       "path": "scripts/standalone/gateway-trial-start.py",
-      "sourceBlob": "7600045402c9a13ae6b40afd57b230840180dccc",
-      "sha256": "523932995f76e691278a22c2dcae5ed24a79d693f56bac2385398dfe09f808f0",
+      "sourceBlob": "c89c1a4e8c2bdc5fc7a0e8b87ba61b58f427606d",
+      "sha256": "b22f038787d1a2fd13ea5cc26945bd3435d05b415c8fefc1c08eabcc76d46401",
       "mode": "100644"
     },
     {

@@ -110,6 +110,10 @@ async def run(location):
         provider_env.chmod(0o600)
     children = []
     env = {**os.environ, 'API_SERVER_HOST': '127.0.0.1', 'API_SERVER_PORT': '7861'}
+    if native_config is not None:
+        # This wrapper only enables the Mithril-native tenant after restoring its Profile state.
+        # Keep the product marker scoped to these native child processes, never the shared image.
+        env['MITHRIL_AGENT'] = '1'
     for argv in [
         ['/opt/hermes/.venv/bin/python', '/opt/hermes/gateway-trial-start.py'],
         ['/opt/hermes/.venv/bin/hermes', 'serve', '--host', '127.0.0.1', '--port', '7862', '--no-open', '--isolated'],

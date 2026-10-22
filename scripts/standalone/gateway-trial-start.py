@@ -23,6 +23,7 @@ def configure(home, initial_model='qwen/qwen3.8-27b'):
 
 if __name__ == '__main__':
     assert os.getuid() == 1000, 'The cloud trial must run as UID 1000'
+    os.environ['MITHRIL_AGENT'] = '1'
     configure(Path('/opt/data'), os.environ.get('MITHRIL_NATIVE_INITIAL_MODEL', 'qwen/qwen3.8-27b'))
     os.execv('/opt/hermes/.venv/bin/hermes', [
         'hermes', 'gateway', 'run', '--external-supervisor',
