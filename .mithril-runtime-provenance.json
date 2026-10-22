@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "48ac771c74c8d709cbc13a240d8875a40a65a29c",
+  "sourceRevision": "dbc8ca458baba0b3667550d8c3a5bd4ceffacc6f",
   "sourceTree": "9e44da2623be14fd55111e02ceb5f747f267707d",
   "publicationState": "candidate",
   "license": "MIT",
@@ -28196,8 +28196,8 @@
     },
     {
       "path": "hermes_cli/tools_config_providers.py",
-      "sourceBlob": "d710dce9c5fa2730428c4104d48e258d7d471ebf",
-      "sha256": "b2185bad4626e16c5bb6ccbe64f31bd26bfd7d8bee0fdc119b1e655c30e35dfc",
+      "sourceBlob": "dda52cfe07011ab9af37781a61de3f390bf55995",
+      "sha256": "d2319f30135ce925c67a9e09c6cbf9950e600d5e4b4864dd5f932211a3b62a74",
       "mode": "100644"
     },
     {
