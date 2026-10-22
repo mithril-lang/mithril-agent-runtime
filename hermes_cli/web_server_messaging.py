@@ -375,6 +375,19 @@ def _restart_gateway_after_whatsapp_onboarding(profile: Optional[str] = None) ->
 
 _TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.hermes-agent.nousresearch.com"
 _TELEGRAM_ONBOARDING_USER_AGENT = f"HermesDashboard/{get_version_info().base_version}"
+_TELEGRAM_MITHRIL_UNAVAILABLE = (
+    "Automatic Telegram bot setup is unavailable in Mithril Agent. "
+    "Use the manual setup with @BotFather."
+)
+
+
+def _telegram_managed_onboarding_available() -> bool:
+    return os.environ.get("MITHRIL_AGENT") != "1"
+
+
+def _require_telegram_managed_onboarding() -> None:
+    if not _telegram_managed_onboarding_available():
+        raise HTTPException(status_code=501, detail=_TELEGRAM_MITHRIL_UNAVAILABLE)
 
 
 @dataclass
@@ -413,6 +426,9 @@ _TELEGRAM_INVALID = "Telegram setup service returned an invalid response."
 def _telegram_onboarding_request_sync(
     method: str, path: str, *, body: dict[str, Any] | None = None, bearer_token: str | None = None
 ) -> dict[str, Any]:
+    # Defense in depth: no caller may send Mithril profile data or credentials to
+    # the upstream Hermes onboarding service, even if a route forgets its guard.
+    _require_telegram_managed_onboarding()
     import httpx
     headers = {"Accept": "application/json", "User-Agent": _TELEGRAM_ONBOARDING_USER_AGENT}
     request_kwargs: dict[str, Any] = {}

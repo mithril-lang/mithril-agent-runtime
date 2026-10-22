@@ -11,6 +11,7 @@ import logging
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
+from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
 
@@ -302,6 +303,34 @@ def _runtime(provider: str, api_mode: str, base_url: Any, api_key: Any, **extra:
         api_mode = "chat_completions"
         base_url = normalize_actual_base_url(base_url)
     return {"provider": provider, "api_mode": api_mode, "base_url": base_url, "api_key": api_key, **extra}
+
+
+def _guard_mithril_account_token_origin(runtime: Dict[str, Any]) -> None:
+    """Never send a Mithril account bearer to an endpoint outside the Mithril API origin."""
+    token = runtime.get("api_key")
+    if not isinstance(token, str) or not token.startswith("mf_"):
+        return
+    try:
+        parsed = urlsplit(str(runtime.get("base_url") or ""))
+        allowed = (
+            parsed.scheme.lower() == "https"
+            and parsed.hostname is not None
+            and parsed.hostname.lower() == "api.mithril.fund"
+            and parsed.port in (None, 443)
+            and parsed.username is None
+            and parsed.password is None
+            and not parsed.query
+            and not parsed.fragment
+        )
+    except (TypeError, ValueError):
+        allowed = False
+    if not allowed:
+        raise AuthError(
+            "Mithril Account credentials can only be used with https://api.mithril.fund. "
+            "Run `mithril login` to restore the managed endpoint.",
+            provider=str(runtime.get("requested_provider") or runtime.get("provider") or "mithril-account"),
+            code="mithril_account_origin_mismatch",
+        )
 
 
 def _cfg_provider(model_cfg: Dict[str, Any]) -> str:
@@ -1018,6 +1047,7 @@ def resolve_runtime_provider(*, requested: Optional[str] = None, explicit_api_ke
         logger.info("model.openai_runtime=codex_app_server overrides the %s runtime (source=%s); its credential/endpoint "
                     "is not used — the app-server authenticates with its own login", runtime.get("provider"), runtime.get("source"))
     runtime["api_mode"] = api_mode
+    _guard_mithril_account_token_origin(runtime)
     return runtime
 
 

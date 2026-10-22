@@ -1,6 +1,7 @@
 """First-party gateway bearer trust, ported from connectors-only 43608084f4."""
 
 import logging
+import os
 from typing import Callable, Optional
 from urllib.parse import urlsplit
 
@@ -63,6 +64,8 @@ def managed_gateway_auth_headers(
     bearer. Returns ``{}`` rather than raising when no token is available, so a
     caller can report "sign in" instead of sending an unauthenticated request.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {}
     if not is_managed_nous_gateway_url(url, gateway_builder):
         return {}
 

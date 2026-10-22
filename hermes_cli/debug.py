@@ -6,6 +6,7 @@ import gzip
 import io
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -19,6 +20,11 @@ from hermes_constants import get_hermes_home
 from utils import atomic_json_write
 
 logger = logging.getLogger(__name__)
+
+
+def _is_mithril_agent() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
+
 
 # Prepended to upload-bound content when redaction is enabled so paste reviewers know.
 _REDACTION_BANNER = (
@@ -67,6 +73,10 @@ def _sweep_expired_pastes(now: Optional[float] = None) -> tuple[int, int]:
     expiration (paste.rs GCs them eventually).
     """
     entries = _load_pending()
+    if _is_mithril_agent():
+        # Pending URLs may have been created by a Hermes profile. Mithril Agent does not own
+        # those external pastes, so preserve the local record without contacting the service.
+        return (0, len(entries))
     if not entries:
         return (0, 0)
     current = time.time() if now is None else now
@@ -144,6 +154,9 @@ def _is_dpaste_url(url: str) -> bool:
 
 def delete_paste(url: str) -> bool:
     """Delete a paste.rs paste (the only service with unauthenticated DELETE). True on success."""
+    if _is_mithril_agent():
+        raise RuntimeError(
+            "Mithril Agent does not manage external paste URLs; no request was sent.")
     paste_id = _extract_paste_id(url)
     if not paste_id:
         if _is_dpaste_url(url):
@@ -172,6 +185,9 @@ def _schedule_auto_delete(urls: list[str], delay_seconds: int = _AUTO_DELETE_SEC
 
 def _post_paste(service: str, endpoint: str, body: bytes, content_type: str) -> str:
     """POST *body* to a paste service and return the paste URL it echoes back."""
+    if _is_mithril_agent():
+        raise RuntimeError(
+            "Mithril Agent does not upload diagnostics to external paste services; no data was sent.")
     req = urllib.request.Request(endpoint, data=body, method="POST",
                                  headers={"Content-Type": content_type, "User-Agent": _USER_AGENT})
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -201,6 +217,9 @@ def upload_to_pastebin(content: str, expiry_days: int = 1) -> str:
     swept after 6h); dpaste.com's minimum is 1 day and anonymous pastes cannot
     be deleted afterwards, so callers must not promise a shorter retention.
     """
+    if _is_mithril_agent():
+        raise RuntimeError(
+            "Mithril Agent does not upload diagnostics to external paste services; no data was sent.")
     errors: list[str] = []
     for service, upload in (
         ("paste.rs", lambda: _upload_paste_rs(content)),
@@ -406,6 +425,25 @@ def collect_share_bundle(log_lines: int = 200, redact: bool = True) -> dict[str,
     return bundle
 
 
+def build_local_debug_export(log_lines: int = 200) -> dict:
+    """Collect a Mithril-branded, always-redacted local diagnostics export."""
+    created = datetime.datetime.now(datetime.timezone.utc)
+    files = collect_share_bundle(log_lines=log_lines, redact=True)
+    banner = (
+        "[Mithril Agent local diagnostics export: credential-shaped tokens and "
+        "email addresses in logs are redacted.]\n")
+    files = {name: content.replace(_REDACTION_BANNER, banner) for name, content in files.items()}
+    return {
+        "ok": True,
+        "mode": "local",
+        "format": "mithril-agent-diagnostics/1",
+        "filename": f"mithril-diagnostics-{created.strftime('%Y%m%dT%H%M%SZ')}.json",
+        "created_at": created.isoformat(),
+        "redacted": True,
+        "files": files,
+    }
+
+
 def build_nous_bundle(bundle: dict[str, str], redact: bool = True) -> bytes:
     """Gzip a :func:`collect_share_bundle` mapping into the Nous envelope (shape parsed by the
     discord-support viewer — keep it stable)."""
@@ -433,6 +471,9 @@ def build_debug_share(
     Shared by ``hermes debug share`` and the dashboard ``POST /api/ops/debug-share``. Blocking
     network I/O — callers inside an event loop must run it in a worker thread.
     """
+    if _is_mithril_agent():
+        raise RuntimeError(
+            "Mithril Agent does not upload diagnostics to external paste services; no data was sent.")
     _best_effort_sweep_expired_pastes()
     bundle = collect_share_bundle(log_lines=log_lines, redact=redact)
     if redact:
@@ -490,6 +531,14 @@ def run_debug_share(args):
                 print(f"\n\n{'=' * 60}\nFULL {label}\n{'=' * 60}\n\n{body}")
         return
 
+    if _is_mithril_agent():
+        print(
+            "Mithril Agent does not upload diagnostics to public or Nous services. "
+            "No data was sent.\n"
+            "Use `mithril debug share --local` to print the report locally.\n",
+            file=sys.stderr)
+        return
+
     if getattr(args, "nous", False):
         return _run_debug_share_nous(args, log_lines=log_lines, redact=redact)
     print(_PRIVACY_NOTICE)
@@ -539,6 +588,12 @@ _NOUS_PRIVACY_NOTICE = """\
 
 def _run_debug_share_nous(args, *, log_lines: int, redact: bool) -> None:
     """``hermes debug share --nous``: gzip the same bundle into the Nous envelope → Nous-S3."""
+    if _is_mithril_agent():
+        print(
+            "Mithril Agent does not upload diagnostics to Nous. No data was sent.\n"
+            "Use `mithril debug share --local` to print the report locally.\n",
+            file=sys.stderr)
+        return
     from hermes_cli.diagnostics_upload import share_to_nous
     print(_NOUS_PRIVACY_NOTICE)
     if not _confirm_upload(args):
@@ -580,6 +635,9 @@ def run_debug_delete(args):
     if not urls:
         print("Usage: hermes debug delete <url> [<url> ...]\n"
               "  Deletes paste.rs pastes uploaded by 'hermes debug share'.")
+        return
+    if _is_mithril_agent():
+        print("Mithril Agent does not manage external paste URLs. No request was sent.")
         return
     for url in urls:
         try:

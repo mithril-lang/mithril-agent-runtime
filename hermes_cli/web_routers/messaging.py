@@ -30,7 +30,16 @@ from hermes_constants import get_process_hermes_home
 from hermes_cli.web_deps import LateState, late
 from hermes_cli.web_server_gateway import _restart_gateway_after
 from hermes_cli.web_server_messaging import (
-    _TelegramOnboardingPairing, _WhatsAppOnboardingSession, _messaging_platform_catalog, _telegram_onboarding_error_message, _telegram_onboarding_lock, _telegram_onboarding_pairings, _whatsapp_onboarding_payload, _whatsapp_onboarding_sessions,
+    _TelegramOnboardingPairing,
+    _WhatsAppOnboardingSession,
+    _messaging_platform_catalog,
+    _require_telegram_managed_onboarding,
+    _telegram_managed_onboarding_available,
+    _telegram_onboarding_error_message,
+    _telegram_onboarding_lock,
+    _telegram_onboarding_pairings,
+    _whatsapp_onboarding_payload,
+    _whatsapp_onboarding_sessions,
 )
 from hermes_cli.web_routers._common import (
     REDACTED_CREDENTIAL_WRITE_DETAIL, http_failure, is_redacted_credential_preview,
@@ -704,6 +713,7 @@ async def _telegram_onboarding_request(method: str, path: str, *, body=None, bea
 
 @router.post("/api/messaging/telegram/onboarding/start")
 async def start_telegram_onboarding(body: TelegramOnboardingStart):
+    _require_telegram_managed_onboarding()
     bot_name = (body.bot_name or "Hermes Agent").strip() or "Hermes Agent"
     payload = await _telegram_onboarding_request("POST", "/v1/telegram/pairings", body={"bot_name": bot_name})
 
@@ -727,6 +737,7 @@ async def start_telegram_onboarding(body: TelegramOnboardingStart):
 
 @router.get("/api/messaging/telegram/onboarding/{pairing_id}")
 async def get_telegram_onboarding_status(pairing_id: str):
+    _require_telegram_managed_onboarding()
     with _telegram_onboarding_lock:
         record = _telegram_record_or_404(pairing_id)
         if record.bot_token:
@@ -766,6 +777,7 @@ async def get_telegram_onboarding_status(pairing_id: str):
 
 @router.post("/api/messaging/telegram/onboarding/{pairing_id}/apply")
 async def apply_telegram_onboarding(pairing_id: str, body: TelegramOnboardingApply, profile: Optional[str] = None):
+    _require_telegram_managed_onboarding()
     normalized_ids = [_normalize_telegram_user_id(raw_id) for raw_id in body.allowed_user_ids]
     if not all(normalized_ids):
         raise HTTPException(status_code=400, detail="Allowed Telegram user IDs must be numeric.")
@@ -806,6 +818,7 @@ async def apply_telegram_onboarding(pairing_id: str, body: TelegramOnboardingApp
 
 @router.delete("/api/messaging/telegram/onboarding/{pairing_id}")
 async def cancel_telegram_onboarding(pairing_id: str):
+    _require_telegram_managed_onboarding()
     with _telegram_onboarding_lock:
         _telegram_onboarding_pairings.pop(pairing_id, None)
     return {"ok": True}
@@ -823,9 +836,11 @@ async def get_messaging_platforms(profile: Optional[str] = None):
         # the gateway status readers do NOT (they resolve process-level paths), so the profile directory is
         # passed explicitly for those (#71211).
         with _profile_scope(profile) as scoped_dir:
+            cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
             return {
                 "env_path": str(get_env_path()),
-                "gateway_start_command": " ".join(["hermes", *_gateway_subcommand(profile, "start")]),
+                "gateway_start_command": " ".join([cli, *_gateway_subcommand(profile, "start")]),
+                "telegram_managed_onboarding_available": _telegram_managed_onboarding_available(),
                 "platforms": _platform_payloads(scoped_dir, _messaging_platform_catalog()),
             }
 

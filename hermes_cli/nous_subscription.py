@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Dict, Iterable, Optional, Set
 
@@ -409,8 +410,9 @@ def _modal_feature(terminal_cfg: Dict[str, object], tool_enabled: bool, managed:
 def get_nous_subscription_features(config: Optional[Dict[str, object]] = None, *, force_fresh: bool = False) -> NousSubscriptionFeatures:
     if config is None:
         config = load_config() or {}
-    provider_is_nous = _provider_is_nous(config)
-    account_info = _account_info_or_none(**({"force_fresh": True} if force_fresh else {}))
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    provider_is_nous = False if mithril_agent else _provider_is_nous(config)
+    account_info = None if mithril_agent else _account_info_or_none(**({"force_fresh": True} if force_fresh else {}))
     # Coarse "entitled to any managed tool" gate: paid access OR a live free tool pool. Per-backend
     # availability is then narrowed by coverage (the pool funds image but not video, etc.).
     nous_auth_present = bool(account_info and account_info.logged_in)

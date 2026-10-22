@@ -203,6 +203,11 @@ class ConnectorClient:
         idempotency_key: Optional[str] = None,
         retries: int = _MAX_RETRIES,
     ) -> Any:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            raise GatewayUnavailable(
+                "Hosted connector execution is unavailable in Mithril Agent",
+                code="MITHRIL_ROUTE_UNAVAILABLE", status=404,
+            )
         origin = self._endpoint_resolver()
         if not origin:
             raise GatewayUnavailable(

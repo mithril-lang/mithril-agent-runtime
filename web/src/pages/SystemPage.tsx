@@ -68,6 +68,7 @@ import type {
   CuratorStatus,
   PortalStatus,
   DebugShareResponse,
+  DebugShareUploadResponse,
   GatewayMigratePlan,
 } from "@/lib/api";
 import { apiErrorFromResponse, errorMessage } from "@/lib/api-error";
@@ -86,6 +87,18 @@ function formatDuration(seconds: number): string {
   if (d > 0) return `${d}d ${h}h ${m}m`;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
+}
+
+function downloadDebugExport(exportData: Extract<DebugShareResponse, { mode: "local" }>): void {
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = exportData.filename;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 type BackupImportTarget =
@@ -533,10 +546,29 @@ export default function SystemPage() {
   // copyable links rather than a log tail.
   const [shareRedact, setShareRedact] = useState(true);
   const [sharing, setSharing] = useState(false);
-  const [shareResult, setShareResult] = useState<DebugShareResponse | null>(
+  const [shareResult, setShareResult] = useState<DebugShareUploadResponse | null>(
     null,
   );
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const mithrilDiagnostics = status?.distribution === "mithril-agent";
+  const diagnosticsModeReady = Boolean(status?.distribution);
+  const diagnosticsSummary = (() => {
+    if (!diagnosticsModeReady) return "Checking the runtime diagnostics mode…";
+    if (mithrilDiagnostics) {
+      return (
+        "Downloads a redacted JSON report to this device. It may contain recent prompts, " +
+        "tool output, and file paths; Mithril does not upload it."
+      );
+    }
+    return (
+      "Uploads system info + logs to a public paste service and returns links to send the " +
+      "Hermes team. Pastes auto-delete after 6 hours."
+    );
+  })();
+  const diagnosticsButtonLabel = (() => {
+    if (sharing) return mithrilDiagnostics ? "Preparing export…" : "Uploading…";
+    return mithrilDiagnostics ? "Download redacted export" : "Generate share link";
+  })();
 
   const copyToClipboard = useCallback(
     async (text: string, label: string) => {
@@ -557,7 +589,15 @@ export default function SystemPage() {
     setSharing(true);
     setShareResult(null);
     try {
-      const res = await api.runDebugShare({ redact: shareRedact });
+      const res = await api.runDebugShare({
+        redact: mithrilDiagnostics ? true : shareRedact,
+        local_export: mithrilDiagnostics,
+      });
+      if (res.mode === "local") {
+        downloadDebugExport(res);
+        showToast("Downloaded redacted diagnostic export", "success");
+        return;
+      }
       setShareResult(res);
       const n = Object.keys(res.urls).length;
       showToast(
@@ -571,7 +611,7 @@ export default function SystemPage() {
     } finally {
       setSharing(false);
     }
-  }, [shareRedact, showToast]);
+  }, [mithrilDiagnostics, shareRedact, showToast]);
 
 
   // ── Update check / apply ───────────────────────────────────────────
@@ -1033,51 +1073,53 @@ export default function SystemPage() {
       </section>
 
       {/* ── Portal ────────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
-          <Globe className="h-4 w-4" /> Nous Portal
-        </H2>
-        <Card>
-          <CardContent className="flex flex-col gap-3 py-4">
-            <div className="flex items-center gap-3">
-              <Badge tone={portal?.logged_in ? "success" : "secondary"}>
-                {portal?.logged_in ? "logged in" : "not logged in"}
-              </Badge>
-              {portal?.provider && (
-                <span className="text-sm text-muted-foreground">
-                  inference provider: {portal.provider}
-                </span>
-              )}
-              <a
-                href={portal?.subscription_url || "https://portal.nousresearch.com/manage-subscription"}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-auto text-xs text-primary underline"
-              >
-                Manage subscription
-              </a>
-            </div>
-            {portal?.features && portal.features.length > 0 && (
-              <div className="flex flex-col gap-1 border-t border-border pt-3">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Tool Gateway routing
-                </span>
-                {portal.features.map((f) => (
-                  <div key={f.label} className="flex items-center justify-between text-sm">
-                    <span>{f.label}</span>
-                    <span className="text-muted-foreground">{f.state}</span>
-                  </div>
-                ))}
+      {portal && portal.subscription_url !== null && (
+        <section className="flex flex-col gap-3">
+          <H2 variant="sm" className="flex items-center gap-2 text-muted-foreground">
+            <Globe className="h-4 w-4" /> Nous Portal
+          </H2>
+          <Card>
+            <CardContent className="flex flex-col gap-3 py-4">
+              <div className="flex items-center gap-3">
+                <Badge tone={portal.logged_in ? "success" : "secondary"}>
+                  {portal.logged_in ? "logged in" : "not logged in"}
+                </Badge>
+                {portal.provider && (
+                  <span className="text-sm text-muted-foreground">
+                    inference provider: {portal.provider}
+                  </span>
+                )}
+                <a
+                  href={portal.subscription_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto text-xs text-primary underline"
+                >
+                  Manage subscription
+                </a>
               </div>
-            )}
-            {!portal?.logged_in && (
-              <p className="text-xs text-muted-foreground">
-                Log in with <span className="font-mono">hermes portal</span>.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+              {portal.features.length > 0 && (
+                <div className="flex flex-col gap-1 border-t border-border pt-3">
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Tool Gateway routing
+                  </span>
+                  {portal.features.map((f) => (
+                    <div key={f.label} className="flex items-center justify-between text-sm">
+                      <span>{f.label}</span>
+                      <span className="text-muted-foreground">{f.state}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!portal.logged_in && (
+                <p className="text-xs text-muted-foreground">
+                  Log in with <span className="font-mono">hermes portal</span>.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* ── Curator ───────────────────────────────────────────────── */}
       <section className="flex flex-col gap-3">
@@ -1451,26 +1493,25 @@ export default function SystemPage() {
           </CardContent>
         </Card>
 
-        {/* Debug share — uploads a redacted report + logs, returns shareable
-            links. Separated from the buttons above because its output is
-            persistent, copyable URLs, not a fire-and-forget log tail. */}
+        {/* Diagnostics use a local export in Mithril mode and a public paste
+            upload in legacy Hermes mode. */}
         <Card>
           <CardContent className="flex flex-col gap-3 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-start gap-2">
                 <Share2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium">Share debug report</span>
+                  <span className="text-sm font-medium">
+                    {mithrilDiagnostics ? "Download diagnostic export" : "Share debug report"}
+                  </span>
                   <span className="text-xs text-muted-foreground max-w-prose">
-                    Uploads system info + logs to a public paste service and
-                    returns links to send the Hermes team. Pastes auto-delete
-                    after 6 hours.
+                    {diagnosticsSummary}
                   </span>
                 </div>
               </div>
               <Button
                 size="sm"
-                disabled={sharing}
+                disabled={sharing || !diagnosticsModeReady}
                 prefix={
                   sharing ? (
                     <Spinner className="h-3.5 w-3.5" />
@@ -1480,25 +1521,27 @@ export default function SystemPage() {
                 }
                 onClick={() => void runDebugShare()}
               >
-                {sharing ? "Uploading…" : "Generate share link"}
+                {diagnosticsButtonLabel}
               </Button>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <Checkbox
-                checked={shareRedact}
-                disabled={sharing}
-                id="share-redact"
-                onCheckedChange={(checked) => setShareRedact(checked === true)}
-              />
+            {diagnosticsModeReady && !mithrilDiagnostics && (
+              <div className="flex items-center gap-2.5">
+                <Checkbox
+                  checked={shareRedact}
+                  disabled={sharing}
+                  id="share-redact"
+                  onCheckedChange={(checked) => setShareRedact(checked === true)}
+                />
 
-              <Label
-                className="cursor-pointer select-none text-xs font-normal normal-case tracking-normal text-muted-foreground"
-                htmlFor="share-redact"
-              >
-                Redact credential-shaped tokens before upload (recommended)
-              </Label>
-            </div>
+                <Label
+                  className="cursor-pointer select-none text-xs font-normal normal-case tracking-normal text-muted-foreground"
+                  htmlFor="share-redact"
+                >
+                  Redact credential-shaped tokens before upload (recommended)
+                </Label>
+              </div>
+            )}
 
             {shareResult && (
               <div className="flex flex-col gap-2 border-t border-border pt-3">

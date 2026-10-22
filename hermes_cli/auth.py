@@ -1763,6 +1763,10 @@ def resolve_nous_access_token(
     ca_bundle: Optional[str] = None,
     refresh_skew_seconds: int = ACCESS_TOKEN_REFRESH_SKEW_SECONDS) -> str:
     """Resolve a refresh-aware Nous Portal access token for managed tool gateways."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise _nous_err(
+            "Nous Portal access tokens are unavailable in Mithril Agent; use a Mithril-owned or direct provider route.",
+            "mithril_nous_auth_disabled")
     # Only a default-TLS resolution is memoised; error paths never populate the memo.
     memoable = not insecure and ca_bundle is None
     cache_key = hermes_home_key()
@@ -1873,6 +1877,11 @@ def get_nous_auth_status() -> Dict[str, Any]:
 
     Prefers the auth-store provider state (the live source of truth for refresh) and validates it by
     resolving runtime credentials so revoked refresh sessions do not show up as a healthy login."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {
+            "logged_in": False, "inference_credential_present": False, "free_tier": False,
+            "source": "disabled_in_mithril",
+        }
     global _nous_auth_status_cache
     now = time.monotonic()
     auth_file_key, mtime = _auth_file_cache_key()

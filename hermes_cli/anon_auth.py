@@ -144,7 +144,9 @@ def anon_failure_copy(code: str, *, retry_after: Any = None) -> str:
 
 def guest_enabled() -> bool:
     """The free tier is on for this process: the launch gate is set AND ``nous.guest`` (default
-    True) has not switched it off. The only place either is read."""
+    True) has not switched it off. Mithril Agent never enables the Hermes Nous free tier."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     if (os.environ.get(GUEST_ONBOARDING_ENV) or "").strip() != "1":
         return False
     try:
@@ -560,6 +562,8 @@ def ensure_portal_identity(
     """
     if not explicit:
         raise ValueError("ensure_portal_identity: only explicit creators may call this (explicit=True)")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     if not guest_enabled():
         return None
     failure = _mint_failure_for_profile()
@@ -588,6 +592,10 @@ def refresh_guest_state(state: Dict[str, Any], client: httpx.Client) -> None:
     Raises :class:`AnonCredentialDead` when NAS no longer knows the credential; the caller owns
     re-minting (:func:`ensure_portal_identity` after :func:`clear_dead_guest`).
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise AuthError(
+            "Nous free-tier authentication is unavailable in Mithril Agent.",
+            provider="nous", code="mithril_nous_auth_disabled", retryable=False)
     anon_token = state.get("anon_token")
     if not isinstance(anon_token, str) or not anon_token:
         raise AnonCredentialDead(ANON_FAILURE_COPY[ANON_CREDENTIAL_DEAD], code=ANON_CREDENTIAL_DEAD)

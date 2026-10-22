@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import math
+import os
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, ClassVar, ContextManager, Dict, Iterator, Optional
@@ -238,15 +239,20 @@ class AlreadySignedIn(SignInState):
 @dataclass(frozen=True)
 class Unavailable(SignInState):
     detail: str = ""
+    mithril_mode: bool = False
     kind: ClassVar[str] = "unavailable"
     precondition: ClassVar[bool] = True
 
     @property
     def copy(self) -> str:
+        if self.mithril_mode:
+            return "Sign in to Mithril on the Agent host with `mithril login`."
         return UPGRADE_UNAVAILABLE_CHAT
 
     @property
     def copy_terminal(self) -> str:
+        if self.mithril_mode:
+            return "Sign in with `mithril login` on this device to use a Mithril account."
         return f"{UPGRADE_UNAVAILABLE} ({self.detail})" if self.detail else UPGRADE_UNAVAILABLE
 
 
@@ -324,6 +330,10 @@ def run_sign_in(
     entered inside the generator, on whichever thread is advancing it.
     *client_factory* is the HTTP client seam, ``client_factory(timeout_seconds, verify)``.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        yield Unavailable(mithril_mode=True)
+        return
+
     from hermes_cli import anon_auth as _core
     from hermes_cli.auth import PROVIDER_REGISTRY, _resolve_verify
     from hermes_cli.auth_device_flow import _request_device_code

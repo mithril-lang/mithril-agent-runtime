@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Connection lifecycle tool for managed gateway accounts and local MCP servers.
 
-Disconnecting accounts remains a portal-only user decision.
+Disconnecting accounts remains a user-only action outside this tool.
 """
 
+import os
 from typing import Any, Callable, Dict, Optional
 
 from tools.connectors.catalog_tool import MANAGE_CATALOG_SCHEMA, manage_catalog
@@ -127,6 +128,40 @@ MANAGE_CONNECTIONS_SCHEMA = {
         "required": [],
     },
 }
+
+
+if os.environ.get("MITHRIL_AGENT") == "1":
+    # In Mithril mode only the local MCP path is supported. Remove the hosted
+    # account actions from the advertised tool contract as well as the client
+    # transport, so their failure cannot look like a temporary sign-in issue.
+    _properties = MANAGE_CONNECTIONS_SCHEMA["parameters"]["properties"]
+    MANAGE_CONNECTIONS_SCHEMA["description"] = (
+        "Manage local MCP servers from the bundled catalog. Hosted connector accounts are not "
+        "available in Mithril Agent; do not try hosted status, connect or reconnect actions, and "
+        "do not claim a hosted account is connected. Use install, enable or authorize with a "
+        "target object containing the server name and mcp=true. Never hand-edit mcp_servers "
+        "config. After a skip or timeout continue without the app or ask the user in chat. "
+        "This tool cannot disconnect or revoke an existing account."
+    )
+    _properties["action"]["enum"] = list(MCP_ACTIONS)
+    _properties["action"]["description"] = (
+        "Choose install, enable or authorize for a local MCP server. Hosted connector account "
+        "actions are unavailable in Mithril Agent."
+    )
+    _properties["connectors"]["items"]["anyOf"] = [{
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "mcp": {"type": "boolean", "enum": [True]},
+        },
+        "required": ["name", "mcp"],
+        "additionalProperties": False,
+    }]
+    _properties["connectors"]["description"] = (
+        "Local MCP server targets only, each as {\"name\": \"server-name\", \"mcp\": true}."
+    )
+    _properties.pop("force", None)
+    MANAGE_CONNECTIONS_SCHEMA["parameters"]["required"] = ["action", "connectors"]
 
 
 registry.register(

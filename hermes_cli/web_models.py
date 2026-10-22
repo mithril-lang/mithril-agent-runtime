@@ -227,9 +227,11 @@ class LearningNodeEdit(BaseModel):
     profile: Optional[str] = None
 
 class DebugShareRequest(BaseModel):
-    # Redaction scrubs credential-shaped tokens before logs leave the machine; opt-out only.
+    # Applies to Hermes uploads; Mithril local exports are always redacted.
     redact: bool = True
     lines: int = 200  # recent log lines in the summary tail (full logs are separate)
+    # Mithril mode requires an explicit user-initiated local export; never a remote share.
+    local_export: bool = False
 
 class TTSSpeakRequest(BaseModel):
     text: str

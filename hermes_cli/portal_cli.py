@@ -1,6 +1,7 @@
 """``hermes portal`` — the human-readable entry point for Nous Portal."""
 from __future__ import annotations
 
+import os
 import sys
 import webbrowser
 
@@ -163,6 +164,26 @@ _SUBCOMMANDS = {
 def portal_command(args) -> int:
     """Top-level dispatch for `hermes portal <subcommand>`."""
     sub = getattr(args, "portal_command", None)
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        from hermes_cli.mithril_auth import main as mithril_auth_main
+        if sub in (None, "", "login"):
+            return mithril_auth_main(["login"])
+        if sub in ("info", "status"):
+            return mithril_auth_main(["account", "status"])
+        if sub == "open":
+            url = "https://console.mithril.fund/account"
+            print(f"Opening {url}")
+            try:
+                if webbrowser.open(url):
+                    return 0
+            except Exception:
+                pass
+            print("Could not launch a browser. Visit the URL above manually.")
+            return 1
+        if sub == "tools":
+            print("Nous Portal tool routing is not part of Mithril Agent.", file=sys.stderr)
+            return 2
+
     handler = _SUBCOMMANDS.get(sub)
     if handler is not None:
         return handler(args)
@@ -173,27 +194,39 @@ def portal_command(args) -> int:
 
 def add_parser(subparsers) -> None:
     """Register `hermes portal` on the given argparse subparsers object."""
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
     portal_parser = subparsers.add_parser(
         "portal",
-        help="Set up Nous Portal (login, model pick, Tool Gateway); see also `portal info`",
-        description=(
+        help=("Sign in to Mithril Fund or inspect your account" if mithril_agent else
+              "Set up Nous Portal (login, model pick, Tool Gateway); see also `portal info`"),
+        description=((
+            "Run `mithril portal` or `portal login` to sign in to Mithril Fund. "
+            "Use `portal info` or `portal status` to check the current Profile, "
+            "and `portal open` to open the Mithril Console account page."
+        ) if mithril_agent else (
             "Run `hermes portal` with no subcommand to log in to Nous Portal "
             "and set it up — pick a model, set Nous as your provider, and offer "
             "the Tool Gateway (the human-readable alias for `hermes auth add "
             "nous --type oauth`, identical to `hermes setup --portal`). "
             "Subcommands: login (default), info, open, tools."
-        ),
+        )),
     )
     portal_sub = portal_parser.add_subparsers(dest="portal_command")
 
     # `status` is a hidden (no help) back-compat alias; registration order = `hermes portal -h` order.
-    for name, help_text in (
+    commands = (
+        ("login", "Sign in to Mithril Fund (default)"),
+        ("info", "Check Mithril account status"),
+        ("status", None),
+        ("open", "Open the Mithril Console account page"),
+    ) if mithril_agent else (
         ("login", "Log in to Nous Portal + set it up (default; one-shot onboarding)"),
         ("info", "Show Portal auth + Tool Gateway routing summary"),
         ("status", None),
         ("open", "Open the Portal subscription page in your default browser"),
         ("tools", "List Tool Gateway tools and which are routed via Nous"),
-    ):
+    )
+    for name, help_text in commands:
         portal_sub.add_parser(name, **({} if help_text is None else {"help": help_text}))
 
     portal_parser.set_defaults(func=portal_command)

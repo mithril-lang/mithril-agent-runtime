@@ -1757,7 +1757,18 @@ def switch_model(
         explicit_provider=explicit_provider, user_providers=user_providers, custom_providers=custom_providers,
         new_model=raw_input.strip(), target_provider=current_provider)
     route = _route_explicit_provider if explicit_provider else _route_from_model_input
-    for step in (route, _resolve_switch_credentials, _validate_switch):
+    fail = route(st)
+    if fail is not None:
+        return fail
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        target_provider = normalize_provider(st.target_provider).strip().lower()
+        model_id = st.new_model.strip().lower()
+        if (target_provider in {"nous", "nous-portal", "nousresearch"}
+                or model_id.startswith(("nous/", "nous:"))):
+            return st.fail_on_target(
+                "Nous models are unavailable in Mithril Agent. "
+                "Run `mithril login` to choose a Mithril model.")
+    for step in (_resolve_switch_credentials, _validate_switch):
         fail = step(st)
         if fail is not None:
             return fail

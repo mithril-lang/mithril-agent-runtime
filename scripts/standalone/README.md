@@ -1,5 +1,20 @@
 # Independent Docker gateway qualification
 
+## Mithril OCI fleet entrypoint
+
+The Mithril-owned OCI image uses
+`scripts/standalone/mithril-gateway-oci-entrypoint.sh` as its command while
+retaining the generic Docker ENTRYPOINT dispatcher. The script sets
+`MITHRIL_AGENT=1` before starting the Agent and runs one multiplexing Gateway
+in the foreground. The OCI operator owns restart, health, stop, rollout, and
+rollback policy; the container must not register a competing per-Profile
+background Gateway service. Keep the marker out of the shared base image.
+
+Build and qualification must bind the launcher revision and immutable image
+digest to the exact Fund source/export and catalog snapshot. Profile state and
+credentials remain scoped to the owning Mithril Profile. This launcher is a
+source artifact only; it does not qualify or activate the existing bot fleet.
+
 This Mac-controlled profile qualifies the repository Dockerfile for the
 `linux/amd64` gateway trial. It does not turn the organization's held full
 Python/Rust/JS/native release matrix into a completed production pipeline.

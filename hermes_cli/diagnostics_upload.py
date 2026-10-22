@@ -16,6 +16,9 @@ _USER_AGENT = "hermes-agent/debug-share"
 
 def _urlopen_checked(url: str, data: bytes, method: str, headers: dict, *, timeout: int, what: str):
     """Send the request; raise ``RuntimeError`` on non-2xx and return the response body bytes."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise RuntimeError(
+            "Mithril Agent does not upload diagnostics to Nous services; no data was sent.")
     req = urllib.request.Request(url, data=data, method=method, headers={**headers, "User-Agent": _USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         status = getattr(resp, "status", None)

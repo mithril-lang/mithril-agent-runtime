@@ -19,6 +19,8 @@ def managed_nous_tools_enabled(*, force_fresh: bool = False) -> bool:
     """Coarse gate: entitled to the Nous Tool Gateway (paid Portal access OR a live free
     pool). Fails closed on unknown/error — never blocks startup. Callers narrow per category
     via ``tool_gateway_entitled_for``; ``force_fresh`` is for flows needing a just-bought grant."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         from hermes_cli.nous_account import get_nous_portal_account_info
         account_info = (get_nous_portal_account_info(force_fresh=True) if force_fresh
@@ -31,6 +33,9 @@ def managed_nous_tools_enabled(*, force_fresh: bool = False) -> bool:
 def nous_tool_gateway_unavailable_message(capability: str = "the Nous Tool Gateway", *,
                                           force_fresh: bool = False) -> str:
     """Return account-aware guidance for an unavailable Nous Tool Gateway path."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return (f"{capability} is unavailable in Mithril Agent. Configure a direct provider or use a supported "
+                "Mithril route.")
     try:
         from hermes_cli.nous_account import (
             format_nous_portal_entitlement_message, get_nous_portal_account_info)

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import os
 import re
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol
 from urllib.parse import quote
 
@@ -150,6 +151,11 @@ class PortalConnectorClient:
         *,
         headers: dict[str, str] | None = None,
     ) -> tuple[Any, int]:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            raise PortalConnectorUnavailable(
+                "Hosted connector metadata is unavailable in Mithril Agent",
+                code="MITHRIL_ROUTE_UNAVAILABLE", status=404,
+            )
         url = f"{self.origin()}{path}"
         headers = self._authorized_headers(url, headers)
         try:

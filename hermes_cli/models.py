@@ -374,6 +374,8 @@ def fetch_nous_recommended_models(
     process restarts. ``force_refresh`` bypasses both caches. Stale disk data remains a fallback
     on live failure; reading it never renews its freshness.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {}
     base = (portal_base_url or "https://portal.nousresearch.com").rstrip("/")
     now = time.monotonic()
     cache_key = (_pricing_profile_key(), base)
@@ -651,6 +653,8 @@ def model_ids(*, force_refresh: bool = False) -> list[str]:
 def get_curated_nous_model_ids() -> list[str]:
     """Curated Nous Portal model ids: the remote catalog manifest, else the in-repo
     ``_PROVIDER_MODELS["nous"]`` snapshot. Always a list."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from hermes_cli.model_catalog import get_curated_nous_models
         remote = get_curated_nous_models()

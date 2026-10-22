@@ -41,14 +41,14 @@ return class ManagedNativeGateway extends nativeSharedGateway(DurableObject) {
       const existing = await this.ctx.storage.get('paidLease');
       if (existing) return existing;
       if (this.ctx.container.running || this.stopping) throw Error('Runtime is busy');
-      const admitted = {...launch, startedAt: now, deadline: now + launch.maximumSeconds*1000, state: 'running'};
+      const admitted = {...launch, startedAt: now, deadline: Math.min(now + launch.maximumSeconds*1000,launch.expiresAt ? launch.expiresAt*1000 : Infinity), state: 'running'};
       await this.ctx.storage.put('paidLease', admitted);
       return admitted;
     });
     if (lease.jobId !== launch.jobId) return json({error: 'runtime-has-active-lease'}, 409);
     if (lease.state !== 'running' || Date.now() >= lease.deadline) return json({error: 'lease-ended'}, 409);
     // Replays never swap credentials, price terms or create another lease.
-    if (lease.maximumSeconds !== launch.maximumSeconds || lease.model !== launch.model) return json({error:'lease-terms-conflict'},409);
+    if (lease.maximumSeconds !== launch.maximumSeconds || lease.model !== launch.model || lease.expiresAt !== launch.expiresAt || lease.funding !== launch.funding) return json({error:'lease-terms-conflict'},409);
     try { await this.wake(); } catch { await this.touch(); return json({jobId: lease.jobId, status:'starting'},202); }
     return this.leaseStatus(lease.jobId);
   }
@@ -70,16 +70,32 @@ return class ManagedNativeGateway extends nativeSharedGateway(DurableObject) {
   async start() {
     const lease = await this.ctx.storage.get('paidLease');
     if (!lease || lease.state !== 'running' || Date.now() >= lease.deadline) throw Error('Paid lease required');
+    // Persist before issuing start: an unknown provisioning outcome must be fenced by destroy.
+    if(!this.ctx.container.running){lease.runtimeStartRequested=true;await this.ctx.storage.put('paidLease',lease);}
     return super.start();
   }
   async touch() {
     const lease = await this.ctx.storage.get('paidLease');
     if (!lease) return;
-    await this.ctx.storage.setAlarm(lease.state === 'running' ? Math.min(Date.now()+Number(this.env.IDLE_MS || 120000),lease.deadline) : Date.now()+30000);
+    if (lease.state === 'running') {
+      const raw=Number(this.env.IDLE_MS || 120000);
+      const idle=Number.isSafeInteger(raw) && raw>=1000 && raw<=900000 ? raw : 120000;
+      const idleDeadline=Date.now()+idle;
+      await this.ctx.storage.put('idleDeadline',idleDeadline);
+      await this.ctx.storage.setAlarm(Math.min(idleDeadline,lease.deadline));
+    } else await this.ctx.storage.setAlarm(Date.now()+30000);
   }
   async sleep() {
+    const wasRunning=this.ctx.container.running;
+    const lease=await this.ctx.storage.get('paidLease');
+    if(!wasRunning && lease?.state==='running' && lease.runtimeStartRequested){
+      // A false running flag during failed provisioning is not proof that late start is fenced.
+      this.stopping=true;
+      try{await this.destroyContainer();await this.ctx.storage.delete('storeToken');}
+      finally{this.stopping=false;}
+    }
     const response = await super.sleep();
-    if (response.ok && !this.ctx.container.running) await this.endLease('checkpointed');
+    if (response.ok && !this.ctx.container.running) await this.endLease(wasRunning?'checkpointed':'last-durable-checkpoint');
     return response;
   }
   async endLease(recovery) {
@@ -95,7 +111,9 @@ return class ManagedNativeGateway extends nativeSharedGateway(DurableObject) {
     await this.settle(lease);
   }
   async settle(lease) {
-    if(!lease.providerUsage) {
+    // Sponsored customer settlement needs an acknowledged stop, not a nonempty provider bill.
+    // Missing/zero analytics remain unknown provider cost; they cannot pin a free account forever.
+    if(lease.funding!=='free' && !lease.providerUsage) {
       if(Date.now()-lease.endedAt<120000) {await this.touch();return;}
       try {
         const rows=await this.usage('query Usage($start:Time,$end:Time,$label:String) { viewer { accounts(filter:{accountTag:"62e1fda53188460698f8c66d3aef59c6"}) { containersUsageAdaptiveGroups(limit:100,filter:{datetime_geq:$start,datetime_lt:$end,labels_has:$label}) { sum { cpuTimeSec allocatedMemory allocatedDisk } } } } }',{start:new Date(lease.startedAt-60000).toISOString(),end:new Date(lease.endedAt+60000).toISOString(),label:'mithril_job='+lease.jobId});
@@ -122,14 +140,32 @@ return class ManagedNativeGateway extends nativeSharedGateway(DurableObject) {
     const lease = await this.ctx.storage.get('paidLease');
     if (!lease) return;
     if (lease.state !== 'running') {await this.settle(lease); return;}
-    const response = await this.sleep(); await response.body?.cancel();
-    if (!this.ctx.container.running) return;
-    if (Date.now() >= lease.deadline) {
-      // The budget is a hard cap even with an open socket or failed checkpoint.
-      // Recovery explicitly reports the last durable checkpoint, never a clean stop.
-      await this.ctx.container.destroy(); await this.ctx.storage.delete('storeToken');
-      await this.endLease('last-durable-checkpoint');
-    } else {await this.ctx.storage.setAlarm(Math.min(Date.now()+5000,lease.deadline));}
+    const idleDeadline=await this.ctx.storage.get('idleDeadline');
+    // A queued alarm can be delivered after a new authenticated activity extended idle time.
+    if (this.ctx.container.running && Date.now()<lease.deadline && Number.isFinite(idleDeadline) && Date.now()<idleDeadline) {
+      await this.ctx.storage.setAlarm(Math.min(idleDeadline,lease.deadline));return;
+    }
+    try {
+      // Never wait for graceful quiesce after expiry: a hung runtime cannot postpone TTL.
+      if (Date.now()<lease.deadline) {
+        const response=await this.sleep();await response.body?.cancel();
+        if (!this.ctx.container.running) return;
+      }
+      if (Date.now()>=lease.deadline) {
+        this.stopping=true;
+        try {await this.destroyContainer();}
+        finally {this.stopping=false;}
+        await this.ctx.storage.delete('storeToken');
+        await this.endLease('last-durable-checkpoint');return;
+      }
+    } catch {
+      // If destroy succeeded but persistence/callback failed, finish from the durable lease.
+      if (!this.ctx.container.running && this.destroyAcknowledged) {
+        try {await this.endLease('last-durable-checkpoint');return;} catch {}
+      }
+    }
+    // An exception at TTL must not consume the only alarm; retry without extending the lease.
+    await this.ctx.storage.setAlarm(Date.now()+5000);
   }
   async fetch(request) {
     const p = managedPrincipal(request,this.env.SERVICE_KEY);

@@ -35,6 +35,14 @@ logger = logging.getLogger("hermes_cli.auth")
 _UNUSABLE_JWT_RELOGIN = "Re-authenticate with: hermes auth add nous"
 
 
+def _ensure_nous_auth_allowed() -> None:
+    """Keep Hermes Portal credentials out of a Mithril Agent runtime."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise _nous_err(
+            "Nous Portal authentication is unavailable in Mithril Agent; use `mithril login` instead.",
+            "mithril_nous_auth_disabled")
+
+
 def _unusable_invoke_jwt_error(reason: str, *, no_refresh_token: bool = False) -> AuthError:
     """Shared ``relogin=True`` error for an access token that is not a usable inference JWT.
 
@@ -600,6 +608,7 @@ def _try_import_shared_nous_state(*, timeout_seconds: float = 15.0) -> Optional[
 def _refresh_access_token(
     *, client: httpx.Client, portal_base_url: str, client_id: str, refresh_token: str,
 ) -> Dict[str, Any]:
+    _ensure_nous_auth_allowed()
     response = client.post(
         f"{portal_base_url}/api/oauth/token",
         headers={"x-nous-refresh-token": refresh_token},
@@ -665,6 +674,7 @@ def _refresh_nous_or_quarantine(
     portal_base_url: str, client_id: str, refresh_token: str, reason: str,
     persist: Callable[[], None]) -> Dict[str, Any]:
     """Redeem the refresh token; on terminal failure quarantine state + pool, persist, re-raise."""
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import _refresh_access_token, _is_terminal_nous_refresh_error
     try:
         return _refresh_access_token(
@@ -729,6 +739,7 @@ def fetch_nous_models(
     *, inference_base_url: str, api_key: str, timeout_seconds: float = 15.0,
     verify: bool | str = True) -> List[str]:
     """Fetch available model IDs from the Nous inference API."""
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import _nonempty_str
     with _nous_http_client(timeout_seconds, verify) as client:
         response = client.get(
@@ -792,6 +803,7 @@ def refresh_nous_oauth_from_state(
     src: Dict[str, Any], *, timeout_seconds: float = 15.0, force_refresh: bool = False,
     on_state_update: Optional[Callable[[Dict[str, Any], str], None]] = None) -> Dict[str, Any]:
     """Refresh Nous OAuth from a state dict (defaults filled in) without mutating auth.json."""
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import (
         _assert_nous_inference_jwt_usable, _refresh_access_token, _resolve_verify,
         _select_nous_invoke_jwt)
@@ -1053,6 +1065,7 @@ def resolve_nous_runtime_credentials(
     A guest whose ``anon_`` credential NAS no longer knows (reaped or claimed) is retired and a new
     identity is set up once, transparently -- the one client rule covering both reap and claim.
     """
+    _ensure_nous_auth_allowed()
     from hermes_cli.anon_auth import AnonCredentialDead, clear_dead_guest, ensure_portal_identity
     try:
         return _resolve_nous_runtime_credentials(
@@ -1082,6 +1095,7 @@ def _resolve_nous_runtime_credentials(
     the refresh POST is skipped if the store (re-read under the lock) already holds a *different*
     usable token — a peer won the rotation; adopt it rather than invalidate a sibling's token.
     """
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import (
         _assert_nous_inference_jwt_usable, _auth_file_path, _provider_state_transaction,
         _resolve_verify, _select_nous_invoke_jwt, _sync_nous_pool_from_auth_store,
@@ -1192,8 +1206,18 @@ def _nous_status_from_state(
         "free_tier": is_guest_state(state)}
 
 
+def _mithril_disabled_nous_status() -> Dict[str, Any]:
+    """Hide saved Hermes account state from Mithril surfaces without reading or refreshing it."""
+    return {
+        "logged_in": False, "inference_credential_present": False, "free_tier": False,
+        "source": "disabled_in_mithril",
+    }
+
+
 def _compute_nous_auth_status() -> Dict[str, Any]:
     """Uncached implementation of get_nous_auth_status(). See that function."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _mithril_disabled_nous_status()
     from hermes_cli.auth import get_provider_auth_state, resolve_nous_runtime_credentials
     state = get_provider_auth_state("nous")
     if not state:
@@ -1246,6 +1270,8 @@ def get_nous_auth_status_local() -> Dict[str, Any]:
     ``logged_in`` = usable invoke JWT, or a refresh token not terminally quarantined — not proof
     the server still accepts it.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _mithril_disabled_nous_status()
     from hermes_cli.auth import get_provider_auth_state
     try:
         state = get_provider_auth_state("nous")
@@ -1353,6 +1379,7 @@ def _nous_device_code_login(
     timeout_seconds: float = 15.0, insecure: bool = False, ca_bundle: Optional[str] = None,
     on_verification: Optional[Callable[[str, str], None]] = None) -> Dict[str, Any]:
     """Run the Nous device-code flow and return full OAuth state without persisting."""
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import (
         PROVIDER_REGISTRY, _coerce_ttl_seconds, _is_remote_session, _optional_base_url,
         _poll_for_token, _print_device_code_instructions, _request_device_code,
@@ -1443,6 +1470,7 @@ def step_up_nous_billing_scope(
     server silently downscopes and this returns False. Persists like ``_login_nous`` minus the
     model picker.
     """
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import (
         PROVIDER_REGISTRY, _nous_device_code_login, _save_active_provider_state,
         get_provider_auth_state)
@@ -1579,6 +1607,7 @@ def _restore_active_provider(prior_active_provider: Any) -> None:
 
 def _login_nous(args, pconfig: ProviderConfig) -> None:
     """Nous Portal device authorization flow."""
+    _ensure_nous_auth_allowed()
     from hermes_cli.auth import (
         _auth_store_lock, _load_auth_store, _nous_device_code_login, _save_active_provider_state,
         _save_model_choice, _sync_nous_pool_from_auth_store, _update_config_for_provider,

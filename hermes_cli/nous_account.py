@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 import time
 import urllib.request
@@ -295,6 +296,8 @@ def get_nous_portal_account_info(*, force_fresh: bool = False, min_jwt_ttl_secon
     A valid unexpired OAuth JWT serves as a local snapshot (UX gating only; the server stays
     authoritative). ``force_fresh=True`` always calls ``/api/oauth/account`` and bypasses the cache.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return NousPortalAccountInfo(logged_in=False, source="none", fresh=False)
     try:
         from hermes_cli.auth import get_provider_auth_state
 

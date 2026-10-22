@@ -132,9 +132,10 @@ function normalizeWhatsAppMode(mode: unknown): "bot" | "self-chat" | null {
 
 export default function ChannelsPage() {
   const [platforms, setPlatforms] = useState<MessagingPlatform[]>([]);
-  const [envPath, setEnvPath] = useState("~/.hermes/.env");
+  const [telegramManagedOnboardingAvailable, setTelegramManagedOnboardingAvailable] = useState(false);
+  const [envPath, setEnvPath] = useState("~/.mithril/.env");
   const [gatewayStartCommand, setGatewayStartCommand] = useState(
-    "hermes gateway start",
+    "mithril gateway start",
   );
   const [loading, setLoading] = useState(true);
   const { toast, showToast } = useToast();
@@ -164,6 +165,7 @@ export default function ChannelsPage() {
       .getMessagingPlatforms()
       .then((res) => {
         setPlatforms(res.platforms);
+        setTelegramManagedOnboardingAvailable(res.telegram_managed_onboarding_available === true);
         setEnvPath(res.env_path || "~/.hermes/.env");
         setGatewayStartCommand(res.gateway_start_command || "hermes gateway start");
       })
@@ -625,6 +627,7 @@ export default function ChannelsPage() {
                 </div>
                 {platform.id === "telegram" && (
                   <TelegramOnboardingPanel
+                    managedOnboardingAvailable={telegramManagedOnboardingAvailable}
                     onManualSetup={() => openConfig(platform)}
                     onChanged={load}
                     onRestartNeeded={() => setRestartNeeded(true)}
@@ -1059,6 +1062,7 @@ function WhatsAppOnboardingPanel({
 }
 
 function TelegramOnboardingPanel({
+  managedOnboardingAvailable,
   onManualSetup,
   onChanged,
   onRestartNeeded,
@@ -1066,6 +1070,7 @@ function TelegramOnboardingPanel({
   setRestartNeeded,
   showToast,
 }: {
+  managedOnboardingAvailable: boolean;
   onManualSetup: () => void;
   onChanged: () => Promise<void>;
   onRestartNeeded: () => void;
@@ -1279,35 +1284,44 @@ function TelegramOnboardingPanel({
           Choose how to connect your Telegram bot
         </span>
         <span className="text-xs text-muted-foreground">
-          Both options connect a bot you control and save its credentials only to
-          this Hermes installation.
+          {managedOnboardingAvailable
+            ? "Both options connect a bot you control and save its credentials only to this Hermes installation."
+            : "Automatic bot creation is unavailable in this runtime. Use the manual @BotFather setup; the token stays in this profile."}
         </span>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:divide-x sm:divide-border">
-        <div className="grid content-start gap-3 sm:pr-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium uppercase text-foreground">
-              Quick setup
-            </span>
-            <Badge tone="success">recommended</Badge>
+      <div className={cn(
+        "mt-4 grid gap-4",
+        managedOnboardingAvailable && "sm:grid-cols-2 sm:divide-x sm:divide-border",
+      )}>
+        {managedOnboardingAvailable && (
+          <div className="grid content-start gap-3 sm:pr-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium uppercase text-foreground">
+                Quick setup
+              </span>
+              <Badge tone="success">recommended</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Scan a QR code and confirm in Telegram. Hermes creates the bot and
+              detects your Telegram user ID automatically.
+            </p>
+            <Button
+              size="sm"
+              className="w-fit uppercase"
+              onClick={() => void start()}
+              disabled={phase !== "idle"}
+              prefix={phase === "starting" ? <Spinner /> : <QrCode className="h-4 w-4" />}
+            >
+              {phase === "starting" ? "Starting…" : "Create with QR"}
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Scan a QR code and confirm in Telegram. Hermes creates the bot and
-            detects your Telegram user ID automatically.
-          </p>
-          <Button
-            size="sm"
-            className="w-fit uppercase"
-            onClick={() => void start()}
-            disabled={phase !== "idle"}
-            prefix={phase === "starting" ? <Spinner /> : <QrCode className="h-4 w-4" />}
-          >
-            {phase === "starting" ? "Starting…" : "Create with QR"}
-          </Button>
-        </div>
+        )}
 
-        <div className="grid content-start gap-3 border-t border-border pt-4 sm:border-t-0 sm:pl-4 sm:pt-0">
+        <div className={cn(
+          "grid content-start gap-3",
+          managedOnboardingAvailable && "border-t border-border pt-4 sm:border-t-0 sm:pl-4 sm:pt-0",
+        )}>
           <span className="text-xs font-medium uppercase text-foreground">
             Use your own bot
           </span>
@@ -1330,7 +1344,7 @@ function TelegramOnboardingPanel({
 
       {platform.configured && (
         <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
-          Telegram credentials are already configured. A new QR setup or bot token
+          Telegram credentials are already configured. A new bot setup or token
           will replace the current bot when you save.
         </div>
       )}
