@@ -36,6 +36,16 @@ _DOCS_BASE = "https://hermes-agent.nousresearch.com/docs"
 _BRACKETED_PASTE_PATTERN = re.compile(r"\x1b\[\s*200~|\x1b\[\s*201~")
 
 
+def _agent_cli_command() -> str:
+    """Command name shown in setup guidance for the active distribution."""
+    return "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+
+
+def _agent_product_name() -> str:
+    """Product name shown in setup guidance for the active distribution."""
+    return "Mithril Agent" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes Agent"
+
+
 def print_header(title: str, *, gap: bool = False):
     """Print a section header (``gap`` adds an extra blank line before it)."""
     if gap:
@@ -348,7 +358,7 @@ def _prompt_api_key(var: dict):
     if var.get("url"):
         print_info(f"  Get your key at: {var['url']}")
     print()
-    _prompt_and_save_env_var(var, "  ✓ Saved", "  Skipped (configure later with 'hermes setup')")
+    _prompt_and_save_env_var(var, "  ✓ Saved", f"  Skipped (configure later with '{_agent_cli_command()} setup')")
 
 
 def _prompt_and_save_env_var(var: dict, saved_msg: str, skipped_msg: str) -> None:
@@ -388,8 +398,11 @@ def setup_model_provider(config: dict, *, quick: bool = False):
     quick setup caller; rotation, vision and TTS keep safe defaults either way."""
     from hermes_cli.config import load_config, save_config
     print_header("Inference Provider")
-    _info("Choose how to connect to your main chat model.",
-          f"   Guide: {_DOCS_BASE}/integrations/providers", None)
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _info("Choose how to connect to your main chat model.", None)
+    else:
+        _info("Choose how to connect to your main chat model.",
+              f"   Guide: {_DOCS_BASE}/integrations/providers", None)
     from hermes_cli.main import select_provider_and_model
     from hermes_cli.observability.shared_metrics_setup import provider_setup_surface
     try:
@@ -400,7 +413,7 @@ def setup_model_provider(config: dict, *, quick: bool = False):
     except Exception as exc:
         logger.debug("select_provider_and_model error during setup: %s", exc)
         from hermes_cli.auth_error_copy import provider_setup_failure_lines
-        lead, *rest = provider_setup_failure_lines(exc, retry_command="hermes model")
+        lead, *rest = provider_setup_failure_lines(exc, retry_command=f"{_agent_cli_command()} model")
         print_warning(lead)
         for line in rest:
             print_info(line)
@@ -429,7 +442,7 @@ def _apply_default_agent_settings(config: dict):
     save_config(config)
     print_success("Applied recommended defaults:")
     _info("  Max iterations: 150", "  Compression threshold: 0.50",
-          "  Run `hermes setup agent` later to customize.")
+          f"  Run `{_agent_cli_command()} setup agent` later to customize.")
 
 
 def _prompt_number(label: str, current, cast=int):
@@ -538,7 +551,7 @@ def setup_telemetry(config: dict):
     _info("Shared metrics contain only bounded counters: activity, session length,",
           "outcomes, error classes, model routes and token totals, built-in tool, command",
           "and catalog names, bucketed setup counts, update results and timing, crashes,",
-          "startup and reply speed, messaging-platform health, how Hermes gets used",
+          f"startup and reply speed, messaging-platform health, how {_agent_product_name()} gets used",
           "(agent accuracy and efficiency, active time per surface, which features and",
           "settings are used or switched off, provider setup outcomes), and coarse",
           "machine facts (RAM range, GPU type, version age and channel, updates behind,",
@@ -630,7 +643,8 @@ def _run_setup_section(config: dict, section: str) -> None:
         print_info(f"Available sections: {', '.join(k for k, _, _ in SETUP_SECTIONS)}")
         return
     label, func = entry
-    _print_banner(f"│     ☤ Hermes Setup — {label:<34s} │")
+    banner_name = "Mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "☤ Hermes"
+    _print_banner(f"│     {banner_name} Setup — {label:<34s} │")
     _run_setup_steps([(label, lambda: func(config))])
     save_config(config)
     print()
@@ -642,7 +656,7 @@ def _run_full_setup(config: dict, hermes_home, *, is_existing: bool, migration_r
     print_header("Configuration Location")
     _info(f"Config file:  {get_config_path()}", f"Secrets file: {get_env_path()}",
           f"Data folder:  {hermes_home}", f"Install dir:  {PROJECT_ROOT}", None,
-          "You can edit these files directly or use 'hermes config edit'")
+          f"You can edit these files directly or use '{_agent_cli_command()} config edit'")
     if migration_ran:
         _info(None, "Settings were imported from OpenClaw.",
               "Each section below will show what was imported — press Enter to keep,",
@@ -741,10 +755,10 @@ def _run_setup_wizard_impl(args):
             _record_setup_completed(config)
             return
         print_header("Reconfigure", gap=True)
-        print_success("You already have Hermes configured.")
+        print_success(f"You already have {_agent_product_name()} configured.")
         _info("Running the full wizard — each prompt shows your current value.",
               "Press Enter to keep it, or type a new value to change it.", "",
-              "Tip: jump straight to a section with 'hermes setup model|terminal|",
+              f"Tip: jump straight to a section with '{_agent_cli_command()} setup model|terminal|",
               "     gateway|tools|agent', or fill only missing items with --quick.")
     else:
         # First-time setup (--reconfigure / --quick are meaningless here; fall through)

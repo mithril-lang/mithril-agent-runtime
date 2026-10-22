@@ -2,10 +2,22 @@
 resolved through the module object so test patches on ``hermes_cli.setup.<name>`` take effect."""
 
 import logging
+import os
+from types import SimpleNamespace
 from tools import tool_backend_helpers
 from hermes_cli import nous_subscription
 
 logger = logging.getLogger("hermes_cli.setup")
+
+
+def _agent_cli_command() -> str:
+    return "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+
+
+def _command_hint(text: str) -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return text.replace("hermes", "mithril")
+    return text
 
 # provider -> (label, env vars: any one set means available; empty = always).
 # Local engines are (label, module, hint) and must be importable.
@@ -61,7 +73,7 @@ def _voice_provider_status(kind: str, provider: str, rows: dict, default: tuple)
     label, module, hint = row
     if _setup._module_installed(module):
         return (f"{kind} ({label}{' local' if kind == 'Text-to-Speech' else ''})", True, None)
-    return (f"{kind} ({label} — not installed)", False, hint)
+    return (f"{kind} ({label} — not installed)", False, _command_hint(hint))
 
 
 def _first_available_plugin_provider(registry: str, skip: str = None):
@@ -94,7 +106,7 @@ def _vision_row(config, feats):
         ok = bool(get_available_vision_backends())
     except Exception:
         ok = False
-    return ("Vision (image analysis)", ok, None if ok else "run 'hermes setup' to configure")
+    return ("Vision (image analysis)", ok, None if ok else f"run '{_agent_cli_command()} setup' to configure")
 
 
 def _managed_or_provider_row(feature, name: str, managed_label: str, missing_hint: str):
@@ -113,7 +125,7 @@ def _web_row(config, feats):
 
 def _browser_row(config, feats):
     # Browser tools (local Chromium, Camofox, Browserbase, Browser Use, or Firecrawl)
-    hint = _BROWSER_MISSING_HINTS.get(feats.browser.current_provider, _BROWSER_MISSING_DEFAULT)
+    hint = _command_hint(_BROWSER_MISSING_HINTS.get(feats.browser.current_provider, _BROWSER_MISSING_DEFAULT))
     return _managed_or_provider_row(feats.browser, "Browser Automation", "Nous Browser Use", hint)
 
 
@@ -161,8 +173,9 @@ def _modal_row(config, feats):
     if _setup.cfg_get(config, "terminal", "backend") == "modal":
         if feats.modal.direct_override:
             return ("Modal Execution (direct Modal)", True, None)
-        return ("Modal Execution", False, "run 'hermes setup terminal'")
-    if tool_backend_helpers.managed_nous_tools_enabled() and feats.nous_auth_present:
+        return ("Modal Execution", False, f"run '{_agent_cli_command()} setup terminal'")
+    if (os.environ.get("MITHRIL_AGENT") != "1"
+            and tool_backend_helpers.managed_nous_tools_enabled() and feats.nous_auth_present):
         return ("Modal Execution (optional via Nous subscription)", True, None)
     return None
 
@@ -213,6 +226,8 @@ def _print_section_header(title):
 def _print_setup_summary(config: dict, hermes_home):
     """Print the setup completion summary."""
     from hermes_constants import display_hermes_home as _dhh
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    command = "mithril" if mithril_agent else "hermes"
     # Provider readiness — the one thing setup must produce. A user who cancelled the API-key
     # prompt mid-wizard used to exit "successfully" with NO working model; say so loudly.
     try:
@@ -220,16 +235,31 @@ def _print_setup_summary(config: dict, hermes_home):
         resolve_provider()
     except Exception:
         print()
-        _setup.print_warning("No inference provider is configured — Hermes cannot chat yet.")
-        _setup._info("  Finish this one step with either of:",
-              "    hermes model            (pick any provider/model)",
-              "    hermes setup --portal   (Nous Portal OAuth, no API key)")
+        if mithril_agent:
+            _setup.print_warning("No Mithril model is configured — Mithril Agent cannot chat yet.")
+            _setup._info("  Finish account setup with:", "    mithril setup --portal")
+        else:
+            _setup.print_warning("No inference provider is configured — Hermes cannot chat yet.")
+            _setup._info("  Finish this one step with either of:",
+                  "    hermes model            (pick any provider/model)",
+                  "    hermes setup --portal   (Nous Portal OAuth, no API key)")
 
     print()
     _setup.print_header("Tool Availability Summary")
 
     tool_status = []
-    subscription_features = nous_subscription.get_nous_subscription_features(config)
+    if mithril_agent:
+        # Do not look up Nous Portal entitlement while showing Mithril's first-run summary.
+        no_managed_features = SimpleNamespace(
+            managed_by_nous=False, available=False, current_provider="", direct_override=False,
+        )
+        subscription_features = SimpleNamespace(
+            web=no_managed_features, browser=no_managed_features, image_gen=no_managed_features,
+            video_gen=no_managed_features, tts=no_managed_features, stt=no_managed_features,
+            modal=no_managed_features, features={"stt": no_managed_features}, nous_auth_present=False,
+        )
+    else:
+        subscription_features = nous_subscription.get_nous_subscription_features(config)
     for build in _TOOL_ROW_BUILDERS:
         row = build(config, subscription_features)
         tool_status.extend(row if isinstance(row, list) else [] if row is None else [row])
@@ -243,7 +273,7 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
 
     if available_count < len(tool_status):
-        _setup.print_warning("Some tools are disabled. Run 'hermes setup tools' to configure them,")
+        _setup.print_warning(f"Some tools are disabled. Run '{command} setup tools' to configure them,")
         _setup.print_warning(f"or edit {_dhh()}/.env directly to add the missing API keys.")
         print()
 
@@ -258,16 +288,37 @@ def _print_setup_summary(config: dict, hermes_home):
     print()
 
     _print_section_header("📝 To edit your configuration:")
-    _print_cmd_rows(_EDIT_WIZARD_ROWS)
+    edit_wizard_rows = _EDIT_WIZARD_ROWS
+    edit_config_rows = _EDIT_CONFIG_ROWS
+    ready_rows = _READY_ROWS
+    if mithril_agent:
+        edit_wizard_rows = (
+            ("mithril setup", "          Re-run the full wizard"),
+            ("mithril setup model", "    Change model/provider"),
+            ("mithril setup terminal", " Change terminal backend"),
+            ("mithril setup gateway", "  Configure messaging"),
+            ("mithril setup tools", "    Configure tool providers"),
+        )
+        edit_config_rows = (
+            ("mithril config", "         View current settings"),
+            ("mithril config edit", "    Open config in your editor"),
+            ("mithril config set <key> <value>", ""),
+        )
+        ready_rows = (
+            ("mithril", "              Start chatting"),
+            ("mithril gateway", "      Start messaging gateway"),
+            ("mithril doctor", "       Check for issues"),
+        )
+    _print_cmd_rows(edit_wizard_rows)
     print()
-    _print_cmd_rows(_EDIT_CONFIG_ROWS)
+    _print_cmd_rows(edit_config_rows)
     print("                          Set a specific value\n\n   Or edit the files directly:")
     for path in (_setup.get_config_path(), _setup.get_env_path()):
         print(f"   {_setup.color(f'nano {path}', _setup.Colors.DIM)}")
     print()
 
     _print_section_header("🚀 Ready to go!")
-    _print_cmd_rows(_READY_ROWS)
+    _print_cmd_rows(ready_rows)
     print()
 
 

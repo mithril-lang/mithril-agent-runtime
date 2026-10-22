@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "f1de0e0bd9954240c130cfbb0a5151bb1a133c08",
-  "sourceTree": "155a2484e7331ec593091ef012e1fb62963e461c",
+  "sourceRevision": "ab94a8c72c313298b7c9e38a9ddf00e039a9a40f",
+  "sourceTree": "331b58463e45d0d26058416734a6e03eee724800",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -27518,8 +27518,8 @@
     },
     {
       "path": "hermes_cli/setup.py",
-      "sourceBlob": "437a6b64c75690dd89804dcb7f7a7c5c6969107e",
-      "sha256": "223c39e8744cbf22cfe6b0290da7db3e759cdf8b5f4da7dcb1fae9be05a4dd28",
+      "sourceBlob": "28c6d29b2ec5085d680ac9715064b092cc11c318",
+      "sha256": "4d7af5d67019faa62daf01b244245f2f88ca211e92fd53e868174eb0ab20c4c6",
       "mode": "100644"
     },
     {
@@ -27548,14 +27548,14 @@
     },
     {
       "path": "hermes_cli/setup_quick.py",
-      "sourceBlob": "74a9422b55a0a942977e38548f8a74845a95561b",
-      "sha256": "db4cbd6e31b2ed1b732f6505a50e239f3b53a4e0d923109a4604ea639b88eb16",
+      "sourceBlob": "825fd2eb8e478a16bd750a9d3bcbe82836b77dc5",
+      "sha256": "27d11fd12d04d5575f09a795ec5245e31bf3e3d53cfa2ae5dc853f9da9f918d3",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/setup_summary.py",
-      "sourceBlob": "cd95157d75024e86858a9a87d16a5f2c23e86cf7",
-      "sha256": "e2b85bbb84c5fe1109b6d0d9c87024a45e0b01af37c66ff2e1be2c4526ae932b",
+      "sourceBlob": "41842ebb628fdc8f6b0e4cb7995c4f479f69a9d4",
+      "sha256": "381873d5463daf911a90dd49ab1dab81957bdda3d037baf68a4fdadd17e6a55a",
       "mode": "100644"
     },
     {
