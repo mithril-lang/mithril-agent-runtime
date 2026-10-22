@@ -26409,7 +26409,7 @@
     {
       "path": "hermes_cli/main_platform_setup.py",
       "sourceBlob": "f72db22199c63c749ce54e5c6315e59fdf1bbf6f",
-      "sha256": "4e2e7c14556724fb99d163e98ce1e0bc8d1a70c112218cb8db756a08c902840c",
+      "sha256": "e95e4ed695dd05af8e243902db25b0c2e8f671c65ed78c0f555cb7b87f5359a4",
       "mode": "100644"
     },
     {
@@ -28065,7 +28065,7 @@
     {
       "path": "hermes_cli/subcommands/sync.py",
       "sourceBlob": "69d4200086e8227a9f952a566196cd66fb9d0463",
-      "sha256": "521b826e23c8c6e91a240e1329586a3bbf0e445f3c62385580afb50fa63be8e9",
+      "sha256": "27a78d4c2f14a4770f840a1b965a39fb9b3966e4a3c4c301a428d0f356e5ec20",
       "mode": "100644"
     },
     {
@@ -49775,7 +49775,7 @@
       {
         "path": "hermes_cli/main_platform_setup.py",
         "baseSha256": "4e2e7c14556724fb99d163e98ce1e0bc8d1a70c112218cb8db756a08c902840c",
-        "sha256": "b0acfec7e39ad2566feee0c85fe8b13196b1dc45a454f72b09a7f33722d5f23d"
+        "sha256": "e95e4ed695dd05af8e243902db25b0c2e8f671c65ed78c0f555cb7b87f5359a4"
       },
       {
         "path": "hermes_cli/mithril_account.py",
@@ -49811,6 +49811,11 @@
         "path": "hermes_cli/source_releases.py",
         "baseSha256": "52657b9dbe4e20e2dcf3cb0fb59635313ff980ed747833773d0400e2aff3e65e",
         "sha256": "acfdf694391480d424165b59cd156c7c089542c666965c4006bb4e3ea09c5189"
+      },
+      {
+        "path": "hermes_cli/subcommands/sync.py",
+        "baseSha256": "521b826e23c8c6e91a240e1329586a3bbf0e445f3c62385580afb50fa63be8e9",
+        "sha256": "27a78d4c2f14a4770f840a1b965a39fb9b3966e4a3c4c301a428d0f356e5ec20"
       },
       {
         "path": "hermes_cli/subcommands/update.py",
@@ -49883,6 +49888,6 @@
         "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
       }
     ],
-    "sha256": "630475e831d83c3df4723e4812848ab64e4a27b3fa29cfbfc09b466f1fe83624"
+    "sha256": "4fa98b420d976fc904369c08540b6ea49e5c49f3567368da6a8037bfa50db666"
   }
 }

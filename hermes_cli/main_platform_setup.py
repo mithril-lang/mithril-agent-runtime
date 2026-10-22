@@ -363,14 +363,15 @@ def cmd_sync(args):
     """Skill Sync — personal sync across devices, plus sharing with your org."""
     import json as _json
     sub = getattr(args, "sync_command", None)
-    if sub in {None, ""}:
-        _err(_SYNC_USAGE)
-        return 1
     from tools import skills_sync_client as ssc
     if ssc.is_mithril_agent_mode():
         if sub == "status":
             return _sync_status(ssc)
-        _err("Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned; no Nous sync request was made.")
+        _err("Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned. "
+             "Run `mithril sync status` to check availability; no remote sync request was made.")
+        return 1
+    if sub in {None, ""}:
+        _err(_SYNC_USAGE)
         return 1
     if sub in {"enable", "disable"}:
         return _sync_toggle(args, sub)
