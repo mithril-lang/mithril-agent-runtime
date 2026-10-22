@@ -1,10 +1,12 @@
 import { Typography } from "@nous-research/ui/ui/components/typography/index";
 import type { StatusResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { isMithrilDistribution, MITHRIL_AGENT_HOME_URL } from "@/lib/agent-docs";
 import { useI18n } from "@/i18n";
 
 export function SidebarFooter({ status }: SidebarFooterProps) {
   const { t } = useI18n();
+  const isMithril = isMithrilDistribution(status?.distribution);
 
   return (
     <div
@@ -21,7 +23,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
       </Typography>
 
       <a
-        href="https://nousresearch.com"
+        href={isMithril ? MITHRIL_AGENT_HOME_URL : "https://nousresearch.com"}
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
@@ -30,7 +32,7 @@ export function SidebarFooter({ status }: SidebarFooterProps) {
           "focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-midground/40",
         )}
       >
-        {t.app.footer.org}
+        {isMithril ? "Mithril" : t.app.footer.org}
       </a>
     </div>
   );

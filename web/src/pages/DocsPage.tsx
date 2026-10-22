@@ -4,10 +4,8 @@ import { useI18n } from "@/i18n";
 import { usePageHeader } from "@/contexts/usePageHeader";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { agentDocsUrlForDistribution, HERMES_AGENT_DOCS_URL } from "@/lib/agent-docs";
 import { PluginSlot } from "@/plugins";
-
-export const HERMES_DOCS_URL = "https://hermes-agent.nousresearch.com/docs/";
-export const MITHRIL_AGENT_DOCS_URL = "https://docs.mithril.fund/reference/mcp/";
 
 const DS_BUTTON_OUTLINED_LINK_CN = cn(
   "group relative inline-grid grid-cols-[auto_1fr_auto] items-center",
@@ -28,16 +26,14 @@ export default function DocsPage() {
       .then((status) => {
         if (mounted) {
           setDocsUrl(
-            status.distribution === "mithril-agent"
-              ? MITHRIL_AGENT_DOCS_URL
-              : HERMES_DOCS_URL,
+            agentDocsUrlForDistribution(status.distribution),
           );
         }
       })
       // If the distribution cannot be identified, keep the Mithril surface
       // on Mithril-owned documentation instead of opening Hermes docs.
       .catch(() => {
-        if (mounted) setDocsUrl(MITHRIL_AGENT_DOCS_URL);
+        if (mounted) setDocsUrl(agentDocsUrlForDistribution(null));
       });
     return () => {
       mounted = false;
@@ -80,7 +76,7 @@ export default function DocsPage() {
           className={cn(
             "min-h-0 w-full min-w-0 flex-1",
             "rounded-sm border border-current/20",
-            docsUrl === HERMES_DOCS_URL && "[color-scheme:light] bg-white",
+            docsUrl === HERMES_AGENT_DOCS_URL && "[color-scheme:light] bg-white",
           )}
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
           referrerPolicy="no-referrer-when-downgrade"

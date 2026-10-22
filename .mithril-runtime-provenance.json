@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "397403f7cf606eb97a9b4491aef6c85cc12e1549",
+  "sourceRevision": "386266bdd7a098a4baa982f2ab6d4620bad9acff",
   "sourceTree": "9e44da2623be14fd55111e02ceb5f747f267707d",
   "publicationState": "candidate",
   "license": "MIT",
@@ -39757,6 +39757,12 @@
       "mode": "100755"
     },
     {
+      "path": "scripts/install-mithril.ps1",
+      "sourceBlob": "e2d22d2325e97006c47e797478374cf3bcbf915b",
+      "sha256": "676f137a669dd046ad1ba2d239517402bbfc1f424da44078977799e70f059071",
+      "mode": "100644"
+    },
+    {
       "path": "scripts/install.cmd",
       "sourceBlob": "e60b4ff3448d2c0bfbc9bfc34af84a8b118a7591",
       "sha256": "c2ee750b6eda7902abbd85fb058ee1db2495c3d18c576e090554fcf4b81479ba",
@@ -40108,6 +40114,12 @@
       "path": "scripts/standalone/cloudflare/deploy.py",
       "sourceBlob": "f279751e27615ce7bf0547bdf2be1b3214c1f0a6",
       "sha256": "59ed1f6236ae7bddc8e292a27e38a04288970cec2d9aa26a2e9b23935633d5e1",
+      "mode": "100644"
+    },
+    {
+      "path": "scripts/standalone/cloudflare/idle-stop-candidate.md",
+      "sourceBlob": "95b7a049e239fc4b990b9c8d7fb97cf0907d9a07",
+      "sha256": "46ccf19f26cf351ff8cd7a24e673b0ffe0b6029e307eb91549dccca773fc915b",
       "mode": "100644"
     },
     {
@@ -48716,8 +48728,8 @@
     },
     {
       "path": "web/src/components/SidebarFooter.tsx",
-      "sourceBlob": "310ccad7b22c597ed5f9948c1bc6b9eb6feecb4e",
-      "sha256": "c070c3c534b7b51bef52b1de94cdeca1d6a2e1e8b357016af8115993e29ad306",
+      "sourceBlob": "d8885d8da8527665df07d5351687dd8fee4e6a00",
+      "sha256": "6fe8e07c092a86b28bcabc57868d979f41d88c69ae84f07c9c53bb3b70b6893b",
       "mode": "100644"
     },
     {
@@ -48946,6 +48958,12 @@
       "path": "web/src/index.css",
       "sourceBlob": "e4b5e2777f962ed02f9bc83bc970710e7a31da8a",
       "sha256": "0f65b06e327494f599d59d57cd0633387a0f0bef11be2917a70cc2ffde60690b",
+      "mode": "100644"
+    },
+    {
+      "path": "web/src/lib/agent-docs.ts",
+      "sourceBlob": "40b1d2b45d22ed4d09fecb9ff8e68959293e9713",
+      "sha256": "96b8663e3a3c3b6b8707e2f7ec5034671a9440b61e2425ef99ac7f4658604bf7",
       "mode": "100644"
     },
     {
@@ -49502,8 +49520,8 @@
     },
     {
       "path": "web/src/pages/DocsPage.tsx",
-      "sourceBlob": "8289f595fe218e62d721a0c78c430cec8e1fb0cc",
-      "sha256": "ba57bc0405fb0503abac075501c2773cdf5d4616da1b72d8ccc17574fcea0d81",
+      "sourceBlob": "f350ea1011c1e8672045fc170ba40b4ee60565fc",
+      "sha256": "499cf215bc90ca5c7aa10fed673d3c7ff9076f8edb561f76e5b23096e466b762",
       "mode": "100644"
     },
     {
@@ -49550,8 +49568,8 @@
     },
     {
       "path": "web/src/pages/PluginsPage.tsx",
-      "sourceBlob": "d309991dfbf4c5b3b974e15a1ee001085e49d001",
-      "sha256": "2b76f7be012680671d733770dc9ce0b5289f1b21de3ee4a25cd89a7d1a4dd101",
+      "sourceBlob": "3b39259bee20fdf990cecd926bf449266a02d55e",
+      "sha256": "ec79cada3647c39f0e2ce3369d084f50b493b14968b9cd1780aafd20cbd4ec4c",
       "mode": "100644"
     },
     {
