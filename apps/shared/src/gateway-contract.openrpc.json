@@ -3572,7 +3572,7 @@
     },
     {
       "name": "session.usage",
-      "summary": "Token / context / cost counters for the session (+ Nous credit lines when available).",
+      "summary": "Token / context / cost counters for the session (+ verified Mithril balance or Nous credit lines when available).",
       "params": [
         {
           "name": "params",
