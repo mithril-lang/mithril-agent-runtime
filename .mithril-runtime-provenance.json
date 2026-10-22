@@ -49853,6 +49853,11 @@
         "sha256": "365be39954a529b177de3c56d5d2f6fad1c8a3e9d140a491cd532b61c127cfff"
       },
       {
+        "path": "mcp/mithril-fund/server.py",
+        "baseSha256": "706788b12b42d6addd209a636effab804e71d9ff79cea1104f9bb7c9ffed9475",
+        "sha256": "f3c5373824c0b5184ae27b6237c524dd3ea9fa61c0b34a2c08111087dc1072e4"
+      },
+      {
         "path": "pm/artifact_mirror.py",
         "baseSha256": "80554900b7372c76cb38392a93761229575520e27446fef6d3fb69cad84bfa5d",
         "sha256": "5a80a3157dbc25fb9ab451180bc07de4fff741d2b789125f1d8e1b0b466c1090"
@@ -49918,6 +49923,6 @@
         "sha256": "3358a5c3c29079edd7de616dffa5079b4fe22c66e1c554a89bb787d325f41bed"
       }
     ],
-    "sha256": "53af40993fe86382a0690aef891762e579976926cb8c6a64b4863deb2edf4e90"
+    "sha256": "2154e0c814813831b1c334b46da93b2d27ca69a0b94d66d1519ccaac19473f69"
   }
 }
