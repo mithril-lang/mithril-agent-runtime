@@ -918,7 +918,12 @@ def _shared_metrics_state(config: dict) -> tuple[bool, bool]:
 def _shared_metrics_menu_label(config: dict) -> str:
     """Menu row for shared metrics, showing both consent states."""
     enabled, send = _shared_metrics_state(config)
-    state = "off" if not enabled else ("collecting + sending to Nous" if send else "collecting locally")
+    if not enabled:
+        state = "off"
+    elif os.environ.get("MITHRIL_AGENT") == "1":
+        state = "collecting locally; remote sending unavailable"
+    else:
+        state = "collecting + sending to Nous" if send else "collecting locally"
     return f"Configure shared metrics  ({state})"
 
 

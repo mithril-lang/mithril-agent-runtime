@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "3f2c16c655c370748334625a5915297872edf731",
-  "sourceTree": "04d04df5d26db9d9a18dc1e90731a84cada1d210",
+  "sourceRevision": "f1de0e0bd9954240c130cfbb0a5151bb1a133c08",
+  "sourceTree": "155a2484e7331ec593091ef012e1fb62963e461c",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -26810,8 +26810,8 @@
     },
     {
       "path": "hermes_cli/observability/shared_metrics_send_config.py",
-      "sourceBlob": "de8ac454ade014964b7d34d1dff7571e8b747e4e",
-      "sha256": "7d8b5862a500a10223a6dfa3ef5d9f25e5e29101ba683a2d7e71757eb3d3afe1",
+      "sourceBlob": "9921d31d0a09d20a9409e0aaa5858cb4458ec9d8",
+      "sha256": "2520d6fa67d5023afcec3f86138806f7c15c5422aa083c7ac59c99367c92a7b3",
       "mode": "100644"
     },
     {
@@ -27518,8 +27518,8 @@
     },
     {
       "path": "hermes_cli/setup.py",
-      "sourceBlob": "f032d15380d51f9e5478255363d2c83adc71137c",
-      "sha256": "ad49beccfe5b7767e845ee3031f3c7b3e2538388f0f5e2904229e549b1169add",
+      "sourceBlob": "437a6b64c75690dd89804dcb7f7a7c5c6969107e",
+      "sha256": "223c39e8744cbf22cfe6b0290da7db3e759cdf8b5f4da7dcb1fae9be05a4dd28",
       "mode": "100644"
     },
     {
@@ -27548,8 +27548,8 @@
     },
     {
       "path": "hermes_cli/setup_quick.py",
-      "sourceBlob": "8fed4386d2410cb980e09901450410a99de5756c",
-      "sha256": "1436f02d96b1e1665a1fab00c7b0552468cb0de6361f6377bb2100e7ebd2e28b",
+      "sourceBlob": "74a9422b55a0a942977e38548f8a74845a95561b",
+      "sha256": "db4cbd6e31b2ed1b732f6505a50e239f3b53a4e0d923109a4604ea639b88eb16",
       "mode": "100644"
     },
     {
@@ -28172,8 +28172,8 @@
     },
     {
       "path": "hermes_cli/tools_config.py",
-      "sourceBlob": "7c42c29c9cacacdeff548ea6a4a23d7e1312fa42",
-      "sha256": "ee1db982256a787c868f059fbf41d709418e208844181cff598e12ee2db89aa5",
+      "sourceBlob": "d47ca58a3f60a839f0339ad6884e4030d582327a",
+      "sha256": "8badf63bb9911d0f26cc42614be81ece5cb7a1385e77aa2f48e58ad7e0cf6270",
       "mode": "100644"
     },
     {

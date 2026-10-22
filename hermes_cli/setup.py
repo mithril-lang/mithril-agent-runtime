@@ -85,6 +85,16 @@ def is_interactive_stdin() -> bool:
 def print_noninteractive_setup_guidance(reason: str | None = None) -> None:
     """Print guidance for headless/non-interactive setup flows."""
     print()
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        print(color("Mithril Agent — Non-interactive setup", Colors.CYAN, Colors.BOLD))
+        print()
+        if reason:
+            print_info(reason)
+        _info("The interactive account setup cannot be used here.", None,
+              "Sign in from an interactive terminal with:",
+              "  mithril setup --portal", None,
+              "Then run mithril to start chatting.", None)
+        return
     print(color("☤ Hermes Setup — Non-interactive mode", Colors.CYAN, Colors.BOLD))
     print()
     if reason:
@@ -534,7 +544,9 @@ def setup_telemetry(config: dict):
           "machine facts (RAM range, GPU type, version age and channel, updates behind,",
           "local model server yes/no). Never prompts, files, paths, setting values or",
           "error text.",
-          "Collection is local. Sending them to Nous is a separate opt-in.")
+          ("Collection is local. Remote sending is unavailable in Mithril Agent."
+           if os.environ.get("MITHRIL_AGENT") == "1"
+           else "Collection is local. Sending them to Nous is a separate opt-in."))
     shared_metrics = _sub_dict(_sub_dict(config, "telemetry"), "shared_metrics")
     current = shared_metrics.get("enabled") is True
     shared_metrics["enabled"] = prompt_yes_no("Enable local shared metrics?", default=current)
@@ -549,6 +561,10 @@ def setup_telemetry(config: dict):
         _record_send_consent_change(enabled=False)
         return
     print_success("Local shared metrics enabled.")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _record_send_consent_change(enabled=False)
+        print_info("Remote shared-metrics sending is unavailable in Mithril Agent. Metrics stay local to this Profile.")
+        return
     _info(*_SEND_CONSENT_EXPLAINER)
     shared_metrics["send"] = prompt_yes_no("Send shared metrics to Nous?", default=shared_metrics.get("send") is True)
     _record_send_consent_change(enabled=shared_metrics["send"])
@@ -705,10 +721,16 @@ def _run_setup_wizard_impl(args):
     from hermes_cli.auth import get_active_provider
     is_existing = bool(get_env_value("OPENROUTER_API_KEY") or get_env_value("OPENAI_BASE_URL")
                        or get_active_provider() is not None)
-    _print_banner("│             ☤ Hermes Agent Setup Wizard                │",
-                  "├─────────────────────────────────────────────────────────┤",
-                  "│  Let's configure your Hermes Agent installation.       │",
-                  "│  Press Ctrl+C at any time to exit.                     │")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _print_banner("│            Mithril Agent Setup Wizard                   │",
+                      "├─────────────────────────────────────────────────────────┤",
+                      "│  Configure your Mithril Agent installation.            │",
+                      "│  Press Ctrl+C at any time to exit.                     │")
+    else:
+        _print_banner("│             ☤ Hermes Agent Setup Wizard                │",
+                      "├─────────────────────────────────────────────────────────┤",
+                      "│  Let's configure your Hermes Agent installation.       │",
+                      "│  Press Ctrl+C at any time to exit.                     │")
     migration_ran = False
     if is_existing:
         # Full reconfigure wizard is the default (Enter keeps each current value); `--quick`
@@ -732,8 +754,19 @@ def _run_setup_wizard_impl(args):
         migration_ran = _offer_openclaw_migration(hermes_home)  # before configuration begins
         if migration_ran:
             config = load_config()
-        setup_mode = prompt_choice("How would you like to set up Hermes?", [label for label, _ in _FIRST_TIME_MODES], 0)
-        label, runner = _FIRST_TIME_MODES[setup_mode]
+        first_time_modes = _FIRST_TIME_MODES
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            first_time_modes = (
+                ("Quick Setup (Mithril Account) — sign in and choose a model (recommended)",
+                 "_run_first_time_quick_setup"),
+                _FIRST_TIME_MODES[1],
+                _FIRST_TIME_MODES[2],
+            )
+        setup_prompt = ("How would you like to set up Mithril Agent?"
+                        if os.environ.get("MITHRIL_AGENT") == "1"
+                        else "How would you like to set up Hermes?")
+        setup_mode = prompt_choice(setup_prompt, [label for label, _ in first_time_modes], 0)
+        label, runner = first_time_modes[setup_mode]
         if runner is not None:
             from hermes_cli import setup_quick
             _run_setup_steps([(label, lambda: getattr(setup_quick, runner)(config, hermes_home, is_existing))])

@@ -57,6 +57,20 @@ def _run_nous_flow(config: dict, *, context: str, cancel_exc: tuple, cancel_line
 def _run_portal_one_shot(config: dict) -> None:
     """One-shot Nous Portal setup (``hermes setup --portal`` / ``hermes portal``)."""
     from hermes_cli.setup import _info, _print_banner, _record_setup_completed, print_error, print_info, print_success
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _print_banner("│       Mithril Agent Account Setup (one-shot)             │")
+        _info(None, "  Sign in to your Mithril Fund account and choose a model.", None)
+        from hermes_cli.mithril_auth import main as mithril_auth_main
+        if mithril_auth_main(["login"]) != 0:
+            return
+        with contextlib.suppress(Exception):
+            _reload_config_into(config, dict_only=True)
+        print()
+        print_success("Mithril account setup complete.")
+        _info("  Run `mithril` to start chatting.")
+        _record_setup_completed(config)
+        return
+
     _print_banner("│     ☤ Hermes Setup — Nous Portal (one-shot)             │")
     _info(None, "  One subscription, 300+ models, plus the Tool Gateway:",
           "    web search, image generation, TTS, browser automation",
@@ -86,27 +100,36 @@ def _run_portal_one_shot(config: dict) -> None:
 
 
 def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
-    """Streamlined first-time setup via Nous Portal: OAuth, model, terminal & messaging;
-    everything else gets defaults."""
+    """Streamlined first-time account, model, terminal and messaging setup."""
     from hermes_cli.setup import (
         _apply_default_agent_settings, _info, print_header, print_info, _print_setup_summary, print_success,
         print_warning, prompt_choice, save_config, setup_gateway, setup_terminal_backend
     )
-    # Step 1: Nous Portal — OAuth login + model selection (provider set to "nous" by the save).
-    print_header("Nous Portal", gap=True)
-    _info("One subscription, 300+ models, plus the Tool Gateway:",
-          "  web search, image generation, TTS, browser automation.",
-          "Sign up: https://portal.nousresearch.com/manage-subscription", None)
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        # Keep the Mithril distribution on Mithril's account and model catalog. A failed or
+        # cancelled sign-in aborts before later setup can be saved as complete.
+        from hermes_cli.setup import _SetupCancelled
+        print_header("Mithril Account", gap=True)
+        _info("Sign in to Mithril Fund to choose a model for Mithril Agent.", None)
+        from hermes_cli.mithril_auth import main as mithril_auth_main
+        if mithril_auth_main(["login"]) != 0:
+            raise _SetupCancelled()
+    else:
+        # Step 1: Nous Portal — OAuth login + model selection (provider set to "nous" by the save).
+        print_header("Nous Portal", gap=True)
+        _info("One subscription, 300+ models, plus the Tool Gateway:",
+              "  web search, image generation, TTS, browser automation.",
+              "Sign up: https://portal.nousresearch.com/manage-subscription", None)
 
-    def _on_error(exc: Exception) -> None:
-        from hermes_cli.auth_error_copy import provider_setup_failure_lines
-        lead, *rest = provider_setup_failure_lines(exc, retry_command="hermes model")
-        print_warning(lead)
-        for line in rest:
-            print_info(line)
+        def _on_error(exc: Exception) -> None:
+            from hermes_cli.auth_error_copy import provider_setup_failure_lines
+            lead, *rest = provider_setup_failure_lines(exc, retry_command="hermes model")
+            print_warning(lead)
+            for line in rest:
+                print_info(line)
 
-    _run_nous_flow(config, context="quick setup", cancel_exc=(KeyboardInterrupt, EOFError),
-                   cancel_lines=(None, "Nous Portal setup cancelled."), print_error=_on_error)
+        _run_nous_flow(config, context="quick setup", cancel_exc=(KeyboardInterrupt, EOFError),
+                       cancel_lines=(None, "Nous Portal setup cancelled."), print_error=_on_error)
     # The wizard's later save_config(config) must not clobber the login/model save.
     _reload_config_into(config)
 
@@ -117,8 +140,9 @@ def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
 
     # Step 4: Offer messaging gateway setup
     print()
+    command = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
     gateway_choice = prompt_choice("Connect a messaging platform? (Telegram, Discord, etc.)", [
-        "Set up messaging now (recommended)", "Skip — set up later with 'hermes setup gateway'",
+        "Set up messaging now (recommended)", f"Skip — set up later with '{command} setup gateway'",
     ], 0)
     if gateway_choice == 0:
         setup_gateway(config)
@@ -130,9 +154,9 @@ def _run_first_time_quick_setup(config: dict, hermes_home, is_existing: bool):
         ensure_gateway_service(context="setup")
     print()
     print_success("Setup complete! You're ready to go.")
-    _info(None, "  Configure all settings:    hermes setup")
+    _info(None, f"  Configure all settings:    {command} setup")
     if gateway_choice != 0:
-        print_info("  Connect Telegram/Discord:  hermes setup gateway")
+        print_info(f"  Connect Telegram/Discord:  {command} setup gateway")
     _print_macos_fda_tip()
     print()
     _print_setup_summary(config, hermes_home)
