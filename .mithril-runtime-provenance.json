@@ -49901,8 +49901,13 @@
         "path": "tools/skills_sync_client_org.py",
         "baseSha256": "e888296a8cca71200071ae51c82c20da29a53602da626c3ca0642ba47b2e6e2a",
         "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
+      },
+      {
+        "path": "tui_gateway/methods_session.py",
+        "baseSha256": "75b32808640e6d4f83839c175af8d158496289cd633a81fffdc0750980436a4a",
+        "sha256": "3358a5c3c29079edd7de616dffa5079b4fe22c66e1c554a89bb787d325f41bed"
       }
     ],
-    "sha256": "4d9888c62b67698bf484843f98c3ab145aad4ea3656aa5ae67646eebf4085160"
+    "sha256": "6b5d753858b7a73b36d6418b4aff2cfb83f7833ff0e83e36f209714564507672"
   }
 }
