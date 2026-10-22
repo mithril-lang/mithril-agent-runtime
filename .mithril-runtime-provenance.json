@@ -26265,7 +26265,7 @@
     {
       "path": "hermes_cli/local_runtime/catalog.py",
       "sourceBlob": "09dd85a5ae6d48a5070d614bfc7608cfb68a0da9",
-      "sha256": "3ea53544c5bff03ce2be69513e1d0ef4811c10ac12fe92616440230d1558ce72",
+      "sha256": "cf796a7662998504306811c4af3ceff4098da2b26df8e988285ab10bc3864e6e",
       "mode": "100644"
     },
     {
@@ -26535,7 +26535,7 @@
     {
       "path": "hermes_cli/model_catalog.py",
       "sourceBlob": "4a94b1316b80190ae286bb5f378b5c0196748141",
-      "sha256": "ceb014b614f3813a261e2b904c897d80997b5dc86a18960aa7f6138a5fcfd2a5",
+      "sha256": "b38a8ee450d125525fa4ae1c8c146f7f8145208766b55dfe4eff5cc900e786f8",
       "mode": "100644"
     },
     {
@@ -26925,7 +26925,7 @@
     {
       "path": "hermes_cli/plugin_catalog.py",
       "sourceBlob": "09057524df4e49946234b875f1259cf549d2252b",
-      "sha256": "7f0c9584343fc9294a724e9a132f31dfe30550e68e960f679746a40ff521c267",
+      "sha256": "a4547af5fb3aeb8c129161d98e880fc76e1c42aa020b7ac5303e0cc7b61e78cb",
       "mode": "100644"
     },
     {
@@ -49763,6 +49763,11 @@
         "sha256": "8adf9f050e6b950f644442091ed72a6a0ce25165e77fe4cc37e1b0905cbd0f04"
       },
       {
+        "path": "hermes_cli/local_runtime/catalog.py",
+        "baseSha256": "3ea53544c5bff03ce2be69513e1d0ef4811c10ac12fe92616440230d1558ce72",
+        "sha256": "cf796a7662998504306811c4af3ceff4098da2b26df8e988285ab10bc3864e6e"
+      },
+      {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
         "sha256": "dd4324fafe974d992fbb4e0a2cb9b274ab1cac2566b93310aca544a0cb162189"
@@ -49786,6 +49791,16 @@
         "path": "hermes_cli/mithril_startup.py",
         "baseSha256": null,
         "sha256": "05ff5340b86c05da4e00ca95f1329385c0e514858a732a222981b05ac5b3f5c3"
+      },
+      {
+        "path": "hermes_cli/model_catalog.py",
+        "baseSha256": "ceb014b614f3813a261e2b904c897d80997b5dc86a18960aa7f6138a5fcfd2a5",
+        "sha256": "b38a8ee450d125525fa4ae1c8c146f7f8145208766b55dfe4eff5cc900e786f8"
+      },
+      {
+        "path": "hermes_cli/plugin_catalog.py",
+        "baseSha256": "7f0c9584343fc9294a724e9a132f31dfe30550e68e960f679746a40ff521c267",
+        "sha256": "a4547af5fb3aeb8c129161d98e880fc76e1c42aa020b7ac5303e0cc7b61e78cb"
       },
       {
         "path": "hermes_cli/runtime_provider_custom.py",
@@ -49868,6 +49883,6 @@
         "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
       }
     ],
-    "sha256": "f69299a40f4c9f3fc5b32304982eca519a2c122108abb2dc7db2c125b9e186d3"
+    "sha256": "630475e831d83c3df4723e4812848ab64e4a27b3fa29cfbfc09b466f1fe83624"
   }
 }

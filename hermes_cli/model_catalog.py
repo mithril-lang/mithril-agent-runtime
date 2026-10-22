@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextvars
 import json
 import logging
+import os
 import threading
 import time
 import urllib.error
@@ -22,6 +23,10 @@ from hermes_cli.version_info import get_version_info
 from utils import atomic_json_write
 
 logger = logging.getLogger(__name__)
+
+
+def _mithril_agent_mode() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
 
 DEFAULT_CATALOG_URL = (
     "https://hermes-agent.nousresearch.com/docs/api/model-catalog.json")
@@ -212,7 +217,10 @@ def _in_process_catalog() -> dict[str, Any] | None:
 
 def get_catalog(*, force_refresh: bool = False) -> dict[str, Any]:
     """Parsed model catalog manifest, or ``{}`` on failure — never raises, so the CLI works offline
-    (callers treat a missing provider/model as "use the in-repo fallback")."""
+    (callers treat a missing provider/model as "use the in-repo fallback"). Mithril mode deliberately
+    ignores the Hermes-origin cache as well as live catalog URLs until a Mithril-owned manifest exists."""
+    if _mithril_agent_mode():
+        return {}
     cfg = _load_catalog_config()
     if not cfg["enabled"]:
         return {}
@@ -246,6 +254,8 @@ def get_catalog(*, force_refresh: bool = False) -> dict[str, Any]:
 
 def refresh_interval_seconds() -> float:
     """Return the configured catalog TTL in seconds (the gateway poll cadence)."""
+    if _mithril_agent_mode():
+        return DEFAULT_TTL_MINUTES * 60.0
     return max(60.0, _load_catalog_config()["ttl_hours"] * 3600.0)
 
 
@@ -253,6 +263,16 @@ def refresh_catalogs() -> bool:
     """Force-refresh every remote catalog the picker reads (manifest, OpenRouter live list, Nous Portal
     recommendations), writing each disk cache so the next ``/model`` open in ANY process sees them.
     Blocking; run it off the event loop."""
+    if _mithril_agent_mode():
+        # Keep the selected provider's live model list, but skip the Hermes manifest and Nous
+        # recommendations. Provider-specific APIs remain independent of the Hermes catalog.
+        try:
+            from hermes_cli.models import fetch_openrouter_models
+
+            fetch_openrouter_models(force_refresh=True)
+        except Exception:
+            logger.debug("OpenRouter model refresh failed", exc_info=True)
+        return False
     if not _load_catalog_config()["enabled"]:
         return False
     catalog = get_catalog(force_refresh=True)
@@ -268,6 +288,8 @@ def refresh_catalogs() -> bool:
 
 def _fetch_provider_override(provider: str) -> dict[str, Any] | None:
     """If ``model_catalog.providers.<name>.url`` is set, fetch that instead."""
+    if _mithril_agent_mode():
+        return None
     cfg = _load_catalog_config()
     if not cfg["enabled"]:
         return None
@@ -305,6 +327,8 @@ def get_curated_openrouter_models() -> list[tuple[str, str]] | None:
 
 def get_curated_nous_models() -> list[str] | None:
     """Nous Portal's curated model ids from the manifest."""
+    if _mithril_agent_mode():
+        return None
     return [mid for mid, _ in _block_ids(_get_provider_block("nous"))] or None
 
 
@@ -316,6 +340,8 @@ def _default_model_from_block(block: dict[str, Any] | None) -> str | None:
 def get_default_model_from_cache(provider: str) -> str | None:
     """The manifest's labeled default for ``provider`` (the model Hermes silently lands on when the
     user never picked one) — in-process then disk cache only, never a fetch."""
+    if _mithril_agent_mode():
+        return None
     cached = _in_process_catalog()
     found = _default_model_from_block(_block_of(cached, provider)) if cached is not None else None
     if found:
@@ -328,6 +354,8 @@ def seed_cache_from_checkout(project_root: "Path | str") -> bool:
     """Overwrite the disk cache with the checkout's ``website/static/api/model-catalog.json``.
     After ``hermes update`` that file IS the newest catalog, so the picker stays current even when
     the remote fetch is bot-gated. Validated, then written via the same atomic writer."""
+    if _mithril_agent_mode():
+        return False
     src = Path(project_root) / "website" / "static" / "api" / "model-catalog.json"
     try:
         with open(src, encoding="utf-8-sig") as fh:
