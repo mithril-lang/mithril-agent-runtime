@@ -242,6 +242,42 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
         return []
 
 
+def _read_mithril_account_balance_lines() -> list[str]:
+    try:
+        from hermes_cli.config import load_env
+        from hermes_cli.mithril_auth import TOKEN_ENV, mithril_balance_lines, request, verified_identity
+        token = load_env().get(TOKEN_ENV)
+        if not token:
+            return ["Mithril balance unavailable. Run `mithril login` to sign in."]
+        identity = request("/v1/me", token=token)
+        if not verified_identity(identity):
+            return ["Mithril balance unavailable. Run `mithril account status` to check this Profile."]
+        return mithril_balance_lines(token, identity)
+    except Exception:
+        logger.debug("Mithril balance read failed (fail-open)", exc_info=True)
+        return ["Mithril balance unavailable. Check your connection and try again."]
+
+
+def mithril_account_balance_lines(*, timeout: float = 10.0) -> list[str]:
+    """Read the Mithril ledger in the active Profile, bounded like the Nous usage fetch."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return []
+    import contextvars
+    from tools.daemon_pool import DaemonThreadPoolExecutor
+
+    context = contextvars.copy_context()
+    pool = DaemonThreadPoolExecutor(max_workers=1)
+    future = pool.submit(context.run, _read_mithril_account_balance_lines)
+    try:
+        return future.result(timeout=timeout)
+    except BaseException:
+        future.add_done_callback(lambda f: f.exception())
+        logger.debug("Mithril balance read timed out or failed (fail-open)", exc_info=True)
+        return ["Mithril balance unavailable. Check your connection and try again."]
+    finally:
+        pool.shutdown(wait=False)
+
+
 def _snapshot_from_credits_state(state) -> Optional[AccountUsageSnapshot]:
     """Header-shaped CreditsState (dev fixture) → /usage snapshot, same shape as the portal path. *_usd strings
     are display-only; the % comes from CreditsState.used_fraction. Fail-open → None."""

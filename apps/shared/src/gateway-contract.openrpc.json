@@ -32144,6 +32144,21 @@
             ],
             "default": null,
             "title": "Credits Lines"
+          },
+          "mithril_balance_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mithril Balance Lines"
           }
         },
         "title": "SessionUsageResult",

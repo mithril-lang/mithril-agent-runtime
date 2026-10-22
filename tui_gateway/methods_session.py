@@ -1382,6 +1382,12 @@ def _(rid, params: dict, session: dict) -> dict:
     usage: dict = _session_usage_snapshot(session)
     if session.get("agent") is None and not usage:
         usage = {"calls": 0, "input": 0, "output": 0, "total": 0}
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        with _session_profile_runtime_scope(session):
+            with contextlib.suppress(Exception):
+                from agent.account_usage import mithril_account_balance_lines
+                if lines := mithril_account_balance_lines():
+                    usage["mithril_balance_lines"] = lines
     # Nous credits are agent-independent (portal fetch); fail-open when absent.
     with contextlib.suppress(Exception):
         from agent.account_usage import nous_credits_lines

@@ -19,7 +19,9 @@ import webbrowser
 API = "https://api.mithril.fund"
 CONSOLE = "https://console.mithril.fund/account/device"
 TOKEN_ENV = "MITHRIL_ACCOUNT_TOKEN"
-SCOPES = frozenset({"inference", "workspace:read"})
+BASE_SCOPES = frozenset({"inference", "workspace:read"})
+BILLING_SCOPE = "billing:read"
+SCOPES = BASE_SCOPES | {BILLING_SCOPE}
 
 
 class SignInError(Exception):
@@ -150,12 +152,37 @@ def select_home(profile=None):
         os.environ["HERMES_HOME"] = resolve_profile_env(profile)
 
 
-def verified_identity(identity):
+def verified_identity(identity, required_scopes=BASE_SCOPES):
     user = identity.get("user")
     scopes = identity.get("scopes")
     return (isinstance(user, dict) and isinstance(user.get("id"), str) and bool(user["id"])
             and isinstance(scopes, list) and all(isinstance(scope, str) for scope in scopes)
-            and SCOPES <= set(scopes))
+            and required_scopes <= set(scopes))
+
+
+def _format_micro_usd(value):
+    """Format a signed micro-USD ledger amount to cents without float rounding."""
+    cents_total = (abs(value) + 5_000) // 10_000
+    dollars, cents = divmod(cents_total, 100)
+    sign = "-" if value < 0 else ""
+    return f"{sign}${dollars:,}.{cents:02d}"
+
+
+def mithril_balance_lines(token, identity):
+    """Return a verified, read-only Mithril ledger balance line for a profile."""
+    scopes = identity.get("scopes") if isinstance(identity, dict) else None
+    if not isinstance(scopes, list) or BILLING_SCOPE not in scopes:
+        return ["Mithril balance unavailable. Run `mithril login` to approve read-only billing access."]
+    try:
+        value = request("/v1/billing/status", token=token)
+    except SignInError:
+        return ["Mithril balance unavailable. Check your connection and try again."]
+    balance = value.get("balanceMicroUsd")
+    ledger_sum = value.get("ledgerSum")
+    if (type(balance) is not int or abs(balance) > 9_007_199_254_740_991
+            or type(ledger_sum) is not int or ledger_sum != balance or value.get("consistent") is not True):
+        return ["Mithril balance hidden because the account ledger could not be verified. Check https://console.mithril.fund/account."]
+    return [f"Mithril balance: {_format_micro_usd(balance)}"]
 
 
 def persist(token, model):
@@ -214,45 +241,7 @@ def uses_existing_provider_auth(argv):
             and len(stripped) > 2 and not stripped[2].startswith("-"))
 
 
-def _profile_from_argv(argv):
-    profile = None
-    for index, arg in enumerate(argv):
-        if arg in ("-p", "--profile") and index + 1 < len(argv):
-            profile = argv[index + 1]
-        elif arg.startswith("--profile="):
-            profile = arg.split("=", 1)[1]
-    return profile
-
-
-def startup_login(argv=None):
-    """Sign this launcher into Mithril before its first interactive chat.
-
-    Only the selected Profile's persisted token counts. An inherited shell
-    variable must not authenticate another ``-p`` Profile.
-    """
-    argv = list(sys.argv[1:] if argv is None else argv)
-    profile = _profile_from_argv(argv)
-    select_home(profile)
-    try:
-        from hermes_cli.config import is_managed, load_env
-        if is_managed() or load_env().get(TOKEN_ENV, "").strip():
-            return 0
-    except Exception:
-        # The normal login path reports guarded config and .env read failures.
-        pass
-
-    login_argv = ["login"]
-    if profile:
-        login_argv.extend(["--profile", profile])
-    for index, arg in enumerate(argv):
-        if arg in ("-m", "--model") and index + 1 < len(argv):
-            login_argv.extend(["--model", argv[index + 1]])
-        elif arg.startswith("--model="):
-            login_argv.extend(["--model", arg.split("=", 1)[1]])
-    return main(login_argv, continue_on_login=True)
-
-
-def main(argv=None, *, continue_on_login=False):
+def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if uses_existing_provider_auth(argv):
         previous = sys.argv
@@ -294,6 +283,8 @@ def main(argv=None, *, continue_on_login=False):
             if not verified_identity(identity):
                 raise SignInError("Mithril could not verify this account. Run mithril login.")
             print("Signed in to Mithril Fund on this Profile.")
+            for line in mithril_balance_lines(token, identity):
+                print(line)
             return 0
         require_env_writable(TOKEN_ENV, "set")
         if is_managed():
@@ -316,11 +307,10 @@ def main(argv=None, *, continue_on_login=False):
                 pass
         token = poll(grant)
         identity = request("/v1/me", token=token)
-        if not verified_identity(identity):
+        if not verified_identity(identity, SCOPES):
             raise SignInError("Mithril could not verify this account. No local settings were changed.")
         persist(token, model)
-        suffix = " Continuing to your session." if continue_on_login else " Run mithril to start a new conversation."
-        print(f"Signed in to Mithril Fund. Model: {model}.{suffix}")
+        print(f"Signed in to Mithril Fund. Model: {model}\nRun mithril to start a new conversation.")
         return 0
     except KeyboardInterrupt:
         print("\nSign-in cancelled. Run mithril account status to check this Profile.", file=sys.stderr)
