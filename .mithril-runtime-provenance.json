@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "386266bdd7a098a4baa982f2ab6d4620bad9acff",
+  "sourceRevision": "48ac771c74c8d709cbc13a240d8875a40a65a29c",
   "sourceTree": "9e44da2623be14fd55111e02ceb5f747f267707d",
   "publicationState": "candidate",
   "license": "MIT",
@@ -49604,8 +49604,8 @@
     },
     {
       "path": "web/src/pages/SystemPage.tsx",
-      "sourceBlob": "7ca4b136905f1634502462d923ee980d56a8e432",
-      "sha256": "dff231b8a0f09704f949dc5c1f80f39cec09101a72de4d4d27b94542ff3cbb03",
+      "sourceBlob": "4a94f74c0ca98053697136680822a123e6b1252f",
+      "sha256": "0eef87ffd9f138c972508f6dc4317010c6c131a3cfb26e75491e731c54bb8c10",
       "mode": "100644"
     },
     {
