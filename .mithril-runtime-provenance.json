@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "d3c3cec465855805be2537f12a1262d5bb8e0b9d",
-  "sourceTree": "81e5553b0fa08880925a8e7f535b875d39107c3d",
+  "sourceRevision": "b01e84dda954910aa19a90d8fa69cc89db8725c5",
+  "sourceTree": "d6b02b9c07f8077a3fd05294c7b47ac3d1e48324",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -36956,8 +36956,8 @@
     },
     {
       "path": "plugins/image_gen/xai/__init__.py",
-      "sourceBlob": "cabd124f2c8e6929ac382429abbb4f7558b10521",
-      "sha256": "2c9692ed19969c867ea95a8a6e30c7c862ecb8db24c6b7a4959e727b2e71a563",
+      "sourceBlob": "5a0b2fd4731a32ab3331d243b898e8f11b3e0dbe",
+      "sha256": "990490b97a9966d6e49f6954b37eab9e6e5222a44a3a67c031dd144e28a94e92",
       "mode": "100644"
     },
     {
@@ -38648,8 +38648,8 @@
     },
     {
       "path": "plugins/video_gen/xai/__init__.py",
-      "sourceBlob": "e4d2587517987c9a0fc27c4d17e29a78e747f7b0",
-      "sha256": "2415781d9035a54c1e2a63d0d079a93a0e54322b0f783af2565bf949392632dd",
+      "sourceBlob": "e4dd624e61fa9900c04573705e0a9b00314b21e5",
+      "sha256": "1ec768a22d1275c8b2279051ce1d840023119c8eef4af209663c019b873300fa",
       "mode": "100644"
     },
     {
@@ -38876,8 +38876,8 @@
     },
     {
       "path": "plugins/web/xai/provider.py",
-      "sourceBlob": "18b12fc09d31ff096ff5f53589f68d8a75ea05f7",
-      "sha256": "12ebc53aa33d8bb9ae15bb751c3f109abcba0d94272f0a45c71c0fd797adc16b",
+      "sourceBlob": "7647f0ffd77a7ccec7db4092ccc2f9a69a69dce8",
+      "sha256": "d7e6eed01153f334ca60bc892767ab34a89d960e59098b0e39044c47efe5ba4e",
       "mode": "100644"
     },
     {
@@ -44378,8 +44378,8 @@
     },
     {
       "path": "tools/transcription_cloud.py",
-      "sourceBlob": "6967fdf13ed9afcd2bcdb6b9def76dfd6eff8921",
-      "sha256": "2d1c54e2eff6b79f1485ae00024658eac7f0aec54ff315257a4869e82715a77a",
+      "sourceBlob": "3ea2bfa4382ac9c46f8e63064622ad2c815f9ac0",
+      "sha256": "b2a5b62b1d00db6398df6053ce6cb7647251cb5779b94107a0bf16a9417026d9",
       "mode": "100644"
     },
     {
@@ -44462,8 +44462,8 @@
     },
     {
       "path": "tools/tts_tool_providers.py",
-      "sourceBlob": "c16ddf910f493faf9fdad5aa68b27b12668cc037",
-      "sha256": "b7ea3efa78490dc858631ae287256652577382faff9fdc9d6487790003e3287f",
+      "sourceBlob": "43febf89b5b07c66647e5a5cddb6c5065b9cdd2e",
+      "sha256": "d65560482ff926f9304a399a135dbd192716a39a1f5496e08b917a2277b2b37d",
       "mode": "100644"
     },
     {
@@ -44600,14 +44600,14 @@
     },
     {
       "path": "tools/x_search_tool.py",
-      "sourceBlob": "d57f819350e6d7e13a92ad6e4c5bc0ecc8c1a189",
-      "sha256": "94294eaee1614e0298ec50615db83cb83e4d329eb9d85127f9342b83a670e679",
+      "sourceBlob": "e1be9ca8632c4fb6e587f6a6be0329409f45538c",
+      "sha256": "e148a4f62a41c6eedb090a9d80d5e3733997719b66987b4090611fb6046a5f48",
       "mode": "100644"
     },
     {
       "path": "tools/xai_http.py",
-      "sourceBlob": "bdf19b1779532d2fc7c35de0cc7bcc22dcd8e010",
-      "sha256": "f335be8f7ef2c2c56991a7af42ebe4680e5480eb760f14869d18242d310feaa8",
+      "sourceBlob": "16eae42e7714c0a309b66fb304e200650f0148e6",
+      "sha256": "ba364f86315d9fbda81835095de71ea4556bdef2578aa25b02f558feb2075b41",
       "mode": "100644"
     },
     {
@@ -49973,6 +49973,11 @@
         "sha256": "2da11fce6f8bc0e40de473733fcb0ca16fe390d90c91ac5de812c8414c430982"
       },
       {
+        "baseSha256": "2c9692ed19969c867ea95a8a6e30c7c862ecb8db24c6b7a4959e727b2e71a563",
+        "path": "plugins/image_gen/xai/__init__.py",
+        "sha256": "990490b97a9966d6e49f6954b37eab9e6e5222a44a3a67c031dd144e28a94e92"
+      },
+      {
         "baseSha256": "d59d6bf990b3817b33dc2b5477d61396d18882092ea9964c8321f48da168059e",
         "path": "plugins/model-providers/ai-gateway/__init__.py",
         "sha256": "ced374dbe2272c158df7106fb4964917d3b63b90f583057a5b65a3677d9de0b3"
@@ -50003,9 +50008,19 @@
         "sha256": "6c16643e54401a6e2d3ab3c190b45544b5de77db01a5981e471c72adb6c7f0e5"
       },
       {
+        "baseSha256": "2415781d9035a54c1e2a63d0d079a93a0e54322b0f783af2565bf949392632dd",
+        "path": "plugins/video_gen/xai/__init__.py",
+        "sha256": "1ec768a22d1275c8b2279051ce1d840023119c8eef4af209663c019b873300fa"
+      },
+      {
         "baseSha256": "68956ce43b79e3a4e8f2e690a6f69565e94d2a9b777ea366dfd37b286bdbb35a",
         "path": "plugins/web/perplexity/provider.py",
         "sha256": "ac570300bbeefc19c9c156508a436132a91ac4909b1b7e349f4d9e8a0665c03f"
+      },
+      {
+        "baseSha256": "12ebc53aa33d8bb9ae15bb751c3f109abcba0d94272f0a45c71c0fd797adc16b",
+        "path": "plugins/web/xai/provider.py",
+        "sha256": "d7e6eed01153f334ca60bc892767ab34a89d960e59098b0e39044c47efe5ba4e"
       },
       {
         "path": "pm/artifact_mirror.py",
@@ -50083,6 +50098,26 @@
         "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f"
       },
       {
+        "baseSha256": "fdc3080093040ce4db6e09eb2a749127a78fac750500bdb6e586df93d67f281a",
+        "path": "tools/transcription_cloud.py",
+        "sha256": "b2a5b62b1d00db6398df6053ce6cb7647251cb5779b94107a0bf16a9417026d9"
+      },
+      {
+        "baseSha256": "b7ea3efa78490dc858631ae287256652577382faff9fdc9d6487790003e3287f",
+        "path": "tools/tts_tool_providers.py",
+        "sha256": "d65560482ff926f9304a399a135dbd192716a39a1f5496e08b917a2277b2b37d"
+      },
+      {
+        "baseSha256": "94294eaee1614e0298ec50615db83cb83e4d329eb9d85127f9342b83a670e679",
+        "path": "tools/x_search_tool.py",
+        "sha256": "e148a4f62a41c6eedb090a9d80d5e3733997719b66987b4090611fb6046a5f48"
+      },
+      {
+        "baseSha256": "f335be8f7ef2c2c56991a7af42ebe4680e5480eb760f14869d18242d310feaa8",
+        "path": "tools/xai_http.py",
+        "sha256": "ba364f86315d9fbda81835095de71ea4556bdef2578aa25b02f558feb2075b41"
+      },
+      {
         "path": "tui_gateway/contracts/sessions.py",
         "baseSha256": "b6e768c172a8b5737f1a5525bbdfdce2152b385a33c6e04b0be35f32396dd318",
         "sha256": "0ab1977af21b66cf4a6a679703b35f70e3769d335435b52381fe363c6bb720b7"
@@ -50103,6 +50138,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "187cd1aba0bf51cc29143fffe5d6dbdf2bb6c850251e6e8187161c0d502dc35a"
+    "sha256": "0dc374e4bcd5712bf9ba10e0d6c157f0873175cca1a0fec45e960472444e4aca"
   }
 }

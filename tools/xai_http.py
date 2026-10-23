@@ -49,8 +49,10 @@ def has_xai_credentials() -> bool:
         return False
 
 
-def hermes_xai_user_agent() -> str:
-    """Return a stable Hermes-specific User-Agent for xAI HTTP calls."""
+def hermes_xai_user_agent() -> Optional[str]:
+    """Return the Hermes xAI User-Agent in Hermes mode; Mithril has no attribution opt-in."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     try:
         from hermes_cli.version_info import get_version_info
         return f"Hermes-Agent/{get_version_info().base_version}"
@@ -59,8 +61,9 @@ def hermes_xai_user_agent() -> str:
 
 
 def hermes_xai_default_headers() -> Dict[str, str]:
-    """Default headers for OpenAI-SDK and raw HTTP clients talking to xAI (replaces the SDK User-Agent)."""
-    return {"User-Agent": hermes_xai_user_agent()}
+    """Hermes xAI attribution headers, empty in Mithril mode."""
+    user_agent = hermes_xai_user_agent()
+    return {"User-Agent": user_agent} if user_agent else {}
 
 
 _TRUE_WORDS = {"1", "true", "yes", "on", "enabled"}

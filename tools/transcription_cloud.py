@@ -285,7 +285,9 @@ def _transcribe_xai(
                      if is_truthy_value(xai_config.get(flag, default))})
 
         def _post_transcription(bearer: str, endpoint_base_url: str):
-            headers = {"Authorization": f"Bearer {bearer}", "User-Agent": hermes_xai_user_agent()}
+            headers = {"Authorization": f"Bearer {bearer}"}
+            if user_agent := hermes_xai_user_agent():
+                headers["User-Agent"] = user_agent
             return _post_audio_multipart(f"{endpoint_base_url}/stt", headers, file_path, data)
 
         response = _post_transcription(api_key, _resolve_base_url(creds))
