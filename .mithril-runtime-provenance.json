@@ -49859,7 +49859,7 @@
       },
       {
         "path": "hermes_cli/auth.py",
-        "baseSha256": "07fc79cf699723fb18fbe6926bc14854bcfedc20074dc7542ad04a24de48089b",
+        "baseSha256": "15fc74ef51f949b7dea0f9b447791046e2f4d2bba01883885b6d4420c1b19479",
         "sha256": "585868dfd365f88ff0b657301135ded85462786b1323a5ce5548f86360fa3653"
       },
       {
@@ -49880,7 +49880,7 @@
       {
         "path": "hermes_cli/config_defaults.py",
         "baseSha256": "807e1334c7ba8911172e2cb516eb7e15e1820899c3578cb087bf71deeb9c04d7",
-        "sha256": "8adf9f050e6b950f644442091ed72a6a0ce25165e77fe4cc37e1b0905cbd0f04"
+        "sha256": "807e1334c7ba8911172e2cb516eb7e15e1820899c3578cb087bf71deeb9c04d7"
       },
       {
         "path": "hermes_cli/local_runtime/catalog.py",
@@ -49950,7 +49950,7 @@
       {
         "path": "hermes_cli/subcommands/update.py",
         "baseSha256": "5c5db83b6dc0ddb90a53dcb407816dd6830052d772650ed2486629401a52abf0",
-        "sha256": "6b1537d124ee0794cec5a57640bd56c3e8e34e86be9f750d6f9b4785416fec9f"
+        "sha256": "5c5db83b6dc0ddb90a53dcb407816dd6830052d772650ed2486629401a52abf0"
       },
       {
         "path": "hermes_cli/update_cmd.py",
@@ -49985,7 +49985,7 @@
       {
         "path": "scripts/install.ps1",
         "baseSha256": "5204fb92ced8b94af58e9ce37151cbbbc489b3b03ca81830a57362362d3d20da",
-        "sha256": "d133bd5c2a43d8850eae01b968d0178fd0b36a4ea38e4f16cccae41278c8234b"
+        "sha256": "243776c19db71d50a91265b40eb0e466ff4cd3c6d0df6ec6731abdb728f29c92"
       },
       {
         "path": "scripts/install.sh",
@@ -50063,6 +50063,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "678a8a4021a60e2ef71d4855476e064cc0fd5d52822e0fc22b0e5163eb932000"
+    "sha256": "c40d3c79916477950fdefe4a0f3252bde21510545289a451c12ce53ad3fb8958"
   }
 }
