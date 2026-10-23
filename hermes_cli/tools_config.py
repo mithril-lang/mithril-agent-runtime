@@ -1075,10 +1075,13 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     if getattr(args, "summary", False):
         _print_tools_summary(config, enabled_platforms)
         return
-    print(color("☤ Hermes Tool Configuration", Colors.CYAN, Colors.BOLD))
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    product_name = "Mithril Agent" if mithril_agent else "Hermes"
+    print(color(f"☤ {product_name} Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
-    print(color("  Guide: https://hermes-agent.nousresearch.com/docs/user-guide/features/tools", Colors.DIM))
+    if not mithril_agent:
+        print(color("  Guide: https://hermes-agent.nousresearch.com/docs/user-guide/features/tools", Colors.DIM))
     print()
     if first_install:
         _first_install_flow(config, enabled_platforms)
