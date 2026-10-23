@@ -343,10 +343,8 @@ def _beta_header(betas: list) -> Dict[str, str]:
 def _attribution_headers() -> Dict[str, str]:
     """Same client-attribution set sent to OpenRouter / Vercel AI Gateway / Fireworks."""
     if os.environ.get("MITHRIL_AGENT") == "1":
-        return {
-            "X-Title": "Mithril Agent",
-            "User-Agent": f"MithrilAgent/{get_version_info().base_version}",
-        }
+        # Provider attribution is optional; Mithril mode has no user opt-in for it.
+        return {}
     return {
         "HTTP-Referer": "https://hermes-agent.nousresearch.com", "X-Title": "Hermes Agent",
         "User-Agent": f"HermesAgent/{get_version_info().base_version}",

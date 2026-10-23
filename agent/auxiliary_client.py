@@ -912,10 +912,9 @@ def build_or_headers(or_config: dict | None = None) -> dict:
     """
     headers = dict(_OR_HEADERS_BASE)
     if os.environ.get("MITHRIL_AGENT") == "1":
-        # Attribution headers are optional; never identify Mithril traffic as Hermes or
-        # attach the Hermes-owned site URL to a user-selected provider request.
-        headers.pop("HTTP-Referer", None)
-        headers["X-Title"] = "Mithril Agent"
+        # These are optional provider attribution tags, and Mithril mode has no user opt-in.
+        for key in ("HTTP-Referer", "X-Title", "X-OpenRouter-Categories"):
+            headers.pop(key, None)
     if or_config is None:
         try:
             from hermes_cli.config import load_config_readonly
@@ -943,6 +942,8 @@ _NVIDIA_NIM_CLOUD_HEADERS = {"X-BILLING-INVOKE-ORIGIN": "HermesAgent"}
 
 def build_nvidia_nim_headers(base_url: str | None) -> dict:
     """Return NVIDIA NIM cloud attribution headers for build.nvidia.com traffic."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {}
     return dict(_NVIDIA_NIM_CLOUD_HEADERS) if base_url_host_matches(str(base_url or ""), "integrate.api.nvidia.com") else {}
 
 
@@ -950,10 +951,7 @@ def build_nvidia_nim_headers(base_url: str | None) -> dict:
 from hermes_cli.version_info import get_version_info
 
 if os.environ.get("MITHRIL_AGENT") == "1":
-    _AI_GATEWAY_HEADERS = {
-        "X-Title": "Mithril Agent",
-        "User-Agent": f"MithrilAgent/{get_version_info().base_version}",
-    }
+    _AI_GATEWAY_HEADERS = {}
 else:
     _AI_GATEWAY_HEADERS = {
         "HTTP-Referer": "https://hermes-agent.nousresearch.com",

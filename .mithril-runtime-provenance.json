@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "d2964b951ba931a7fd3d5e6f81993759bb19bf17",
-  "sourceTree": "40a12d4796e8849ed56e092a79b2a297e14e7dfc",
+  "sourceRevision": "af540392c12446294859dda12eb6ea4987cc64d3",
+  "sourceTree": "4c23f27969cf86014564c6c16034c8eae9d36f1e",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -230,8 +230,8 @@
     },
     {
       "path": "agent/anthropic_adapter.py",
-      "sourceBlob": "44743bfa04667b897018084aa4ac04e87adc1d38",
-      "sha256": "ae9fc5941387db5474462c155dd6be1eea26b601026f5027283e81e4ed4ccf56",
+      "sourceBlob": "daa8062ee293b2a71efa483bf8eab913420f25df",
+      "sha256": "c76497fb7035a66dbc6b15dc18fcdb764f107696a939958165f2c94295a8684d",
       "mode": "100644"
     },
     {
@@ -284,8 +284,8 @@
     },
     {
       "path": "agent/auxiliary_client.py",
-      "sourceBlob": "9cba2e7bb8109020436cef293a9fc1479f1e958d",
-      "sha256": "9f1c2fd73bbf853f35db4d8a83988a3c0bcd138a37d12e9af9607238c1161ab1",
+      "sourceBlob": "51d5036ee97cea2585220f1f3d11d08b4af18317",
+      "sha256": "971163ad2506777f3978ae385f27990ee79bec185e4afd0b096000ad1583de21",
       "mode": "100644"
     },
     {
@@ -49785,7 +49785,7 @@
       {
         "path": "agent/auxiliary_client.py",
         "baseSha256": "4a1173a9ffe898c987e8abaf6e9e5b2fcba8745089ed6a504f6f420c837bff6d",
-        "sha256": "9f1c2fd73bbf853f35db4d8a83988a3c0bcd138a37d12e9af9607238c1161ab1"
+        "sha256": "971163ad2506777f3978ae385f27990ee79bec185e4afd0b096000ad1583de21"
       },
       {
         "path": "agent/billing_links.py",
@@ -50063,6 +50063,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "d15b08b7241e58dd38dde66056cabc2e6fd1dd33f67a5967dd4fd23d130047f6"
+    "sha256": "0c62a44cbcad17e89821726b02b56106ce9db384e566e7a076b47d4479201dae"
   }
 }
