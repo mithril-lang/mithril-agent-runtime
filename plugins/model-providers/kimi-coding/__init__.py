@@ -6,14 +6,14 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agent.reasoning_effort import KIMI_K3_EFFORTS, KIMI_K3_OVERRIDES, thinking_toggle_extras
-from hermes_cli.version_info import get_version_info
+from hermes_cli.request_identity import agent_user_agent
 from providers import register_provider
 from providers.base import OMIT_TEMPERATURE, ProviderProfile
 
 # Kimi Coding requires a User-Agent sentinel; keep it with gzip transport settings.
 # The optional Hermes attribution URL/title are only sent in Hermes mode.
 _HEADERS = {
-    "User-Agent": f"HermesAgent/{get_version_info().base_version}",
+    "User-Agent": agent_user_agent(),
     # Exclude brotli: httpx's brotlicffi backend has a streaming decode bug on
     # Moonshot's content-encoding: br SSE responses (#28043, #48428, #59556).
     # gzip sidesteps it while still compressing the transfer.
