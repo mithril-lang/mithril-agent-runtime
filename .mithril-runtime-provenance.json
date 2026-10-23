@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "de069905f0ca086dff6f31e2db9a100de110df38",
-  "sourceTree": "6ed639046c6e31e638710cfa2945af1584df1573",
+  "sourceRevision": "0204e8b77581a3d39c51b02359d4e9608472f507",
+  "sourceTree": "0c09d48cdc4dc746eadefacd26f6a0f8e61b6307",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -25028,8 +25028,8 @@
     },
     {
       "path": "hermes_cli/_startup_fast.py",
-      "sourceBlob": "8b5b2efe157827b3050f3214936ba019d8b54e4e",
-      "sha256": "7f73096a3b283b133a44e2f57f39b054695d484534bfd403b56e0c127ebac626",
+      "sourceBlob": "8270cc9ecff3aacff7ab979eeb04c3361a51c4ab",
+      "sha256": "c50a5a995f219019aa420803a18f0ea64a8c03b539e881fe7e4f686c68037140",
       "mode": "100644"
     },
     {
@@ -25262,8 +25262,8 @@
     },
     {
       "path": "hermes_cli/banner.py",
-      "sourceBlob": "a1cef2146957b8722367651e352a137b452eb345",
-      "sha256": "7af6d57376785fc805b6ec9e75377f211aa67b3bbd95a372aa6ba9ed58af783f",
+      "sourceBlob": "f2a1a0f517094ac94b9d5a4bec4a74039182494f",
+      "sha256": "bcd34904201619bf41ccce5fe6619196a8d6bfd12b0f51cc4a10c132d7e775fb",
       "mode": "100644"
     },
     {
@@ -49743,7 +49743,7 @@
   ],
   "sessionController": {
     "repository": "mithril-lang/mithril-fund",
-    "sourceRevision": "de069905f0ca086dff6f31e2db9a100de110df38",
+    "sourceRevision": "0204e8b77581a3d39c51b02359d4e9608472f507",
     "files": [
       {
         "path": "scripts/mithril-runtime/session.py",
