@@ -49731,7 +49731,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "d5fbcc7ea29c19c5329cddfdb48234ad7875f90338256f3a7a86ff1b52113b0d",
+    "sha256": "576ac6adb4ac8bf1935cf362f5a90ae02d6b858973ac89c1293b0f44a9d1b468",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49744,9 +49744,14 @@
         "sha256": "cff9a55ba49c3bf13315acff22cdb895f3c92368b30678eb3a54258d9c70075f"
       },
       {
+        "path": "Formula/mithril-agent.rb",
+        "baseSha256": "4d908abffc64ab027c8263df977124ee1c056f08828f53e9fbe6fe739ded42ba",
+        "sha256": "be78af4191504d179f6dbee486cfd9baec78b7aaf68b3be92f8d8c8f4169aaaa"
+      },
+      {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "a9cf428ece7b87d503fe604fd2b0ed667aef473a84fb36e5d8a9999f4a228618"
+        "sha256": "2107add4b555abe88dacfcbbe1d87b55699bbbcc34cac0d3af6667e4c94fde5b"
       },
       {
         "path": "agent/auxiliary_client.py",
@@ -49804,7 +49809,7 @@
       {
         "path": "scripts/install-mithril.sh",
         "baseSha256": "6aa67b1cf9a10c49015c2cfc533edf85d1e957d6d7710a5c25cb80767b46d9ca",
-        "sha256": "dc630ee33cc41660a3f49589cd7057961a4a194c87ce5290929d555d40269d95"
+        "sha256": "a4f9b5bc92047a74a1286d63d2a32cf58522eb1290f11232dcc36a9e1256b887"
       },
       {
         "path": "scripts/mithril",
