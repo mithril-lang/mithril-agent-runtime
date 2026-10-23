@@ -634,13 +634,13 @@ def _run_debug_share_nous(args, *, log_lines: int, redact: bool) -> None:
 
 def run_debug_delete(args):
     """Delete one or more paste URLs uploaded by /debug."""
+    if _is_mithril_agent():
+        print("Mithril Agent does not manage external paste URLs. No request was sent.")
+        return
     urls = getattr(args, "urls", [])
     if not urls:
         print("Usage: hermes debug delete <url> [<url> ...]\n"
               "  Deletes paste.rs pastes uploaded by 'hermes debug share'.")
-        return
-    if _is_mithril_agent():
-        print("Mithril Agent does not manage external paste URLs. No request was sent.")
         return
     for url in urls:
         try:
@@ -660,7 +660,7 @@ def run_debug(args):
     handler = {"share": run_debug_share, "delete": run_debug_delete}.get(
         getattr(args, "debug_command", None))
     if handler is None:
-        print(_DEBUG_USAGE)
+        print(_MITHRIL_DEBUG_USAGE if _is_mithril_agent() else _DEBUG_USAGE)
     else:
         handler(args)
 
@@ -682,3 +682,13 @@ Options (share):
 
 Options (delete):
   <url> ...    One or more paste URLs to delete"""
+
+_MITHRIL_DEBUG_USAGE = """\
+Usage: mithril debug share --local
+
+Print a redacted diagnostics report locally. Mithril Agent does not upload to
+public paste services or Nous, and does not manage external paste URLs.
+
+Options:
+  --lines N    Number of log lines to include (default: 200)
+  --local      Print the report locally without uploading"""
