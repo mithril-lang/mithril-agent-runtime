@@ -5,6 +5,7 @@ if [ "${1:-}" = '--installer-help' ]; then
     exec sh "$installer" --help
 fi
 export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
+export MITHRIL_AGENT_CLI_LAUNCHER=1
 runtime="$HERMES_HOME/agent/.hermes/bin/hermes"
 if [ ! -x "$runtime" ]; then
     sh "$installer"

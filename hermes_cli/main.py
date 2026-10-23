@@ -3640,6 +3640,9 @@ def main():
 
         logging.getLogger(__name__).debug("pm startup check failed", exc_info=True)
 
+    from hermes_cli.mithril_startup import before_chat
+    before_chat()
+
     if _try_termux_fast_tui_launch():
         return
     if _try_termux_fast_cli_launch():
