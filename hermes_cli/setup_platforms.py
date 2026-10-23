@@ -4,6 +4,7 @@ helpers on hermes_cli.setup, so those are imported lazily per function."""
 
 import contextlib
 import logging
+import os
 import re
 from pathlib import Path
 
@@ -234,6 +235,7 @@ def _setup_bluebubbles():
 def _setup_webhooks():
     """Configure webhook integration."""
     from hermes_cli.setup import _info, print_header, print_success, print_warning, prompt, save_env_value
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
     print_header("Webhooks")
     if declines_reconfigure("Webhooks", "Reconfigure webhooks?", "WEBHOOK_ENABLED"):
         return
@@ -242,7 +244,8 @@ def _setup_webhooks():
     print_warning("   internet. For security, run the gateway in a sandboxed environment")
     print_warning("   (Docker, VM, etc.) to limit blast radius from prompt injection.")
     print()
-    _info("   Full guide: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/", None)
+    if not mithril_agent:
+        _info("   Full guide: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/", None)
     _save_port("WEBHOOK_PORT", prompt("Webhook port (default 8644)"), "8644")
     save_prompted("WEBHOOK_SECRET", "Global HMAC secret (shared across all routes)", password=True,
                    success_msg="Webhook secret saved",
@@ -251,15 +254,21 @@ def _setup_webhooks():
     print()
     print_success("Webhooks enabled! Next steps:")
     from hermes_constants import display_hermes_home as _dhh
-    _info(f"   1. Define webhook routes in {_dhh()}/config.yaml",
-          "   2. Point your service (GitHub, GitLab, etc.) at:",
-          "      http://your-server:8644/webhooks/<route-name>", None,
-          "   Route configuration guide:",
-          "   https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/#configuring-routes",
-          None,
-          # Printed twice upstream; kept verbatim for output parity.
-          "   Open config in your editor:  hermes config edit",
-          "   Open config in your editor:  hermes config edit")
+    if mithril_agent:
+        _info(f"   1. Define webhook routes in {_dhh()}/config.yaml",
+              "   2. Point your service (GitHub, GitLab, etc.) at:",
+              "      http://your-server:8644/webhooks/<route-name>", None,
+              "   Open config in your editor:  mithril config edit")
+    else:
+        _info(f"   1. Define webhook routes in {_dhh()}/config.yaml",
+              "   2. Point your service (GitHub, GitLab, etc.) at:",
+              "      http://your-server:8644/webhooks/<route-name>", None,
+              "   Route configuration guide:",
+              "   https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/#configuring-routes",
+              None,
+              # Printed twice upstream; kept verbatim for output parity.
+              "   Open config in your editor:  hermes config edit",
+              "   Open config in your editor:  hermes config edit")
 
 
 # (platform label, credential env var, home-channel env vars — any one satisfies)
