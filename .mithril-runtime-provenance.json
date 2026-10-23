@@ -49912,7 +49912,7 @@
       {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
-        "sha256": "c1444a208ac09193c01b8f8b2ff556ddd16372279ba52ee1c9cc22558f72e28d"
+        "sha256": "51cdcbea1e3ce6a0db116137a51091a3d987688ec4a3abb68823dfbaafc0d728"
       },
       {
         "path": "hermes_cli/main_platform_setup.py",
@@ -50180,6 +50180,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "be40f8e36090dce6437752b7b7859be4b232a8536f0b2a5a0765bc164ae61286"
+    "sha256": "2add596a23ad2666c4482d1e99d96b4518a3e4bf440d34cadf0f85b1e5fb02aa"
   }
 }
