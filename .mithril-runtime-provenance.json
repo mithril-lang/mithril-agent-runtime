@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "0204e8b77581a3d39c51b02359d4e9608472f507",
-  "sourceTree": "0c09d48cdc4dc746eadefacd26f6a0f8e61b6307",
+  "sourceRevision": "d2964b951ba931a7fd3d5e6f81993759bb19bf17",
+  "sourceTree": "40a12d4796e8849ed56e092a79b2a297e14e7dfc",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -40178,8 +40178,8 @@
     },
     {
       "path": "scripts/standalone/gateway-desktop.py",
-      "sourceBlob": "81e9dafb3eaddff7b6d455a2388d667e7a0ef50a",
-      "sha256": "0c6c63c8ada7297a97890084ec965d023338e575cae97b1b4977afc0356758d9",
+      "sourceBlob": "2c17de359857aed941ff2515867f112406a3036a",
+      "sha256": "8067a9851c6aab32a178a35b3dfb11f45c537609f00d0b2b4411bd3108785043",
       "mode": "100644"
     },
     {
@@ -40214,8 +40214,8 @@
     },
     {
       "path": "scripts/standalone/gateway-trial-start.py",
-      "sourceBlob": "c89c1a4e8c2bdc5fc7a0e8b87ba61b58f427606d",
-      "sha256": "b22f038787d1a2fd13ea5cc26945bd3435d05b415c8fefc1c08eabcc76d46401",
+      "sourceBlob": "fbebb106378c8c04b1722870e20dc7b07acbcc85",
+      "sha256": "8693f98ebe630ae54b2626506a062e1a83bed41c785242a025597740f362acea",
       "mode": "100644"
     },
     {
@@ -40226,8 +40226,8 @@
     },
     {
       "path": "scripts/standalone/gateway.mjs",
-      "sourceBlob": "a45f7ecb6ddfbc88470cd744ebcfc290dad45143",
-      "sha256": "a090d0fe5aa6f89f650f6b2d5f1eca5de1442d7c3b7830c10cdb76f551d7e5d1",
+      "sourceBlob": "7019385d9e423f2e8c2ea39037f3c6295a0afa52",
+      "sha256": "37efe77221f0b86a886c01e50a454f8e5306d80e124af5a5e3b14a8e6763e77d",
       "mode": "100644"
     },
     {
@@ -50015,7 +50015,7 @@
       {
         "path": "scripts/standalone/gateway.mjs",
         "baseSha256": "aafc9b1585851c331d0732fe4401cd4dc33f0f441ec50ef802ce0d49b6939876",
-        "sha256": "a090d0fe5aa6f89f650f6b2d5f1eca5de1442d7c3b7830c10cdb76f551d7e5d1"
+        "sha256": "37efe77221f0b86a886c01e50a454f8e5306d80e124af5a5e3b14a8e6763e77d"
       },
       {
         "path": "tools/mcp_oauth.py",
@@ -50063,6 +50063,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "c40d3c79916477950fdefe4a0f3252bde21510545289a451c12ce53ad3fb8958"
+    "sha256": "d15b08b7241e58dd38dde66056cabc2e6fd1dd33f67a5967dd4fd23d130047f6"
   }
 }
