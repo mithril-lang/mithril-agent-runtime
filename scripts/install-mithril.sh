@@ -89,6 +89,7 @@ staged="$bin_dir/.mithril-install.$$"
     printf '%s\n' 'if [ -z "${HERMES_HOME:-}" ]; then'
     printf '    export HERMES_HOME=%s\n' "$(quote "$profile_home")"
     printf '%s\n' 'fi'
+    printf '%s\n' 'export MITHRIL_AGENT_CLI_LAUNCHER=1'
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
     printf '    exec python3 -I %s "$@"\n' "$(quote "$install_dir/scripts/mithril-runtime/session.py")"
     printf '%s\n' 'fi'
