@@ -1,6 +1,7 @@
 """Kimi / Moonshot provider profiles (chat_completions path; sk-kimi-* keys are
 redirected to api.kimi.com/coding by core)."""
 
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -9,15 +10,20 @@ from hermes_cli.version_info import get_version_info
 from providers import register_provider
 from providers.base import OMIT_TEMPERATURE, ProviderProfile
 
+# Kimi Coding requires a User-Agent sentinel; keep it with gzip transport settings.
+# The optional Hermes attribution URL/title are only sent in Hermes mode.
 _HEADERS = {
-    "HTTP-Referer": "https://hermes-agent.nousresearch.com",
-    "X-Title": "Hermes Agent",
     "User-Agent": f"HermesAgent/{get_version_info().base_version}",
     # Exclude brotli: httpx's brotlicffi backend has a streaming decode bug on
     # Moonshot's content-encoding: br SSE responses (#28043, #48428, #59556).
     # gzip sidesteps it while still compressing the transfer.
     "Accept-Encoding": "gzip",
 }
+if os.environ.get("MITHRIL_AGENT") != "1":
+    _HEADERS.update({
+        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "X-Title": "Hermes Agent",
+    })
 
 
 def _is_confirmed_kimi_coding_url(base_url: str) -> bool:

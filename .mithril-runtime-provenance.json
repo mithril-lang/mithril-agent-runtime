@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "af540392c12446294859dda12eb6ea4987cc64d3",
-  "sourceTree": "4c23f27969cf86014564c6c16034c8eae9d36f1e",
+  "sourceRevision": "d3c3cec465855805be2537f12a1262d5bb8e0b9d",
+  "sourceTree": "81e5553b0fa08880925a8e7f535b875d39107c3d",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -36944,8 +36944,8 @@
     },
     {
       "path": "plugins/image_gen/openrouter/__init__.py",
-      "sourceBlob": "7b26a7c99977362fc4523d4623701fc43cb6b0f9",
-      "sha256": "9108e5ca7752eebc1ce16b2620bc527905b844b8bac3712f3201ab8f75290c57",
+      "sourceBlob": "09a2e7eaae4143c7c3e7a1d7836ff0956da9fd66",
+      "sha256": "2da11fce6f8bc0e40de473733fcb0ca16fe390d90c91ac5de812c8414c430982",
       "mode": "100644"
     },
     {
@@ -37358,8 +37358,8 @@
     },
     {
       "path": "plugins/model-providers/ai-gateway/__init__.py",
-      "sourceBlob": "409476ecf6151c4bab4ae441c3bc7c05d88b858a",
-      "sha256": "d59d6bf990b3817b33dc2b5477d61396d18882092ea9964c8321f48da168059e",
+      "sourceBlob": "f0074288762095ce259e80938aad61a4447580ad",
+      "sha256": "ced374dbe2272c158df7106fb4964917d3b63b90f583057a5b65a3677d9de0b3",
       "mode": "100644"
     },
     {
@@ -37514,8 +37514,8 @@
     },
     {
       "path": "plugins/model-providers/fireworks/__init__.py",
-      "sourceBlob": "e8b67e39e79070041ed13ff39a38cbc4d7b676d2",
-      "sha256": "a0fa31f422ebea9af020da6a42f8f55f3cdf5872bb61b296f2d1c8f6f4e69d31",
+      "sourceBlob": "fb532ee31e9d92e51a1498b744f8697cbd79dc95",
+      "sha256": "0130486628416bef1a15f734c3e12b62e911ffa039425fa0c4acb514e40dc57b",
       "mode": "100644"
     },
     {
@@ -37538,8 +37538,8 @@
     },
     {
       "path": "plugins/model-providers/gmi/__init__.py",
-      "sourceBlob": "942b7452a66db1598e621fc2192cf4e95b3180c6",
-      "sha256": "1cfc7c6501d977b22878674091a10ac896809a695a63c76bcf30e3ed900de910",
+      "sourceBlob": "c16b98e0d56f5a18f6caa64b1fdfce217b98a9cd",
+      "sha256": "6beb93d5b280154a07ac91a08a7331caf7b68275f492e3ca5c500dc4efa7582c",
       "mode": "100644"
     },
     {
@@ -37574,8 +37574,8 @@
     },
     {
       "path": "plugins/model-providers/kimi-coding/__init__.py",
-      "sourceBlob": "440c0df5f869973679c7cef82ebf2b8ee2b5dd57",
-      "sha256": "2e46a8a248787ab6f253cdbe7a4d0208f196a728a947efdac81843bf2e0abea5",
+      "sourceBlob": "ef682f05d82c02a499265b02063ccb2b8a62de6e",
+      "sha256": "98b2fafd4baa5be3ddb9265b6927696224581b9568a6db0cf4db48de344134be",
       "mode": "100644"
     },
     {
@@ -37682,8 +37682,8 @@
     },
     {
       "path": "plugins/model-providers/opencode-zen/__init__.py",
-      "sourceBlob": "da334bc48c7bf6f94f85cb0548e70f5e95813765",
-      "sha256": "829502d68fde46e219e2146dec497719d5c0142a237dd8bb800354e612a25565",
+      "sourceBlob": "b99ea63e1fcf9480c3ae2fc63009fb28ef8b8d29",
+      "sha256": "8ed73895e886a3b0288964c62bdb6461eb393818b4d4e6c8c06849ffc20cff03",
       "mode": "100644"
     },
     {
@@ -38636,8 +38636,8 @@
     },
     {
       "path": "plugins/video_gen/openrouter/__init__.py",
-      "sourceBlob": "6c8c8180168f27b09ba9a5dd8677cbeeec85272c",
-      "sha256": "bc1a130bafe7b85b58011082e6524dfe289ea73cecc77afa8c54f40287cb2a33",
+      "sourceBlob": "030355594bb64b82bc55affaf8cfb0858357d277",
+      "sha256": "6c16643e54401a6e2d3ab3c190b45544b5de77db01a5981e471c72adb6c7f0e5",
       "mode": "100644"
     },
     {
@@ -38822,8 +38822,8 @@
     },
     {
       "path": "plugins/web/perplexity/provider.py",
-      "sourceBlob": "b2d446f5d88076783b2a93e77fce45c62a1357a0",
-      "sha256": "68956ce43b79e3a4e8f2e690a6f69565e94d2a9b777ea366dfd37b286bdbb35a",
+      "sourceBlob": "964b58d9a33cff6f7ae1831c98b16a534dca93e5",
+      "sha256": "ac570300bbeefc19c9c156508a436132a91ac4909b1b7e349f4d9e8a0665c03f",
       "mode": "100644"
     },
     {
@@ -49968,6 +49968,46 @@
         "sha256": "f3c5373824c0b5184ae27b6237c524dd3ea9fa61c0b34a2c08111087dc1072e4"
       },
       {
+        "baseSha256": "9108e5ca7752eebc1ce16b2620bc527905b844b8bac3712f3201ab8f75290c57",
+        "path": "plugins/image_gen/openrouter/__init__.py",
+        "sha256": "2da11fce6f8bc0e40de473733fcb0ca16fe390d90c91ac5de812c8414c430982"
+      },
+      {
+        "baseSha256": "d59d6bf990b3817b33dc2b5477d61396d18882092ea9964c8321f48da168059e",
+        "path": "plugins/model-providers/ai-gateway/__init__.py",
+        "sha256": "ced374dbe2272c158df7106fb4964917d3b63b90f583057a5b65a3677d9de0b3"
+      },
+      {
+        "baseSha256": "a0fa31f422ebea9af020da6a42f8f55f3cdf5872bb61b296f2d1c8f6f4e69d31",
+        "path": "plugins/model-providers/fireworks/__init__.py",
+        "sha256": "0130486628416bef1a15f734c3e12b62e911ffa039425fa0c4acb514e40dc57b"
+      },
+      {
+        "baseSha256": "1cfc7c6501d977b22878674091a10ac896809a695a63c76bcf30e3ed900de910",
+        "path": "plugins/model-providers/gmi/__init__.py",
+        "sha256": "6beb93d5b280154a07ac91a08a7331caf7b68275f492e3ca5c500dc4efa7582c"
+      },
+      {
+        "baseSha256": "2e46a8a248787ab6f253cdbe7a4d0208f196a728a947efdac81843bf2e0abea5",
+        "path": "plugins/model-providers/kimi-coding/__init__.py",
+        "sha256": "98b2fafd4baa5be3ddb9265b6927696224581b9568a6db0cf4db48de344134be"
+      },
+      {
+        "baseSha256": "829502d68fde46e219e2146dec497719d5c0142a237dd8bb800354e612a25565",
+        "path": "plugins/model-providers/opencode-zen/__init__.py",
+        "sha256": "8ed73895e886a3b0288964c62bdb6461eb393818b4d4e6c8c06849ffc20cff03"
+      },
+      {
+        "baseSha256": "bc1a130bafe7b85b58011082e6524dfe289ea73cecc77afa8c54f40287cb2a33",
+        "path": "plugins/video_gen/openrouter/__init__.py",
+        "sha256": "6c16643e54401a6e2d3ab3c190b45544b5de77db01a5981e471c72adb6c7f0e5"
+      },
+      {
+        "baseSha256": "68956ce43b79e3a4e8f2e690a6f69565e94d2a9b777ea366dfd37b286bdbb35a",
+        "path": "plugins/web/perplexity/provider.py",
+        "sha256": "ac570300bbeefc19c9c156508a436132a91ac4909b1b7e349f4d9e8a0665c03f"
+      },
+      {
         "path": "pm/artifact_mirror.py",
         "baseSha256": "80554900b7372c76cb38392a93761229575520e27446fef6d3fb69cad84bfa5d",
         "sha256": "5a80a3157dbc25fb9ab451180bc07de4fff741d2b789125f1d8e1b0b466c1090"
@@ -50063,6 +50103,6 @@
         "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a"
       }
     ],
-    "sha256": "0c62a44cbcad17e89821726b02b56106ce9db384e566e7a076b47d4479201dae"
+    "sha256": "187cd1aba0bf51cc29143fffe5d6dbdf2bb6c850251e6e8187161c0d502dc35a"
   }
 }
