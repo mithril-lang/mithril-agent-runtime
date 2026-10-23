@@ -325,6 +325,8 @@ def nous_policy_present() -> Optional[bool]:
 
     ``None`` is unknown (older mint / unreadable claim) and must not be reported as "no policy".
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     try:
         from hermes_cli.auth import get_provider_auth_state, _decode_jwt_claims
 
@@ -588,6 +590,8 @@ def _dict_or_empty(value: Any) -> dict[str, Any]:
 
 
 def resolve_nous_portal_base_url() -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return ""
     from hermes_cli.auth import _nous_portal_base_url, get_provider_auth_state
 
     return _nous_portal_base_url(get_provider_auth_state("nous") or {})

@@ -63,13 +63,19 @@ def _warn_memory_provider_unavailable(name: str, reason: str = "") -> None:
     if name in _warned_unavailable_providers:
         return
     _warned_unavailable_providers.add(name)
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_agent:
+        help_text = "Check the selected memory provider's credentials and configuration."
+    else:
+        help_text = (
+            "Check the provider's credentials/config with 'hermes memory status'. Note: "
+            "systemd/gateway services do not inherit ~/.hermes/.env automatically; set "
+            "any required variables in the service environment.")
     logger.warning(
         "Memory provider %r is selected but reports unavailable — external memory "
-        "is disabled for this session (built-in memory still works). Check the "
-        "provider's credentials/config with 'hermes memory status'. Note: "
-        "systemd/gateway services do not inherit ~/.hermes/.env automatically; set "
-        "any required variables in the service environment.%s",
+        "is disabled for this session (built-in memory still works). %s%s",
         name,
+        help_text,
         f" {reason}" if reason else "",
     )
 
@@ -932,6 +938,11 @@ def _routed_client_kwargs(agent, fallback_model, _provider_timeout) -> Optional[
         raise RuntimeError(missing_provider_credentials_message(_explicit))
     from hermes_constants import profile_cli_selector
     _sel = profile_cli_selector()
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise RuntimeError(
+            "No LLM provider configured. Run `mithril model` to select a supported provider, "
+            "or `mithril login` to sign in and choose a Mithril model."
+        )
     raise RuntimeError(
         "No LLM provider configured. Run `hermes model` to "
         "select a provider, or run `hermes setup` for first-time "
@@ -981,6 +992,14 @@ def _init_openai_client(agent, api_key, base_url, fallback_model, _provider_time
             if not agent.quiet_mode:
                 print(f"🤖 AI Agent initialized with MoA preset: {agent.model}")
             return
+    _resolved_key = client_kwargs.get("api_key")
+    if isinstance(_resolved_key, str) and _resolved_key.startswith("mf_"):
+        from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+        _guard_mithril_account_token_origin({
+            "provider": agent.provider,
+            "api_key": _resolved_key,
+            "base_url": client_kwargs.get("base_url") or agent.base_url,
+        })
     from hermes_cli.providers import is_actual_route
     if is_actual_route(agent.provider, client_kwargs.get("base_url", "")):
         agent.api_mode = "chat_completions"
@@ -2438,6 +2457,13 @@ def init_agent(
         if isinstance(requested_provider, str) and requested_provider.strip()
         else agent.provider
     )
+    if os.environ.get("MITHRIL_AGENT") == "1" and (
+        agent.provider in {"nous", "nous-portal", "nousresearch"}
+        or base_url_host_matches(agent.base_url, "nousresearch.com")
+    ):
+        raise ValueError(
+            "Nous provider routes are unavailable in Mithril Agent. Choose a supported provider or model."
+        )
     agent.capabilities = {
         key: value for key, value in (capabilities or {}).items()
         if isinstance(key, str) and isinstance(value, bool)

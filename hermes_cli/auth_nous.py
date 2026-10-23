@@ -1305,6 +1305,8 @@ def get_nous_session_validity() -> str:
     only a *terminal* failure maps to "terminal" — a rotation blip, network error, or expiring
     token must NOT (that would trigger a spurious NAS re-mint on a healthy box).
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return NOUS_SESSION_UNKNOWN
     from hermes_cli.auth import get_provider_auth_state
     try:
         state = get_provider_auth_state("nous")

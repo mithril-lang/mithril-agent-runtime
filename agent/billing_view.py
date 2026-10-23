@@ -255,6 +255,8 @@ def fetch_portal_state(
     set on a portal/HTTP failure. Portal URL: server ``portalUrl`` (absolutized), else
     ``portal_fallback(portal_base_url)``.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return failed(error="billing_unavailable_in_mithril_agent")
     try:
         import hermes_cli.nous_billing as nb
     except Exception:
@@ -281,6 +283,8 @@ def fetch_portal_state(
 
 def build_billing_state(*, timeout: float = 15.0) -> BillingState:
     """Fetch + parse ``/api/billing/state``; fail-open. ``HERMES_DEV_BILLING_FIXTURE`` short-circuits to a fixture."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return BillingState(logged_in=False, error="billing_unavailable_in_mithril_agent")
     fixture = _dev_fixture_billing_state()
     if fixture is not None:
         return fixture
@@ -306,6 +310,8 @@ def _dev_fixture_billing_state() -> Optional[BillingState]:
     Names: nocard · card · card-sub · card-autoreload · notadmin · billing-off · logged-out; an
     unknown name yields logged-out with ``error`` so the misconfiguration is visible.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     name = (os.getenv("HERMES_DEV_BILLING_FIXTURE") or "").strip().lower()
     if not name:
         return None

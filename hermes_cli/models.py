@@ -64,6 +64,7 @@ from hermes_cli.models_local import (
     fetch_ollama_cloud_models)
 
 logger = logging.getLogger(__name__)
+_NOUS_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
 
 # Identify ourselves so endpoints fronted by Cloudflare's Browser Integrity
 # Check (error 1010) don't reject the default ``Python-urllib/*`` signature.
@@ -406,6 +407,8 @@ def fetch_nous_recommended_models(
 
 def _resolve_nous_portal_url() -> str:
     """Best-effort lookup of the Portal base URL the user is authed against."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return ""
     try:
         from hermes_cli.auth import DEFAULT_NOUS_PORTAL_URL, get_provider_auth_state
 
@@ -427,6 +430,8 @@ def get_nous_recommended_aux_model(
     force_refresh: bool = False) -> Optional[str]:
     """The Portal's recommended model for an auxiliary task: free tier → free pick only; paid tier →
     paid pick, falling back to the free one when the Portal returned ``null`` (staged rollouts)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     base = portal_base_url or _resolve_nous_portal_url()
     payload = fetch_nous_recommended_models(base, force_refresh=force_refresh)
     if not payload:
@@ -471,6 +476,8 @@ def recommended_nous_default_model() -> dict[str, Any]:
     is selectable (callers degrade). Shared by ``GET /api/model/recommended-default`` and the
     sign-in completion in ``hermes_cli.anon_auth`` so both land on the same model.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {"provider": "nous", "model": "", "free_tier": None}
     from hermes_cli import models_pricing as mp
     from hermes_cli.auth import get_provider_auth_state
 
@@ -880,6 +887,8 @@ def curated_models_for_provider(
     is unreachable.
     """
     normalized = normalize_provider(provider)
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     if normalized == "openrouter":
         return fetch_openrouter_models(force_refresh=force_refresh)
 
@@ -1373,6 +1382,8 @@ def _copilot_catalog(normalized: str, force_refresh: bool) -> Optional[list[str]
 
 
 def _nous_catalog(normalized: str, force_refresh: bool) -> Optional[list[str]]:
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from hermes_cli.auth import fetch_nous_models, resolve_nous_runtime_credentials
 
@@ -1721,6 +1732,8 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
         return _ollama_local_catalog(force_refresh)
 
     normalized = normalize_provider(provider)
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     # A configured `model.base_url` relay is TERMINAL for live catalog egress: the picker must
     # list what the configured endpoint serves and must never touch the vendor host (#121387).
     # A failed or empty probe degrades to the local curated list — falling through to the
@@ -1972,7 +1985,10 @@ def update_provider_cache_entry(provider: str, models: list[str]) -> None:
     so concurrent fetches don't clobber each other's rows. Best-effort, silent on any error."""
     try:
         normalized = normalize_provider(provider) or (provider or "")
-        if not normalized or not models:
+        if (
+            not normalized or not models
+            or (normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1")
+        ):
             return
         fp = _credential_fingerprint(normalized)
         with _cache_write_lock:
@@ -2004,6 +2020,8 @@ def cached_provider_model_ids(
     (hanging or timing-out ``/v1/models``) therefore delays nothing but itself (#114215)."""
     normalized = _normalized_cache_slug(provider)
     if not normalized:
+        return []
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
         return []
     is_ollama = normalized == "ollama"
 

@@ -421,6 +421,8 @@ async def _start_nous_device_code(profile: Optional[str]) -> Dict[str, Any]:
     shared ``anon_auth.run_sign_in`` flow: this route creates the generator, pulls its first state
     (the transfer's consent link and code) and hands that to the UI, then the poller drains the rest.
     Without a free-tier identity it is the plain device-code flow."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise HTTPException(status_code=404, detail="Nous OAuth is unavailable in Mithril Agent.")
     from hermes_cli import anon_auth
     from hermes_cli.auth import PROVIDER_REGISTRY, _request_device_code
     from hermes_cli.web_server_profiles import _config_profile_scope, _profile_scope
@@ -634,11 +636,19 @@ def _oauth_provider_disconnect_hint(provider: Dict[str, Any], status: Dict[str, 
     if provider.get("flow") == "external" and provider.get("id") != "anthropic":
         if _oauth_provider_disconnect_command(provider):
             # Fallback wording for surfaces without the one-click "run in terminal" path.
-            return "Managed outside Hermes — run the disconnect command to remove it."
+            product = "Mithril Agent" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes"
+            return f"Managed outside {product} — run the disconnect command to remove it."
         return "Managed by that provider's CLI; remove it there."
     if status.get("source") == "env_var":
         return "Remove the API key from Settings → Keys instead."
     return None
+
+
+def _distribution_cli_command(command: str) -> str:
+    """Render inherited provider commands with the CLI exposed by this distribution."""
+    if os.environ.get("MITHRIL_AGENT") == "1" and command.startswith("hermes "):
+        return "mithril " + command[len("hermes "):]
+    return command
 
 
 def _build_oauth_catalog() -> list[Dict[str, Any]]:
@@ -659,10 +669,13 @@ def _build_oauth_catalog() -> list[Dict[str, Any]]:
             seen.add(d.slug)
             rows.append({
                 "id": d.slug, "name": d.label, "flow": "external",
-                "cli_command": f"hermes auth add {d.slug}", "docs_url": d.signup_url or "", "status_fn": None,
+                "cli_command": _distribution_cli_command(f"hermes auth add {d.slug}"),
+                "docs_url": d.signup_url or "", "status_fn": None,
             })
     except Exception:
         pass
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        rows = [row for row in rows if row.get("id") != "nous"]
     return rows
 
 
@@ -675,10 +688,15 @@ async def list_oauth_providers(profile: Optional[str] = None):
         for p in _build_oauth_catalog():
             status = _resolve_provider_status(p["id"], p.get("status_fn"))
             disconnect_hint = _oauth_provider_disconnect_hint(p, status)
+            docs_url = p["docs_url"]
+            if (os.environ.get("MITHRIL_AGENT") == "1"
+                    and docs_url.startswith("https://hermes-agent.nousresearch.com/")):
+                docs_url = ""
             providers.append({
                 "id": p["id"], "name": p["name"], "flow": p["flow"],
-                "cli_command": _external_process_cli_command(p["id"], p["cli_command"]),
-                "docs_url": p["docs_url"], "disconnect_hint": disconnect_hint,
+                "cli_command": _distribution_cli_command(
+                    _external_process_cli_command(p["id"], p["cli_command"])),
+                "docs_url": docs_url, "disconnect_hint": disconnect_hint,
                 "disconnect_command": _oauth_provider_disconnect_command(p),
                 "disconnectable": disconnect_hint is None, "status": status,
             })
@@ -793,13 +811,16 @@ def _validate_oauth_profile(profile: Optional[str]) -> str:
 async def start_oauth_login(provider_id: str, request: Request, profile: Optional[str] = None):
     """Initiate an OAuth login flow. Token-protected."""
     _require_token(request)
+    if provider_id == "nous" and os.environ.get("MITHRIL_AGENT") == "1":
+        raise HTTPException(status_code=404, detail="Nous OAuth is unavailable in Mithril Agent.")
     _gc_oauth_sessions()
     _validate_oauth_profile(profile)
     catalog_entry = next((p for p in _OAUTH_PROVIDER_CATALOG if p["id"] == provider_id), None)
     if catalog_entry is None:
         raise HTTPException(status_code=400, detail=f"Unknown provider {provider_id}")
     if catalog_entry["flow"] == "external":
-        raise HTTPException(400, f"{provider_id} uses an external CLI; run `{catalog_entry['cli_command']}` manually")
+        command = _distribution_cli_command(catalog_entry["cli_command"])
+        raise HTTPException(400, f"{provider_id} uses an external CLI; run `{command}` manually")
     if catalog_entry["flow"] != "device_code":
         raise HTTPException(status_code=400, detail="Unsupported flow")
     flow = await _begin_oauth_setup_metric(provider_id, profile)

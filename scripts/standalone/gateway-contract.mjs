@@ -19,14 +19,16 @@ export function admit(envelope, key, expected, now = Date.now()) {
   const age = now - Date.parse(r.finishedAt);
   if (r.status !== 'success' || !Number.isFinite(age) || age < 0 || age > 86400000 || !/^sha256:[a-f0-9]{64}$/.test(r.imageId ?? '')) throw Error('Successful fresh image qualification required');
   if (r.productionEligible !== false) throw Error('Gateway trial qualification cannot authorize a production release');
-  for (const check of ['image-build','offline-regressions','image-runtime']) {
+  for (const check of ['image-build','image-provenance','offline-regressions','image-runtime']) {
     if (!Array.isArray(r.checks) || !r.checks.includes(check)) throw Error(`Missing qualification stage: ${check}`);
   }
   return r;
 }
 export function validateOwner(owner, host, checkout) {
-  if (owner.repository !== 'mithril-lang/mithril-agent' || owner.hostname !== host || owner.checkout !== checkout) throw Error('Deployment owner mismatch');
-  if (!['local','gad'].includes(owner.runner)) throw Error('Only configured local/gad runners are supported');
+  if (owner.repository !== 'mithril-lang/mithril-agent-runtime' || owner.hostname !== host || owner.checkout !== checkout) throw Error('Deployment owner mismatch');
+  if (owner.runner !== 'local') throw Error('Only the local verification runner is supported');
   if (owner.socket && !/^\/run\/mithril-agent-trial\/docker\.sock$/.test(owner.socket)) throw Error('Unexpected runner socket');
+  if (typeof owner.imageIdentity !== 'string' || !/^[a-z0-9][a-z0-9.-]*(?::[0-9]+)?(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$/.test(owner.imageIdentity)) throw Error('Approved canonical Mithril image identity required');
+  if (/(?:^|\/)nousresearch(?:\/|$)/i.test(owner.imageIdentity) || /(?:^|\/)hermes-(?:agent|sandbox)$/i.test(owner.imageIdentity)) throw Error('Mithril image identity cannot name an upstream Hermes/Nous image');
   return owner;
 }

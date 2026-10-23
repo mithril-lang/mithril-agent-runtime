@@ -248,10 +248,11 @@ def _report_unclean_exit(evidence: Dict[str, Any], home: Optional[Path]) -> None
     # The death may have torn the store; this is the only moment we know to look.
     verdict = evidence["state_db_integrity"] = check_state_db_integrity(home=home)
     if verdict not in ("ok", "absent"):
+        cli_name = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
         logger.error(
             "state.db FAILED integrity check after an unclean gateway exit: %s — sessions may read as "
-            "missing until it is repaired. Run `hermes doctor`.",
-            verdict,
+            "missing until it is repaired. Run `%s doctor`.",
+            verdict, cli_name,
         )
     _append_exit_diag({"ts": _now_iso(), "tag": "gateway.previous_unclean_exit", "pid": os.getpid(), **evidence}, home)
     logger.warning(

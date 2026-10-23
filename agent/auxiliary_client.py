@@ -179,6 +179,16 @@ def _openai_http_client_kwargs(base_url: Optional[str], *, async_mode: bool = Fa
 
 
 def _create_openai_client(*, api_key: str, base_url: str, **kwargs: Any) -> Any:
+    if isinstance(api_key, str) and api_key.startswith("mf_"):
+        from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+        _guard_mithril_account_token_origin({
+            "provider": "auxiliary",
+            "api_key": api_key,
+            "base_url": base_url,
+        })
+    if (os.environ.get("MITHRIL_AGENT") == "1"
+            and base_url_host_matches(str(base_url or ""), "nousresearch.com")):
+        raise ValueError("Nous-hosted auxiliary routes are unavailable in Mithril Agent.")
     if _aux_probe_active():
         # Availability probe: resolved credentials/base_url are the answer.
         return _AuxProbeClientStub(api_key=api_key, base_url=base_url)
@@ -901,6 +911,11 @@ def build_or_headers(or_config: dict | None = None) -> dict:
     ``openrouter.response_cache_ttl``. ``or_config=None`` reads from disk.
     """
     headers = dict(_OR_HEADERS_BASE)
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        # Attribution headers are optional; never identify Mithril traffic as Hermes or
+        # attach the Hermes-owned site URL to a user-selected provider request.
+        headers.pop("HTTP-Referer", None)
+        headers["X-Title"] = "Mithril Agent"
     if or_config is None:
         try:
             from hermes_cli.config import load_config_readonly
@@ -934,11 +949,17 @@ def build_nvidia_nim_headers(base_url: str | None) -> dict:
 # Vercel AI Gateway attribution (HTTP-Referer → referrerUrl, X-Title → appName).
 from hermes_cli.version_info import get_version_info
 
-_AI_GATEWAY_HEADERS = {
-    "HTTP-Referer": "https://hermes-agent.nousresearch.com",
-    "X-Title": "Hermes Agent",
-    "User-Agent": f"HermesAgent/{get_version_info().base_version}",
-}
+if os.environ.get("MITHRIL_AGENT") == "1":
+    _AI_GATEWAY_HEADERS = {
+        "X-Title": "Mithril Agent",
+        "User-Agent": f"MithrilAgent/{get_version_info().base_version}",
+    }
+else:
+    _AI_GATEWAY_HEADERS = {
+        "HTTP-Referer": "https://hermes-agent.nousresearch.com",
+        "X-Title": "Hermes Agent",
+        "User-Agent": f"HermesAgent/{get_version_info().base_version}",
+    }
 
 # Nous Portal attribution extra_body. Tags come from agent.portal_tags so the client= marker
 # tracks the canonical base version — never inline a literal here.
@@ -2044,6 +2065,8 @@ def _resolve_nous_runtime_api(
     """Fresh Nous runtime credentials (pool first, then auth store + JWT refresh) — mirrors the main
     agent's 401 recovery. ``stale_access_token`` is the bearer that just 401'd; with ``force_refresh``
     it lets the auth store adopt a sibling process's rotation instead of re-POSTing the shared grant."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     pooled = _resolve_nous_pool_runtime_api(force_refresh=force_refresh)
     if pooled is not None:
         return pooled
@@ -2360,6 +2383,11 @@ def _describe_openrouter_unavailable(model: str = None) -> str:
 
 
 def _try_nous(vision: bool = False) -> Tuple[Optional[OpenAI], Optional[str]]:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        global auxiliary_is_nous
+        auxiliary_is_nous = False
+        logger.debug("Auxiliary Nous route disabled in Mithril mode.")
+        return None, None
     nous = _read_nous_auth()
     runtime = _resolve_nous_runtime_api(force_refresh=False)
     if runtime is None and not nous:
@@ -2402,7 +2430,6 @@ def _try_nous(vision: bool = False) -> Tuple[Optional[OpenAI], Optional[str]]:
     # Vision rides the same id (the backing model is multimodal; a backing that is not answers
     # the request with the upstream's own error, which the ladder handles like any other).
     from hermes_cli.anon_auth import GUEST_MODEL, route_is_welcome_host
-    global auxiliary_is_nous
     if route_is_welcome_host(base_url):
         auxiliary_is_nous = True
         logger.debug("Auxiliary/%s: Nous free tier; using %s", lane, GUEST_MODEL)
@@ -4959,6 +4986,15 @@ def _profile_declared_messages_wire(provider: str) -> Optional[str]:
 
 def _route_client(req: _ResolveRequest, client_obj: Any, final_model_str: Optional[str]) -> _ResolveResult:
     """Return (client, model), converting to the async wrapper when ``req.async_mode``."""
+    # Auxiliary routes have a parallel provider resolver; enforce the same account-token
+    # destination boundary as the main runtime before wrapping or caching the client.
+    from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+    _guard_mithril_account_token_origin({
+        "provider": req.provider,
+        "requested_provider": req.original_provider,
+        "api_key": getattr(client_obj, "api_key", ""),
+        "base_url": getattr(client_obj, "base_url", ""),
+    })
     if req.async_mode:
         return _to_async_client(client_obj, final_model_str, is_vision=req.is_vision)
     return client_obj, final_model_str
@@ -5428,6 +5464,12 @@ def resolve_provider_client(
     original_provider = (provider or "").strip().lower()
     provider = _normalize_aux_provider(provider)
     api_mode = _canonical_api_mode(str(api_mode or "")).lower() or None
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        nous_provider_ids = {"nous", "nous-portal", "nousresearch"}
+        if original_provider in nous_provider_ids or provider in nous_provider_ids:
+            raise ValueError("Nous auxiliary providers are unavailable in Mithril Agent.")
+        if base_url_host_matches(str(explicit_base_url or ""), "nousresearch.com"):
+            raise ValueError("Nous-hosted auxiliary routes are unavailable in Mithril Agent.")
     # MoA chokepoint: "moa" is not an HTTP provider; resolve to the aggregator so direct callers don't
     # dead-end in unknown-provider. Unresolvable preset → leave untouched for the normal diagnostic.
     if provider == "moa":

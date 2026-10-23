@@ -1,4 +1,4 @@
-"""Profile-scoped credentials for Mithril Fund inference."""
+"""Profile-scoped Mithril account token helpers for inference."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ MITHRIL_TOKEN_ENV = "MITHRIL_ACCOUNT_TOKEN"
 
 
 def read_mithril_account_token() -> Optional[str]:
-    """Return the active Profile's device-approved token, or None.
+    """Return the active Profile's device-approved token, or None when unavailable.
 
     Multiplexed requests must have an explicit Profile secret scope. Never fall
     back to an ambient environment value when the scope is missing.
@@ -26,9 +26,8 @@ def read_mithril_account_token() -> Optional[str]:
     if isinstance(value, str) and value.strip():
         return value.strip()
     # Login writes this credential to the active Profile's .env. The ordinary
-    # single-profile CLI does not install a secret scope, so read that file here
-    # without widening the generic secret resolver. Routed/multiplexed work must
-    # use its already-bound profile mapping and may never inspect the process home.
+    # single-Profile CLI may read that file, but routed Profiles must use their
+    # already-bound secret mapping and never inspect the process home.
     try:
         if serves_routed_profile():
             return None
@@ -40,15 +39,11 @@ def read_mithril_account_token() -> Optional[str]:
 
 
 def mithril_inference_token_for_base_url(base_url: object) -> Optional[str]:
-    """Return this Profile's token only for Mithril's canonical HTTPS inference API.
-
-    Older custom-provider entries may still name ``MITHRIL_API_KEY`` after device
-    login saved ``MITHRIL_ACCOUNT_TOKEN``. Reuse it only for the canonical host;
-    never send the credential to a user-configured endpoint.
-    """
+    """Return this Profile's token only for Mithril's canonical HTTPS API origin."""
     try:
         parsed = urlparse(str(base_url or ""))
-        if (parsed.scheme != "https" or parsed.hostname != "api.mithril.fund"
+        if (parsed.scheme.lower() != "https" or parsed.hostname is None
+                or parsed.hostname.lower() != "api.mithril.fund"
                 or parsed.port not in (None, 443) or parsed.username is not None
                 or parsed.password is not None):
             return None

@@ -4,6 +4,7 @@
 
 import atexit
 import concurrent.futures
+import os
 import threading
 
 from .method_ctx import HandlerRegistry, bind_module
@@ -482,7 +483,13 @@ def _(rid, params: dict) -> dict:
     force-redaction pipeline as ``hermes debug share --nous``; redaction is NOT client-controllable
     and consent lives with the CALLER (privacy notice first). Structured ``ok``/``error`` envelope so
     upload failures render inline. Optional: ``error_context`` (-> ``error-context.txt``),
-    ``extra_files`` ({label -> text}), ``log_lines`` (default 200); all force-redacted."""
+    ``extra_files`` ({label -> text}), ``log_lines`` (default 200); all force-redacted. Mithril mode
+    rejects before collecting logs or contacting Nous."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _ok(rid, {
+            "ok": False,
+            "error": "Mithril Agent does not send diagnostics to Nous. No data was sent.",
+        })
     try:
         from hermes_cli.debug import _redact_log_text, build_nous_bundle, collect_share_bundle
         from hermes_cli.diagnostics_upload import share_to_nous

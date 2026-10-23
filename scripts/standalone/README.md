@@ -17,6 +17,10 @@ Build and qualification must bind the launcher revision and immutable image
 digest to the exact Fund source/export and catalog snapshot. Profile state and
 credentials remain scoped to the owning Mithril Profile. This launcher is a
 source artifact only; it does not qualify or activate the existing bot fleet.
+The target replaces the inherited generic image marker with the canonical
+Mithril image identity from the private owner configuration and the exact
+install-stamp source revision. The recipe reads both values back from the
+built image before accepting the image-build stage.
 
 This Mac-controlled profile qualifies the explicit `mithril_gateway` target
 for the `linux/amd64` gateway trial. It does not turn the organization's held full
@@ -26,9 +30,10 @@ No GitHub Actions execution is used.
 The controller runs only a clean committed source. Its fixed recipe streams
 an exact Git archive to a disposable runner directory and builds the explicit
 Mithril target without controller credentials, host source mounts or registry
-login. It reads back the target image's dispatcher, command, and Mithril-mode
-environment before admitting the build stage, then runs the image with its
-default command so the qualification exercises the actual Mithril launcher.
+login. It reads back the target image's dispatcher, command, Mithril-mode
+environment, and image-provenance marker before admitting the image-build
+stage, then runs the image with its default command so the qualification
+exercises the actual Mithril launcher.
 The install stamp records the actual source SHA. Test dependency setup uses
 Hermes PM and the frozen source lock. Mithril branding, launcher, installer and audited runtime-export regressions run alongside the API gateway, configuration, custom-provider and supervision regressions through
 `scripts/run_tests.sh` in a separate container with no external network,
@@ -52,17 +57,24 @@ Use a private external owner JSON containing:
 
 ```json
 {
-  "repository": "mithril-lang/mithril-agent",
+  "repository": "mithril-lang/mithril-agent-runtime",
+  "imageIdentity": "REPLACE_WITH_OWNER_APPROVED_IMAGE_IDENTITY",
   "hostname": "ACTUAL_MAC_HOSTNAME",
   "checkout": "/absolute/path/to/clean/checkout",
-  "runner": "gad"
+  "runner": "local"
 }
 ```
 
-The hostname and canonical checkout must match the actual controlling Mac.
+Replace the image identity placeholder with the owner-approved canonical OCI
+image repository name, without a tag or digest. The hostname and canonical
+checkout must match the actual controlling Mac. The `local` runner must
+connect to the approved isolated Docker daemon that reports `x86_64` and has
+at least 12 GiB free; recording `runner: "local"` does not register or qualify
+that owner. The archived
+`mithril-lang/mithril-agent` repository is not a qualification owner.
 Owner files and the state directory must be owned by the current user and have
-mode 0600 and 0700, respectively. Existing SSH known-hosts and the configured
-`gad` alias provide transport identity. A trial-specific secondary Docker daemon
+mode 0600 and 0700, respectively. The Local Mac controller invokes its
+configured Docker daemon directly. A trial-specific secondary Docker daemon
 may be selected with `socket: "/run/mithril-agent-trial/docker.sock"`; its lifetime,
 capacity and memory reservation must be configured separately. The controller
 never resets Docker storage or deletes unrelated volumes, containers or images.

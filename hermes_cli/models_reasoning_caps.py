@@ -245,8 +245,11 @@ def refresh_reasoning_caps_async(provider: Optional[str]) -> None:
     rejects. Called from the conversation loop's reasoning_mandatory recovery so the profile guard
     is right again on the next request; no-op for providers without a catalog.
     """
+    normalized = str(provider or "").strip().lower()
+    if os.environ.get("MITHRIL_AGENT") == "1" and normalized in {"nous", "nous-portal", "nousresearch"}:
+        return
     src = {"nous": _NOUS_CAPS, "nous-portal": _NOUS_CAPS, "nousresearch": _NOUS_CAPS,
-           "openrouter": _OPENROUTER_CAPS}.get(str(provider or "").strip().lower())
+           "openrouter": _OPENROUTER_CAPS}.get(normalized)
     if src is not None:
         _warm_reasoning_caps_async(lambda: _fetch_caps(src, force=True))
 
@@ -270,6 +273,8 @@ _NOUS_CAPS = _CapsSource(
 def nous_catalog_url() -> str:
     """The Portal ``/v1/models`` URL for the endpoint we actually talk to (``NOUS_INFERENCE_BASE_URL``
     → resolved credential base → prod), so a staging profile reads staging's capabilities."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return ""
     from hermes_cli.models_pricing import _resolve_nous_pricing_credentials
     return f"{_resolve_nous_pricing_credentials()[1]}/v1/models"
 
@@ -293,6 +298,8 @@ def nous_model_reasoning_capabilities(
 ) -> Optional[dict[str, Any]]:
     """Nous Portal counterpart of :func:`openrouter_model_reasoning_capabilities`; warm the cache
     with :func:`warm_nous_reasoning_caps_async` from hot paths."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     return _model_caps(_NOUS_CAPS, model_id, timeout=timeout, allow_fetch=allow_fetch)
 
 
@@ -303,4 +310,6 @@ def warm_openrouter_reasoning_caps_async() -> None:
 
 def warm_nous_reasoning_caps_async() -> None:
     """Nous Portal counterpart of :func:`warm_openrouter_reasoning_caps_async`."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return
     _warm_caps_async(_NOUS_CAPS)

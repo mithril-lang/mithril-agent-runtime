@@ -1,9 +1,10 @@
-"""Remote model catalog fetcher.
+"""Remote model catalog fetcher with separate Hermes and Mithril source boundaries.
 
-``get_catalog()`` returns the parsed manifest: in-process cache (TTL) → disk cache at
-``~/.hermes/cache/model_catalog.json`` → master URL fetch; any fetch failure keeps the stale copy
-(or ``{}``). ``get_curated_openrouter_models()`` / ``get_curated_nous_models()`` are thin accessors
-whose callers fall back to the in-repo lists on ``None``.
+Hermes mode uses an in-process TTL cache, ``~/.hermes/cache/model_catalog.json``, and the configured
+catalog URL with its upstream fallback. Mithril mode reads none of those global Hermes sources and
+does not expose Nous catalog entries. Until a signed Mithril snapshot is wired in, ``get_catalog()``
+returns ``{}``; provider-specific catalogs are fetched only from an explicitly configured non-Nous URL.
+Accessors return ``None`` when no catalog block exists so callers can use their in-repo lists.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from hermes_cli.version_info import get_version_info
 from utils import atomic_json_write
@@ -42,6 +44,39 @@ DEFAULT_FETCH_TIMEOUT = 8.0
 SUPPORTED_SCHEMA_VERSION = 1
 
 _HERMES_USER_AGENT = f"hermes-cli/{get_version_info().base_version}"
+_MITHRIL_USER_AGENT = "mithril-agent"
+_NOUS_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
+
+
+def _is_nous_hermes_catalog_url(url: str) -> bool:
+    """Return True for Nous Research hosts and the upstream Hermes catalog repository."""
+    try:
+        parsed = urlsplit(url)
+        host = (parsed.hostname or "").lower().rstrip(".")
+    except ValueError:
+        return False
+    if host == "nousresearch.com" or host.endswith(".nousresearch.com"):
+        return True
+    if host == "nousresearch.github.io":
+        return True
+    path = unquote(parsed.path).lower().rstrip("/")
+    if host in {"github.com", "www.github.com", "raw.githubusercontent.com"}:
+        return path == "/nousresearch/hermes-agent" or path.startswith("/nousresearch/hermes-agent/")
+    if host == "api.github.com":
+        return path == "/repos/nousresearch/hermes-agent" or path.startswith("/repos/nousresearch/hermes-agent/")
+    return False
+
+
+class _MithrilCatalogRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Allow third-party redirects while keeping catalog requests away from Nous/Hermes."""
+
+    handler_order = 499
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if _is_nous_hermes_catalog_url(newurl):
+            logger.info("Mithril catalog fetch refused Nous/Hermes redirect to %s", newurl)
+            raise urllib.error.HTTPError(newurl, code, "Nous/Hermes redirect blocked in Mithril mode", headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 # In-process cache, invalidated against the disk file's path + mtime and TTL. The path matters:
 # under a multiplexed gateway each profile has its own ``<home>/cache/model_catalog.json``, and
@@ -92,9 +127,19 @@ def _cache_path() -> Path:
 
 def _fetch_manifest(url: str, timeout: float) -> dict[str, Any] | None:
     """HTTP GET the manifest URL and return a validated dict, or None on failure."""
+    mithril_mode = _mithril_agent_mode()
+    if mithril_mode and _is_nous_hermes_catalog_url(url):
+        logger.info("Mithril catalog fetch refused Nous/Hermes URL %s", url)
+        return None
     try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": _HERMES_USER_AGENT})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        user_agent = _MITHRIL_USER_AGENT if mithril_mode else _HERMES_USER_AGENT
+        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": user_agent})
+        if mithril_mode:
+            opener = urllib.request.build_opener(_MithrilCatalogRedirectHandler())
+            response = opener.open(req, timeout=timeout)
+        else:
+            response = urllib.request.urlopen(req, timeout=timeout)
+        with response as resp:
             data = json.loads(resp.read().decode())
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
         logger.info("model catalog fetch failed (%s): %s", url, exc)
@@ -288,7 +333,8 @@ def refresh_catalogs() -> bool:
 
 def _fetch_provider_override(provider: str) -> dict[str, Any] | None:
     """If ``model_catalog.providers.<name>.url`` is set, fetch that instead."""
-    if _mithril_agent_mode():
+    provider_id = provider.strip().lower().replace("_", "-")
+    if _mithril_agent_mode() and provider_id in _NOUS_PROVIDER_IDS:
         return None
     cfg = _load_catalog_config()
     if not cfg["enabled"]:

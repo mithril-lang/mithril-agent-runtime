@@ -27,6 +27,11 @@ def _is_mithril_agent() -> bool:
     return os.environ.get("MITHRIL_AGENT") == "1"
 
 
+def managed_bot_onboarding_available() -> bool:
+    """Whether this distribution may offer the Hermes-hosted managed-bot flow."""
+    return not _is_mithril_agent()
+
+
 @dataclass(frozen=True)
 class TelegramPairing:
     """Pairing record returned by the Telegram onboarding service."""

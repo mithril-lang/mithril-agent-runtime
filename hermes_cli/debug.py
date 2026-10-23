@@ -105,6 +105,9 @@ def _sweep_expired_pastes(now: Optional[float] = None) -> tuple[int, int]:
 
 def _best_effort_sweep_expired_pastes() -> None:
     """Pending-paste cleanup that never lets /debug fail offline."""
+    # Preserve legacy pending URLs in Mithril mode; cleanup would contact paste.rs.
+    if _is_mithril_agent():
+        return
     with contextlib.suppress(Exception):
         _sweep_expired_pastes()
 

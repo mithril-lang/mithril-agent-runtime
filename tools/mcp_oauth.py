@@ -757,9 +757,9 @@ _SSH_HINT_LOOPBACK = (
     "\n"
     "    2. Or forward the port first in a separate terminal:\n"
     "         ssh -N -L {port}:127.0.0.1:{port} <user>@<this-host>\n"
-    "       then open the URL above and let it redirect normally.\n"
-    "\n"
-    "  See: https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh\n")
+    "       then open the URL above and let it redirect normally.\n")
+_SSH_HINT_LOOPBACK_HERMES_DOCS = (
+    "\n  See: https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh\n")
 
 
 def _announce_authorization_url(
@@ -771,7 +771,10 @@ def _announce_authorization_url(
         if redirect_uri:
             print(_SSH_HINT_PROXY.format(redirect_uri=redirect_uri), file=sys.stderr)
         elif port:
-            print(_SSH_HINT_LOOPBACK.format(host=redirect_host or "127.0.0.1", port=port), file=sys.stderr)
+            hint = _SSH_HINT_LOOPBACK.format(host=redirect_host or "127.0.0.1", port=port)
+            if os.environ.get("MITHRIL_AGENT") != "1":
+                hint += _SSH_HINT_LOOPBACK_HERMES_DOCS
+            print(hint, file=sys.stderr)
     if not _can_open_browser():
         note = "Headless environment detected — open the URL manually."
     else:

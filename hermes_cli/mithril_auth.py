@@ -272,7 +272,7 @@ def main(argv=None):
         if args.command == "logout":
             require_env_writable(TOKEN_ENV, "remove")
             remove_env_value(TOKEN_ENV)
-            print("Signed out on this Profile. Manage or revoke device access at https://console.mithril.fund/account.")
+            print("Removed the Mithril token from this Profile. Server-side access may remain active until expiry or Console revocation: https://console.mithril.fund/account.")
             return 0
         if args.command == "account":
             token = load_env().get(TOKEN_ENV)

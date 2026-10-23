@@ -12,7 +12,11 @@ from pydantic import ValidationError
 
 from hermes_constants import get_hermes_home
 from tools.connectors.gateway.errors import GatewayAuthError, GatewayUnavailable, ToolGatewayError
-from tools.connectors.portal.client import NotModified, validate_slug
+from tools.connectors.portal.client import (
+    NotModified,
+    ensure_portal_connector_enabled,
+    validate_slug,
+)
 from tools.connectors.portal.errors import PortalToolsUnavailable
 from tools.connectors.portal.wire import ConnectorTool, ConnectorToolsListing
 from utils import atomic_json_write, read_json_or_empty
@@ -101,6 +105,7 @@ def read_tools(
     refresh: bool = False,
     now: Callable[[], float] = time.time,
 ) -> ToolsRead:
+    ensure_portal_connector_enabled()
     validate_slug(slug)
     member_key = _member_key(client.authorization_token())
     if member_key is None:

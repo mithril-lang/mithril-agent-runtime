@@ -155,7 +155,10 @@ class GatewayStartupMixin:
 
     async def _run_free_tier_bootstrap(self) -> None:
         """The free-tier bootstrap mints the Portal identity through the same profile-scoped routing
-        overrides the warm-up resolves, so it takes the same launch-profile binding."""
+        overrides the warm-up resolves, so it takes the same launch-profile binding. Mithril owns its
+        account identity, so its Gateway must not import or run the Hermes free-tier bootstrap."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            return
         await self._run_boot_probe_in_launch_scope(self._start_free_tier_bootstrap)
 
     async def _warm_turn_prerequisites(self) -> None:
@@ -938,7 +941,8 @@ class GatewayStartupMixin:
             _adv_msg = gateway_log_message(detect_compromised())
             if _adv_msg:
                 logger.warning("%s", _adv_msg)
-                logger.warning("Run `hermes doctor` on the gateway host for full remediation steps.")
+                cli_name = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+                logger.warning("Run `%s doctor` on the gateway host for full remediation steps.", cli_name)
 
     def _start_log_retired_session_reset(self) -> None:
         """Warn per served profile whose config still declares an idle/daily ``session_reset``,

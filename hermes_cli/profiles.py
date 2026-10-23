@@ -1397,8 +1397,8 @@ def _finish_profile_layout(profile_dir: Path, *, no_skills: bool, clone_all: boo
 
     # Default SOUL.md to customize immediately (skipped when a clone already provided one).
     with contextlib.suppress(Exception):  # best-effort — don't fail profile creation over this
-        from hermes_cli.default_soul import DEFAULT_SOUL_MD
-        _seed_file_if_missing(profile_dir / "SOUL.md", DEFAULT_SOUL_MD)
+        from hermes_cli.default_soul import get_default_soul_md
+        _seed_file_if_missing(profile_dir / "SOUL.md", get_default_soul_md())
 
     # Opt-out marker read by seed_profile_skills() and `hermes update`'s all-profile sync
     # (the feature still works via the empty skills/ dir if this fails).

@@ -342,6 +342,11 @@ def _beta_header(betas: list) -> Dict[str, str]:
 
 def _attribution_headers() -> Dict[str, str]:
     """Same client-attribution set sent to OpenRouter / Vercel AI Gateway / Fireworks."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {
+            "X-Title": "Mithril Agent",
+            "User-Agent": f"MithrilAgent/{get_version_info().base_version}",
+        }
     return {
         "HTTP-Referer": "https://hermes-agent.nousresearch.com", "X-Title": "Hermes Agent",
         "User-Agent": f"HermesAgent/{get_version_info().base_version}",
@@ -461,6 +466,13 @@ def build_anthropic_client(api_key, base_url: str = None, timeout: float = None,
     (connect stays 10s). ``drop_context_1m_beta`` strips ``context-1m-2025-08-07`` from the
     client-level beta header — the reactive OAuth retry in run_agent uses it after a subscription
     rejects it; fresh clients keep the default so 1M-capable subscriptions keep the capability."""
+    if isinstance(api_key, str) and api_key.startswith("mf_"):
+        from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+        _guard_mithril_account_token_origin({
+            "provider": "mithril",
+            "api_key": api_key,
+            "base_url": base_url,
+        })
     sdk = _require_sdk("the Anthropic provider")
     if callable(api_key) and not isinstance(api_key, str):
         return _build_anthropic_client_with_bearer_hook(

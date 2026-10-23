@@ -270,8 +270,8 @@ class CLIBillingMixin:
                 _cprint(ln)
             if head or tail:
                 return True
-        from agent.account_usage import nous_credits_lines
-        lines = nous_credits_lines()
+        from agent.account_usage import account_credit_lines
+        lines = account_credit_lines()
         if not lines:
             return False
         print()

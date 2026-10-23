@@ -181,6 +181,8 @@ def is_anonymous_agent(agent: Any) -> bool:
 
 def current_nous_state() -> Optional[Dict[str, Any]]:
     """The profile's ``providers.nous`` state without locking or network (status/picker reads)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     from hermes_cli.auth import _load_auth_store, _load_provider_state
     try:
         return _load_provider_state(_load_auth_store(), "nous")
@@ -594,7 +596,7 @@ def refresh_guest_state(state: Dict[str, Any], client: httpx.Client) -> None:
     """
     if os.environ.get("MITHRIL_AGENT") == "1":
         raise AuthError(
-            "Nous free-tier authentication is unavailable in Mithril Agent.",
+            "Guest authentication is unavailable in Mithril Agent.",
             provider="nous", code="mithril_nous_auth_disabled", retryable=False)
     anon_token = state.get("anon_token")
     if not isinstance(anon_token, str) or not anon_token:
@@ -703,6 +705,11 @@ def welcome_refusal_copy(refusal: Dict[str, Any], *, model: str = "", in_chat: b
     Never guest / anonymous / claim; ``in_chat`` picks ``/login`` over the terminal verb.
     ``door=False`` leaves the "To sign in: …" tail off, for a surface that renders the sign-in as
     a button beside the sentence (the desktop's error card)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not door:
+            return "Guest-model access is unavailable in Mithril Agent."
+        action = "sign in with `/login`" if in_chat else "run `mithril login` to sign in"
+        return f"Mithril Agent requires a supported account or provider; {action}, or run `mithril model` to choose one."
     signin = (_SIGNIN_CHAT if in_chat else _SIGNIN_TERMINAL) if door else ""
     reason = str(refusal.get("reason") or "")
     alternates = refusal.get("alternates") or []
@@ -748,6 +755,11 @@ def welcome_route_refusal(status: Any, message: Any, base_url: Any = None) -> Op
 
 
 def welcome_route_refusal_copy(kind: str, *, in_chat: bool = True, door: bool = True) -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not door:
+            return "Guest-model access is unavailable in Mithril Agent."
+        action = "sign in with `/login`" if in_chat else "run `mithril login` to sign in"
+        return f"Mithril Agent requires a supported account or provider; {action}, or run `mithril model` to choose one."
     template = _WELCOME_ROUTE_COPY.get(kind) or "Hermes couldn't reach the free model on this route."
     return template.format(
         host=DEFAULT_NOUS_WELCOME_URL, signin=(_SIGNIN_CHAT if in_chat else _SIGNIN_TERMINAL) if door else "",

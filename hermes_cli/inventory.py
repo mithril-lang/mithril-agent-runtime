@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from contextvars import copy_context
 from dataclasses import dataclass, replace
 from threading import Lock, Thread, current_thread
@@ -10,6 +11,7 @@ from typing import Any, Optional
 
 _pricing_prewarm_lock = Lock()
 _pricing_prewarm_threads: dict[tuple[str, tuple[tuple[str, str], ...]], Thread] = {}
+_NOUS_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
 
 
 @dataclass(frozen=True)
@@ -96,6 +98,11 @@ def build_models_payload(
         excluded_providers=ctx.excluded_providers or [],
         non_blocking_catalogs=non_blocking_catalogs,
     )
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        rows = [
+            row for row in rows
+            if str(row.get("slug") or "").strip().lower() not in _NOUS_PROVIDER_IDS
+        ]
 
     # Managed local runtime: staged GGUFs are selectable like any provider's models, but
     # list_authenticated_providers can't know about them (no credential — reachability is the
@@ -458,9 +465,12 @@ def _append_unconfigured_rows(
     seen = {r["slug"].lower() for r in rows}
     cur = (ctx.current_provider or "").lower()
     cur_model = str(ctx.current_model or "").strip()
+    cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
     extras: list[dict] = []
     for entry in CANONICAL_PROVIDERS:
         if entry.slug.lower() in seen:
+            continue
+        if entry.slug.lower() in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
             continue
         if current_only and entry.slug.lower() != cur:
             continue
@@ -474,7 +484,7 @@ def _append_unconfigured_rows(
             warning = (
                 f"Configured provider missing usable credentials; paste {key_env} to reactivate. {tail}"
                 if auth_type == "api_key" and key_env
-                else f"Configured provider is not authenticated; run `hermes model` to reactivate. {tail}"
+                else f"Configured provider is not authenticated; run `{cli} model` to reactivate. {tail}"
             )
             extras.append(_canonical_row(
                 entry, cur, models=[saved_model] if saved_model else [], total_models=1 if saved_model else 0,
@@ -582,6 +592,7 @@ def _raw_config_has_enabled_moa_preset() -> bool:
 
 def _apply_picker_hints(rows: list[dict]) -> None:
     """Add ``authenticated``/``auth_type``/``key_env``/``warning`` per row."""
+    cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
     for row in rows:
         if "authenticated" in row:
             continue
@@ -594,7 +605,7 @@ def _apply_picker_hints(rows: list[dict]) -> None:
         row["auth_type"] = auth_type
         row["key_env"] = key_env
         row["warning"] = (f"paste {key_env} to activate" if auth_type == "api_key" and key_env
-                          else f"run `hermes model` to configure ({auth_type})")
+                          else f"run `{cli} model` to configure ({auth_type})")
 
 
 def _reorder_canonical(rows: list[dict]) -> list[dict]:

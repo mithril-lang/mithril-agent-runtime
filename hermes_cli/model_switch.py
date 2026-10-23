@@ -1048,13 +1048,19 @@ def _ollama_configured_base() -> tuple[dict, str]:
 
 
 def _unknown_provider_message(explicit_provider: str) -> str:
-    msg = (
-        f"Unknown provider '{explicit_provider}'. Check 'hermes model' for available "
-        f"providers, or define it in config.yaml under 'providers:'.")
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_agent:
+        msg = (
+            f"Unknown provider '{explicit_provider}'. Use `mithril model` to choose a supported provider "
+            "or define it in config.yaml under 'providers:'.")
+    else:
+        msg = (
+            f"Unknown provider '{explicit_provider}'. Check 'hermes model' for available "
+            f"providers, or define it in config.yaml under 'providers:'.")
     try:  # Surface common config issues that cause provider resolution failures
         from hermes_cli.config import validate_config_structure
         issues = validate_config_structure()
-        if issues:
+        if issues and not mithril_agent:
             msg += "\n\nRun 'hermes doctor' — config issues detected:" + "".join(f"\n  • {ci.message}" for ci in issues[:3])
     except Exception:
         pass
@@ -1228,6 +1234,12 @@ def _route_explicit_provider(st: _Switch) -> Optional[ModelSwitchResult]:
         return st.fail(_unknown_provider_message(st.explicit_provider))
 
     st.target_provider, st.provider_label = pdef.id, pdef.name  # label is re-derived in the credential step
+    if os.environ.get("MITHRIL_AGENT") == "1" and base_url_host_matches(
+        pdef.base_url, "nousresearch.com"
+    ):
+        return st.fail_on_target(
+            "Nous-hosted endpoints are unavailable in Mithril Agent. Choose a supported provider or model."
+        )
     if st.target_provider == "moa" and not st.new_model:
         st.new_model = _moa_default_preset()
 
@@ -1475,6 +1487,11 @@ def _creds_for_switched_provider(st: _Switch) -> Optional[ModelSwitchResult]:
                 # A local-runtime alias has no credential to add: the seam's own message ("server
                 # isn't running" / "turned off") is the actionable one, the auth hint below is noise.
                 return st.fail_on_target(str(e))
+            if os.environ.get("MITHRIL_AGENT") == "1":
+                return st.fail_on_target(
+                    f"{st.provider_label} is not connected: no API key or login was found for it. Add one with "
+                    f"`mithril auth add {st.target_provider}`, or choose a connected provider with `mithril model`.\n"
+                    f"  Details: {e}")
             return st.fail_on_target(
                 f"{st.provider_label} is not connected: no API key or login was found for it. Add one with "
                 f"`hermes auth add {st.target_provider}`, or pick a connected provider in /model.\n"
@@ -1756,6 +1773,15 @@ def switch_model(
         current_base_url=current_base_url, current_api_key=current_api_key, is_global=is_global,
         explicit_provider=explicit_provider, user_providers=user_providers, custom_providers=custom_providers,
         new_model=raw_input.strip(), target_provider=current_provider)
+    if os.environ.get("MITHRIL_AGENT") == "1" and (
+        str(current_provider or "").strip().lower() in {"nous", "nous-portal", "nousresearch"}
+        or str(explicit_provider or "").strip().lower() in {"nous", "nous-portal", "nousresearch"}
+        or str(raw_input or "").strip().lower().startswith(("nous/", "nous:"))
+        or base_url_host_matches(current_base_url, "nousresearch.com")
+    ):
+        return st.fail(
+            "Nous provider routes are unavailable in Mithril Agent. Choose a supported provider or model."
+        )
     route = _route_explicit_provider if explicit_provider else _route_from_model_input
     fail = route(st)
     if fail is not None:
@@ -1768,10 +1794,16 @@ def switch_model(
             return st.fail_on_target(
                 "Nous models are unavailable in Mithril Agent. "
                 "Run `mithril login` to choose a Mithril model.")
-    for step in (_resolve_switch_credentials, _validate_switch):
-        fail = step(st)
-        if fail is not None:
-            return fail
+    fail = _resolve_switch_credentials(st)
+    if fail is not None:
+        return fail
+    if os.environ.get("MITHRIL_AGENT") == "1" and base_url_host_matches(st.base_url, "nousresearch.com"):
+        return st.fail_on_target(
+            "Nous-hosted endpoints are unavailable in Mithril Agent. Choose a supported provider or model."
+        )
+    fail = _validate_switch(st)
+    if fail is not None:
+        return fail
     return _build_switch_result(st)
 
 

@@ -1,12 +1,30 @@
 #!/bin/sh
-# Keep Mithril's profile path at the launcher boundary; use the existing Hermes runtime.
+# Keep Mithril's profile at the launcher boundary and execute only its owned runtime.
+set -eu
 export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
-export MITHRIL_AGENT_CLI_LAUNCHER=1
-hermes_launcher="$(dirname "$0")/hermes"
-if [ -x "$hermes_launcher" ]; then
-    runtime="$hermes_launcher"
+export MITHRIL_AGENT=1
+script="$0"
+while [ -L "$script" ]; do
+    script_dir="$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)"
+    target="$(readlink "$script")"
+    case "$target" in
+        /*) script="$target";;
+        *) script="$script_dir/$target";;
+    esac
+done
+script_dir="$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)"
+if [ -x "$script_dir/../bin/hermes" ]; then
+    # The OCI runtime exposes its owned launcher shim at bin/hermes; source and
+    # installer checkouts keep it under .hermes/bin/hermes instead.
+    runtime="$script_dir/../bin/hermes"
+elif [ -f "$script_dir/../hermes_bootstrap.py" ]; then
+    runtime="$script_dir/../.hermes/bin/hermes"
 else
-    runtime=hermes
+    runtime="$HERMES_HOME/agent/.hermes/bin/hermes"
+fi
+if [ ! -x "$runtime" ]; then
+    printf '%s\n' 'Mithril Agent runtime is missing or incomplete. Install or repair it at https://console.mithril.fund/agent.' >&2
+    exit 127
 fi
 case "${1:-}" in
     login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;

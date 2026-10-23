@@ -36,7 +36,7 @@ import hermes_yaml as yaml
 from hermes_cli.cli_output import line_input
 from hermes_cli.colors import Colors, color
 from hermes_cli import managed_scope
-from hermes_cli.default_soul import DEFAULT_SOUL_MD, is_legacy_template_soul
+from hermes_cli.default_soul import get_default_soul_md, is_legacy_template_soul
 from hermes_cli.secret_prompt import masked_secret_prompt
 # Managed-mode, container and HERMES_UID/GID policy live in hermes_constants (import-safe);
 # re-exported here so existing callers/patch targets keep working.
@@ -338,9 +338,7 @@ def recommended_update_command_for_method(method: str) -> str:
     """Return the update command or guidance for a given install method."""
     if is_nix_install_method(method):
         return _NIX_UPDATE_MSG
-    default_command = ("mithril update" if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1"
-                       else "hermes update")
-    return _UPDATE_COMMAND_BY_METHOD.get(method, default_command)
+    return _UPDATE_COMMAND_BY_METHOD.get(method, "hermes update")
 
 
 def recommended_update_command() -> str:
@@ -531,9 +529,9 @@ def seed_config_file(config_path: Path, template: Optional[Path] = None) -> bool
 
 
 def _ensure_default_soul_md(home: Path) -> None:
-    """Seed DEFAULT_SOUL_MD on first run; upgrade a legacy comment-only scaffold in place.
-    A SOUL.md the user actually customized is never touched."""
+    """Seed the active distribution's default; preserve any SOUL.md the user customized."""
     soul_path = home / "SOUL.md"
+    default_soul = get_default_soul_md()
     if soul_path.exists():
         try:
             existing = soul_path.read_text(encoding="utf-8-sig")
@@ -542,7 +540,7 @@ def _ensure_default_soul_md(home: Path) -> None:
         if not is_legacy_template_soul(existing):
             return
     try:
-        soul_path.write_text(DEFAULT_SOUL_MD, encoding="utf-8")
+        soul_path.write_text(default_soul, encoding="utf-8")
     except OSError:
         if not soul_path.is_symlink():
             raise
@@ -555,7 +553,7 @@ def _ensure_default_soul_md(home: Path) -> None:
         fd, tmp_name = tempfile.mkstemp(prefix=".SOUL.md.", suffix=".seed", dir=str(home))
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(DEFAULT_SOUL_MD)
+                handle.write(default_soul)
             os.replace(tmp_name, soul_path)
         except OSError:
             with suppress(OSError):

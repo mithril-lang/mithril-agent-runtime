@@ -555,12 +555,37 @@ _IMAGE_KEY_BY_BACKEND = {
 }
 
 
+def _is_nous_hermes_image(image: object) -> bool:
+    """Recognize Nous-owned Hermes runtime and sandbox images in container references."""
+    value = str(image or "").strip().lower()
+    if value.startswith("docker://"):
+        value = value[len("docker://"):]
+    repository = value.split("@", 1)[0]
+    parts = repository.split("/")
+    if parts:
+        parts[-1] = parts[-1].split(":", 1)[0]
+    image_names = {"hermes-agent", "hermes-sandbox"}
+    if len(parts) == 2:
+        return parts[0] == "nousresearch" and parts[1] in image_names
+    if len(parts) != 3:
+        return False
+    registry = parts[0].split(":", 1)[0]
+    return (registry in {"docker.io", "index.docker.io", "registry-1.docker.io", "ghcr.io"}
+            and parts[1] == "nousresearch" and parts[2] in image_names)
+
+
 def _select_image(env_type: str, overrides: Dict[str, Any], config: Dict[str, Any]) -> str:
     """Image for *env_type*: per-task override first, then config; "" for imageless backends."""
     key = _IMAGE_KEY_BY_BACKEND.get(env_type)
     if key is None:
         return ""
-    return overrides.get(key) or config[key]
+    image = overrides.get(key) or config[key]
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_hermes_image(image):
+        raise ValueError(
+            "Mithril Agent cannot use a Nous-hosted Hermes image. "
+            "Select a supported Mithril-owned image or another terminal backend."
+        )
+    return image
 
 
 def _lookup_active_env(effective_task_id: str, task_id: Optional[str]):
@@ -739,15 +764,21 @@ def _get_env_config() -> Dict[str, Any]:
 
     cwd, host_cwd = _resolve_config_cwd(env_type, mount_docker_cwd)
 
-    return {
-        "env_type": env_type,
-        "modal_mode": coerce_modal_mode(_tenv("TERMINAL_MODAL_MODE", "auto")),
+    resolved_images = {
         "docker_image": _tenv("TERMINAL_DOCKER_IMAGE", default_image),
-        "docker_image_pinned": _tenv("TERMINAL_DOCKER_IMAGE_PINNED", "0") == "1",
-        "docker_forward_env": docker_forward_env,
         "singularity_image": _tenv("TERMINAL_SINGULARITY_IMAGE", f"docker://{default_image}"),
         "modal_image": _tenv("TERMINAL_MODAL_IMAGE", default_image),
         "daytona_image": _tenv("TERMINAL_DAYTONA_IMAGE", default_image),
+    }
+    return {
+        "env_type": env_type,
+        "modal_mode": coerce_modal_mode(_tenv("TERMINAL_MODAL_MODE", "auto")),
+        "docker_image": resolved_images["docker_image"],
+        "docker_image_pinned": _tenv("TERMINAL_DOCKER_IMAGE_PINNED", "0") == "1",
+        "docker_forward_env": docker_forward_env,
+        "singularity_image": resolved_images["singularity_image"],
+        "modal_image": resolved_images["modal_image"],
+        "daytona_image": resolved_images["daytona_image"],
         "vercel_runtime": _tenv("TERMINAL_VERCEL_RUNTIME", "").strip(),
         "vercel_image": _tenv("TERMINAL_VERCEL_IMAGE", "").strip(),
         "cwd": cwd,

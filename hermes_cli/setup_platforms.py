@@ -120,8 +120,17 @@ def _telegram_allowlist_nudge() -> None:
 
 
 def _obtain_telegram_token():
-    """Return (token, setup_result); auto flow first when chosen, else manual paste."""
+    """Return (token, setup_result); offer managed setup only in supported distributions."""
     from hermes_cli.setup import _info, print_error, prompt
+    try:
+        from hermes_cli.telegram_managed_bot import managed_bot_onboarding_available
+    except ImportError:
+        can_use_managed_onboarding = False
+    else:
+        can_use_managed_onboarding = managed_bot_onboarding_available()
+    if not can_use_managed_onboarding:
+        return _prompt_telegram_bot_token(), None
+
     _info("How would you like to create your Telegram bot?", None,
           "  [1] Automatic (recommended)",
           "      Scan a QR code → confirm in Telegram → done.",

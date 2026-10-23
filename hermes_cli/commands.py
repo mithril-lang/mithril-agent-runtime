@@ -8,6 +8,7 @@ command, append a ``CommandDef``; to add an alias, set ``aliases=("short",)``.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from agent.i18n import t
 from hermes_constants import INDICATOR_STYLES
 
 logger = logging.getLogger(__name__)
+_MITHRIL_MODE = os.environ.get("MITHRIL_AGENT") == "1"
 
 
 def _localized(key: str, default: str) -> str:
@@ -322,12 +324,19 @@ COMMAND_REGISTRY: list[CommandDef] = [
                cli_only=True, desktop="terminal"),
     CommandDef("image", "Attach a local image file for your next prompt", "Info",
                cli_only=True, args_hint="<path>", desktop="terminal"),
-    CommandDef("update", "Update Hermes Agent to the latest version", "Info",
-               busy_policy="dispatch", desktop="terminal"),
+    CommandDef(
+        "update",
+        "Update Mithril Agent" if _MITHRIL_MODE else "Update Hermes Agent to the latest version",
+        "Info", busy_policy="dispatch", desktop="terminal"),
     CommandDef("version", "Show Hermes Agent version", "Info", aliases=("v",),
                busy_policy="dispatch", execute="version"),
-    CommandDef("debug", "Upload debug report (system info + logs) and get shareable links", "Info",
-               args_hint="[nous|local]"),
+    CommandDef(
+        "debug",
+        "Export local diagnostics" if _MITHRIL_MODE else
+        "Upload debug report (system info + logs) and get shareable links",
+        "Info",
+        args_hint="[share [--local]]" if _MITHRIL_MODE else "[nous|local]",
+    ),
 
     # Exit
     CommandDef("quit", "Exit the CLI (use --delete to also remove session history)", "Exit",

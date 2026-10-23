@@ -219,9 +219,12 @@ def _fetch_portal_account(timeout: float):
 
 
 def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list[str]:
-    """Rendered Nous-credits /usage lines, or [] when there's nothing to show. Independent of any live agent
-    (logged-in gate, then a bounded portal fetch); shared by CLI ``_show_usage`` and the TUI ``session.usage`` RPC.
-    Fail-open: any hiccup or timeout → []. HERMES_DEV_CREDITS_FIXTURE renders from the fixture instead of the portal."""
+    """Render Hermes/Nous Portal credits, or [] when there's nothing to show.
+
+    Independent of any live agent (logged-in gate, then a bounded portal fetch); used by
+    ``account_credit_lines`` in Hermes mode and by the TUI's legacy credits field. Mithril mode
+    returns before reading fixtures/auth or contacting Nous. Fail-open: any hiccup or timeout → [].
+    """
     if os.environ.get("MITHRIL_AGENT") == "1":
         return []
     try:
@@ -276,6 +279,17 @@ def mithril_account_balance_lines(*, timeout: float = 10.0) -> list[str]:
         return ["Mithril balance unavailable. Check your connection and try again."]
     finally:
         pool.shutdown(wait=False)
+
+
+def account_credit_lines(*, markdown: bool = False, timeout: float = 10.0) -> list[str]:
+    """Render the active product's read-only account balance for usage surfaces."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        lines = mithril_account_balance_lines(timeout=timeout)
+        if markdown:
+            return [line.replace("Mithril balance:", "**Mithril balance:**", 1)
+                    if line.startswith("Mithril balance:") else line for line in lines]
+        return lines
+    return nous_credits_lines(markdown=markdown, timeout=timeout)
 
 
 def _snapshot_from_credits_state(state) -> Optional[AccountUsageSnapshot]:

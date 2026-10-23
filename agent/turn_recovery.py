@@ -364,7 +364,6 @@ def _print_anthropic_401_diagnostics(agent: Any, key: Any) -> None:
     """Anthropic 401 that survived a credential refresh: show auth method + fixes."""
     from agent.anthropic_credentials import _is_oauth_token
     from agent.azure_identity_adapter import is_token_provider
-    from hermes_constants import display_hermes_home
     _plines(agent, "🔐 Anthropic 401 — authentication failed.")
     if is_token_provider(key):
         # Azure Foundry Entra ID: JWT minted per-request by an httpx hook; 401 = Azure
@@ -382,6 +381,18 @@ def _print_anthropic_401_diagnostics(agent: Any, key: Any) -> None:
             f"   Auth method: {auth_method}",
             f"   Token prefix: {key[:12]}..." if isinstance(key, str) and len(key) > 12 else "   Token: (empty or short)",
         )
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if is_token_provider(key):
+            _plines(agent, "   Run `az login` if your developer session expired.")
+        else:
+            _plines(
+                agent,
+                "   Check the Anthropic credential configured for the selected Mithril Profile.",
+                "   For API keys: verify at https://platform.claude.com/settings/keys",
+                "   Select another supported provider with `/model` if needed.",
+            )
+        return
+    from hermes_constants import display_hermes_home
     _dhh = display_hermes_home()
     _plines(
         agent,

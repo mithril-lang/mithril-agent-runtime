@@ -561,10 +561,10 @@ def _resolve_named_custom_runtime(*, requested_provider: str, explicit_api_key: 
         provider_name=custom_provider.get("provider_key") or custom_provider.get("name"),
     )
     if pool_result:
-        if mithril_token:
-            pool_result["api_key"] = mithril_token
         # The pool doesn't know the custom_providers fields — propagate them here too.
         _apply_custom_provider_extras(custom_provider, target_model, pool_result)
+        if mithril_token:
+            pool_result["api_key"] = mithril_token
         return pool_result
     explicit_key = (explicit_api_key or "").strip()
     candidates = [

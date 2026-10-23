@@ -50,6 +50,17 @@ def nous_tool_gateway_unavailable_message(capability: str = "the Nous Tool Gatew
             "Nous Portal login and billing status.")
 
 
+def managed_gateway_selection_failure(capability: str) -> str:
+    """Explain why a stored managed-provider choice cannot run in this distribution.
+
+    Keep Hermes' selection failure static so an error path does not trigger another Portal
+    entitlement refresh. Mithril gets distribution-specific guidance without contacting Nous.
+    """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return nous_tool_gateway_unavailable_message(capability)
+    return "the Nous Tool Gateway is not available (not entitled or unreachable)"
+
+
 def normalize_browser_cloud_provider(value: object | None) -> str:
     """Return a normalized browser provider key."""
     provider = str(value or _DEFAULT_BROWSER_PROVIDER).strip().lower()
@@ -272,8 +283,9 @@ def removed_backend_note(section: str, name: str) -> Optional[str]:
 def selection_error(section: str, selection_name: str, failure: str) -> str:
     """The uniform honest-error contract for a selected-but-broken provider."""
     failure = removed_backend_note(section, selection_name) or failure
-    return (f"{section} is configured to use {selection_name} (set via hermes "
-            f"tools), but {failure}. Run 'hermes tools' to change it.")
+    cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    return (f"{section} is configured to use {selection_name} (set via {cli} "
+            f"tools), but {failure}. Run '{cli} tools' to change it.")
 
 
 def fal_key_is_configured() -> bool:

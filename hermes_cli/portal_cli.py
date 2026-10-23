@@ -188,7 +188,8 @@ def portal_command(args) -> int:
     if handler is not None:
         return handler(args)
     print(f"Unknown portal subcommand: {sub}", file=sys.stderr)
-    print("Run `hermes portal -h` for usage.", file=sys.stderr)
+    command = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    print(f"Run `{command} portal -h` for usage.", file=sys.stderr)
     return 1
 
 

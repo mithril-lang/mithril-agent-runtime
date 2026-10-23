@@ -8,12 +8,15 @@ OpenRouter/bare-custom, Bedrock and external-process builders in
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
+
+_MITHRIL_UNAVAILABLE_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
 
 from hermes_cli import auth as auth_mod
 from agent.credential_pool import (  # custom_provider_pool_key_candidates is read via origin by runtime_provider_custom
@@ -330,6 +333,19 @@ def _guard_mithril_account_token_origin(runtime: Dict[str, Any]) -> None:
             "Run `mithril login` to restore the managed endpoint.",
             provider=str(runtime.get("requested_provider") or runtime.get("provider") or "mithril-account"),
             code="mithril_account_origin_mismatch",
+        )
+
+
+def _reject_mithril_nous_route(provider: Optional[str], base_url: Optional[str]) -> None:
+    """Fail before reading Nous credentials or returning a Nous-hosted runtime in Mithril mode."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return
+    provider_id = str(provider or "").strip().lower()
+    if provider_id in _MITHRIL_UNAVAILABLE_PROVIDER_IDS or base_url_host_matches(
+        str(base_url or ""), "nousresearch.com"
+    ):
+        raise ValueError(
+            "Nous provider routes are unavailable in Mithril Agent. Choose a supported provider or model."
         )
 
 
@@ -1027,6 +1043,7 @@ def resolve_runtime_provider(*, requested: Optional[str] = None, explicit_api_ke
     target_model overrides model_cfg["default"] when computing provider-specific api_mode (e.g.
     OpenCode Zen/Go where different models route through different API surfaces)."""
     requested_provider = resolve_requested_provider(requested)
+    _reject_mithril_nous_route(requested_provider, explicit_base_url)
     _raise_if_provider_disabled(requested_provider)
     # Same alias expansion the auxiliary client applies, so ``provider: openai`` means one thing on
     # every path (background review, curator, MoA slots, delegation) instead of "Unknown provider".
@@ -1034,8 +1051,10 @@ def resolve_runtime_provider(*, requested: Optional[str] = None, explicit_api_ke
     # the anonymous ``custom`` it expands to is not.
     requested_alias = requested_provider
     requested_provider, explicit_base_url = expand_direct_api_alias(requested_provider, explicit_base_url)
+    _reject_mithril_nous_route(requested_provider, explicit_base_url)
     _raise_if_local_alias_missing_endpoint(requested_provider, explicit_base_url)
     runtime = next(r for r in _ladder_rungs(requested_provider, explicit_api_key, explicit_base_url, target_model) if r)
+    _reject_mithril_nous_route(runtime.get("provider"), runtime.get("base_url"))
     _raise_for_credentialless_bare_custom(requested_provider, runtime)
     # model.openai_runtime is applied ONCE, after the ladder: every rung (pool, OAuth store,
     # explicit --api-key/--base-url, env key) hardcodes the wire api_mode for openai/openai-codex,
