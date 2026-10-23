@@ -7,11 +7,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install pinned uv
-          command: python -m pip install --disable-pip-version-check uv==0.12.3
+          name: Verify the runtime source inventory
+          command: python .circleci/validate-runtime-snapshot.py
       - run:
-          name: Validate the Python dependency lock
-          command: uv lock --check
+          name: Validate the Python dependency lock through PM
+          command: python -m pm.build_env --source . --check-lock
       - run:
           name: Check maintained Python source syntax
           command: python -m compileall -q agent hermes_cli hermes_platform hermes_constants.py cli.py run_agent.py
@@ -21,10 +21,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install locked test dependencies
-          command: |
-            python -m pip install --disable-pip-version-check uv==0.12.3
-            uv sync --locked --no-default-groups --group dev
+          name: Build a fresh locked test environment through PM
+          command: python -m pm.build_env --source . --out .venv --group dev --group test
       - run:
           name: Verify Mithril account routing and first-launch approval
           command: >-
