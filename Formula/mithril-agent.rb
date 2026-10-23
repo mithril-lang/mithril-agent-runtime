@@ -8,6 +8,9 @@ class MithrilAgent < Formula
   license "MIT"
 
   def install
+    # The source archive predates this tap update; bind its bootstrap to this formula.
+    runtime_revision = stable.specs.fetch(:revision)
+    inreplace "scripts/install-mithril.sh", /^revision='[0-9a-f]{40}'$/, "revision='#{runtime_revision}'"
     libexec.install "scripts/install-mithril.sh"
     libexec.install "scripts/mithril-brew-launcher" => "mithril"
     bin.write_exec_script libexec/"mithril"
@@ -27,6 +30,8 @@ class MithrilAgent < Formula
 
   test do
     assert_match "Mithril Agent installer", shell_output("#{bin}/mithril --installer-help")
+    assert_match "Revision: #{stable.specs.fetch(:revision)}",
+                 shell_output("sh #{libexec}/install-mithril.sh --dry-run")
     refute_path_exists testpath/".mithril"
   end
 end
