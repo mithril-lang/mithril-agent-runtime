@@ -2412,12 +2412,30 @@ def _finalize_update_receipt(code: int, reason: str) -> None:
 def _update_preflight_handled(args) -> bool:
     """Managed-install refusal, --plan, admission gate, --check. True = nothing more to do."""
     from hermes_cli.config import is_managed, managed_error
+
+    mithril_mode = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_mode:
+        if getattr(args, "set_channel", None) is not None:
+            print("✗ Mithril Agent update channels are not configured.")
+            print("  A Mithril-owned signed release manifest is required.")
+            sys.exit(2)
+        if getattr(args, "install_id", False):
+            from hermes_cli.update_channel import install_id
+
+            print(install_id(PROJECT_ROOT))
+            return True
+        if getattr(args, "plan", False):
+            print("Mithril Agent update plan:")
+            print("  Release service: unavailable (no signed Mithril manifest is configured).")
+            print("  Gateway OCI and Cloudflare Worker rollouts belong to their deployment owners.")
+            return True
+
     from hermes_cli.update_channel import handle_metadata_args
 
     if handle_metadata_args(args, PROJECT_ROOT):
         sys.exit(0)
     if is_managed():
-        product_name = "Mithril Agent" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes Agent"
+        product_name = "Mithril Agent" if mithril_mode else "Hermes Agent"
         managed_error(f"update {product_name}")
         return True
 
@@ -2450,7 +2468,7 @@ def _update_preflight_handled(args) -> bool:
 
     # Mithril source/image distributions need their own qualified update owner.
     # Never let the shared Hermes updater resolve or fetch an upstream source target.
-    if os.environ.get("MITHRIL_AGENT") == "1":
+    if mithril_mode:
         print("✗ Mithril Agent updates are not configured for this installation.")
         print("  Use the update method provided by your Mithril distribution.")
         sys.exit(1)
