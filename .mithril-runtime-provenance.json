@@ -49731,7 +49731,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "f8899b6d3b87902de5331d829376b2b70da49e53a65c09d43f7133972795ac31",
+    "sha256": "7e07c27e571c0c53d2186e6bb7923d08f5056f4ac79af8846bf2db2b7e2aa7d7",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49759,9 +49759,19 @@
         "sha256": "c034b1b6b3b19bfab81aebd3aa01fd7d78bcabf77f7d264d99917ca5162af21d"
       },
       {
+        "path": "agent/error_classifier.py",
+        "baseSha256": "47385d2d2b37e3e0e18c1a1d281014de6e763f7b9c8c4c41aac70227da1eddd5",
+        "sha256": "fc424fea35f9f1d17f2c6711a8c1338ff5dce20416891f11eb5fbd9f656e84c2"
+      },
+      {
         "path": "agent/secret_scope.py",
         "baseSha256": "8485f3d895a1d7d152fcb461f55c3f17c5fd3acfc76f30e9d8f7f30299eae4e6",
         "sha256": "8485f3d895a1d7d152fcb461f55c3f17c5fd3acfc76f30e9d8f7f30299eae4e6"
+      },
+      {
+        "path": "agent/turn_overflow.py",
+        "baseSha256": "2daa47807026fdf16f0bc857c9ed18aa7d81fb74d17d1ecf3e5f26bdb2ffa4cf",
+        "sha256": "91dadc0f61b5c0722a8016d436137c80f18ea12c424d4548cd209418f92e3c5c"
       },
       {
         "path": "hermes_cli/main.py",
@@ -49854,6 +49864,11 @@
           "path": "services/agent/scripts/run_tests_parallel.py",
           "blob": "081690735754f1152c5c0216686524db772eb50f"
         }
+      },
+      {
+        "path": "tests/test_chat_input_character_limit.py",
+        "baseSha256": null,
+        "sha256": "ac131b249b9fe9b1800849c4104474b3fd48662601623814964e71f3df6064e1"
       },
       {
         "path": "tests/test_mithril_account_token.py",
