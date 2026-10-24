@@ -20,7 +20,7 @@ from agent.conversation_compression import (
     COMPRESSION_RETRY_TOO_LARGE_STATUS_TEMPLATE, compression_blocked_transiently,
     compression_skipped_due_to_lock, context_compression_timed_out,
 )
-from agent.error_classifier import FailoverReason
+from agent.error_classifier import FailoverReason, _build_error_msg, _extract_error_body
 from agent.message_sanitization import serialized_messages_bytes
 from agent.model_metadata import (
     get_context_length_from_provider_error, is_local_endpoint, is_output_cap_error,
@@ -48,6 +48,54 @@ _GITHUB_MODELS_HINT = (
 )
 
 _MINIMAX_ANTHROPIC_URLS = ("https://api.minimax.io/anthropic", "https://api.minimaxi.com/anthropic")
+_INPUT_CHAR_LIMIT = re.compile(r"chat input is (\d+) characters; this model accepts at most (\d+)", re.I)
+
+
+def _chat_input_chars(messages: List[Dict[str, Any]]) -> int:
+    """Count text as the chat route does (JavaScript UTF-16 code units).
+
+    The route joins the assembled request. A row's ``api_content`` sidecar is that
+    wire text; persisted ``content`` can be the shorter transcript copy.
+    """
+    def part_text(part: Any) -> str:
+        if isinstance(part, str):
+            return part
+        value = part.get("text") if isinstance(part, dict) else None
+        return value if isinstance(value, str) else ""
+
+    def text(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(map(part_text, content))
+        return ""
+
+    def message_text(message: Any) -> str:
+        if not isinstance(message, dict):
+            return ""
+        sidecar = message.get("api_content")
+        if isinstance(sidecar, str) and sidecar:
+            return sidecar
+        return text(message.get("content"))
+
+    return sum(
+        len(message_text(message).encode("utf-16-le", errors="surrogatepass")) // 2
+        for message in messages
+    )
+
+
+def _recovery_input_messages(st: _Recovery) -> List[Dict[str, Any]]:
+    """Transcript rows plus the system prompt the next assembly prepends.
+
+    ``build_api_messages`` puts ``active_system_prompt`` on the wire even when the
+    persisted transcript has no system row. Counting only ``messages`` treats a
+    sidecar shrink as growth and misses prompt text the server already counted.
+    """
+    messages = list(st.messages) if isinstance(st.messages, list) else []
+    prompt = st.active_system_prompt if isinstance(st.active_system_prompt, str) else ""
+    if prompt:
+        messages = [{"role": "system", "content": prompt}, *messages]
+    return messages
 
 
 @dataclass
@@ -458,6 +506,39 @@ def _recover_context_length(st: _Recovery, _retry: TurnRetryState, error_msg: st
     )
 
 
+def _recover_input_char_limit(st: _Recovery, _retry: TurnRetryState, error_msg: str) -> OverflowVerdict:
+    """A measured message-text cap needs character-scored progress, not token estimates."""
+    agent = st.agent
+    match = _INPUT_CHAR_LIMIT.search(error_msg)
+    if match is None:
+        return st.done("fallthrough")
+    actual, limit = map(int, match.groups())
+    exhausted = st.count_attempt()
+    if exhausted is not None:
+        return exhausted
+    agent._buffer_diagnostic_status(
+        f"⚠️  Chat input exceeds the model's {limit:,}-character limit "
+        f"({actual:,}); compression attempt {st.compression_attempts}/{st.max_compression_attempts}..."
+    )
+    original_chars = _chat_input_chars(_recovery_input_messages(st))
+    deferred = st.compress(st.request_tokens(), fail_on_timeout=True)
+    if deferred is not None:
+        return deferred
+    new_chars = _chat_input_chars(_recovery_input_messages(st))
+    if new_chars < original_chars:
+        agent._buffer_diagnostic_status(
+            f"🗜️ Compressed chat text by {original_chars - new_chars:,} characters; retrying..."
+        )
+        st.provider_overflow_recovery_pending = True
+        _retry.restart_with_compressed_messages = True
+        return st.done("break")
+    return st.fail_turn(
+        site_copy("context_overflow", model=agent.model),
+        notices=("❌ Chat input exceeds the model's character limit and cannot compress further.", _RETRY_HINT),
+        log=("%sChat input exceeded %s characters; compression made no progress.", agent.log_prefix, limit),
+    )
+
+
 def recover_from_overflow(
     agent: Any, api_error: Exception, classified: Any, _retry: TurnRetryState, *,
     status_code: Optional[int], error_msg: str, wrapped_output_cap_budget: Optional[int],
@@ -471,7 +552,9 @@ def recover_from_overflow(
     load-bearing: 413 is checked BEFORE the generic 4xx handler, and context-length
     errors (incl. relay-wrapped output-cap 429s) BEFORE non-retryable client errors.
     Compression progress is scored in payload BYTES for 413 (never the byte-blind token
-    estimate) and in tokens/message count for context overflow."""
+    estimate), in UTF-16 characters for a measured chat-input cap, and in
+    tokens/message count for other context overflow. The character gate searches the
+    classifier text (``str(error)`` plus a body the SDK omitted), not ``error_msg`` alone."""
     st = _Recovery(
         agent=agent, api_messages=api_messages, system_message=system_message,
         effective_task_id=effective_task_id, api_call_count=api_call_count,
@@ -504,5 +587,11 @@ def recover_from_overflow(
         or wrapped_output_cap_budget is not None
     )
     if st.is_context_length_error:
+        # log_api_error_attempt passes str(api_error).lower() only. Classification
+        # already accepted a measured cap that lived solely in the response body.
+        measured = _build_error_msg(api_error, _extract_error_body(api_error))
+        haystack = measured if _INPUT_CHAR_LIMIT.search(measured) else error_msg
+        if _INPUT_CHAR_LIMIT.search(haystack):
+            return _recover_input_char_limit(st, _retry, haystack)
         return _recover_context_length(st, _retry, error_msg)
     return st.done("fallthrough")

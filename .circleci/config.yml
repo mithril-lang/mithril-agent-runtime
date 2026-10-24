@@ -1,0 +1,46 @@
+version: 2.1
+
+jobs:
+  validate-source:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Verify the runtime source inventory
+          command: python .circleci/validate-runtime-snapshot.py
+      - run:
+          name: Validate the Python dependency lock through PM
+          command: python -m pm.build_env --source . --check-lock
+      - run:
+          name: Check maintained Python source syntax
+          command: python -m compileall -q agent hermes_cli hermes_platform hermes_constants.py cli.py run_agent.py
+  mithril-account-auth:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Build a fresh locked test environment through PM
+          command: python -m pm.build_env --source . --out .venv --group dev --group test
+      - run:
+          name: Verify Mithril account routing and first-launch approval
+          command: >-
+            HERMES_PYTHON="$PWD/.venv/bin/python" PYTHONDONTWRITEBYTECODE=1
+            bash scripts/run_tests.sh -j 2
+            tests/test_mithril_account_token.py tests/test_mithril_first_login.py
+  mithril-distribution:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Verify Homebrew formula and shell installer
+          command: python -m unittest discover -s tests -p test_mithril_distribution.py -v
+
+workflows:
+  mithril-agent-runtime:
+    jobs:
+      - validate-source
+      - mithril-account-auth
+      - mithril-distribution

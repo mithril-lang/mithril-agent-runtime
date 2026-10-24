@@ -2,7 +2,7 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='762c7e8cb0a7cb7f2866e72ccc9c773680e2afa3'
+revision='283efea522e4b9769fa76d8f6236db92310e6642'
 branch='main'
 installer_sha256='0fbf2969c12b9ef9c90b81519814865faa9ee4e22056e2a9a4d0b1d5e59966e8'
 repository='https://github.com/mithril-lang/mithril-agent-runtime.git'
@@ -89,6 +89,7 @@ staged="$bin_dir/.mithril-install.$$"
     printf '%s\n' 'if [ -z "${HERMES_HOME:-}" ]; then'
     printf '    export HERMES_HOME=%s\n' "$(quote "$profile_home")"
     printf '%s\n' 'fi'
+    printf '%s\n' 'export MITHRIL_AGENT_CLI_LAUNCHER=1'
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
     printf '    exec python3 -I %s "$@"\n' "$(quote "$install_dir/scripts/mithril-runtime/session.py")"
     printf '%s\n' 'fi'
@@ -115,4 +116,4 @@ if [ -e "$bin_dir/mithril" ] || [ -L "$bin_dir/mithril" ]; then
 fi
 mv "$staged" "$bin_dir/mithril"
 printf 'Mithril Agent is ready. Run %s/mithril\n' "$bin_dir"
-printf '%s\n' 'Sign in with mithril login, or configure another provider with mithril setup.'
+printf '%s\n' 'Run mithril to sign in and start a session, or configure another provider with mithril setup.'

@@ -218,7 +218,7 @@ def uses_existing_provider_auth(argv):
             and len(stripped) > 2 and not stripped[2].startswith("-"))
 
 
-def main(argv=None):
+def main(argv=None, *, continue_on_login=False, profile_selected=False):
     argv = list(sys.argv[1:] if argv is None else argv)
     if uses_existing_provider_auth(argv):
         previous = sys.argv
@@ -243,7 +243,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         # Resolve before importing config or secret readers; never share another Profile's token.
-        select_home(args.profile)
+        if not profile_selected:
+            select_home(args.profile)
         from hermes_cli.config import (is_managed, load_env,
                                        require_readable_config_before_write,
                                        require_env_writable, remove_env_value)
@@ -288,11 +289,13 @@ def main(argv=None):
         identity = request("/v1/me", token=token)
         if not verified_identity(identity, requested):
             raise SignInError("Mithril could not verify this account. No local settings were changed.")
+        model = select_model(request("/v1/models", token=token), args.model, current)
         persist(token, model)
         if args.connectors:
             print("Mithril connector access authorized for this Profile. Open Mithril to connect Linear.")
         else:
-            print(f"Signed in to Mithril Fund. Model: {model}\nRun mithril to start a new conversation.")
+            suffix = "Continuing to your session." if continue_on_login else "Run mithril to start a new conversation."
+            print(f"Signed in to Mithril Fund. Model: {model}\n{suffix}")
         return 0
     except KeyboardInterrupt:
         print("\nSign-in cancelled. Run mithril account status to check this Profile.", file=sys.stderr)
