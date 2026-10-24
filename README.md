@@ -31,10 +31,27 @@ Use `mithril setup` for other providers, or `mithril -p work login` for an exist
 named local Profile. Explicit provider commands, including `mithril auth status
 openrouter`, retain their existing behavior.
 
-## Native Linear connection
+## Native Linear connection candidate
 
-Run `mithril login --connectors` to approve connector access for the current
-Profile while preserving its inference model and provider. Then connect Linear
-through `manage_connections` in Mithril. Linear reads, issue creation and
-follow-up comments use your own Linear OAuth grant through `api.mithril.fund`.
-The API must have the native connector provisioned before it can connect.
+This section describes an unqualified source candidate, not an available or
+verified hosted Linear connection. A runtime flag or local test does not
+provision the Mithril connector API, its OAuth provider, or an installed release.
+
+The candidate adds `mithril login --connectors` to request connector permissions
+for the current Profile without changing its inference model or provider.
+It requests `connectors:read` and `connectors:write` in addition to the existing
+`inference` and `workspace:read` scopes; it does not itself connect a Linear
+account, approve a Linear action, or grant access to another Profile.
+
+Before using a hosted connection, the original service owners must establish
+the Mithril-owned catalog, consent, account, policy and execution routes; qualify
+the exact runtime/API source and integrated main; and verify the installed
+runtime plus authenticated provider read-back. Signing in alone does not prove
+that `manage_connections` can connect Linear or that reads/writes work. Keep the
+candidate Draft until those existing gates are met. Local MCP servers use their
+own configuration and authorization and are separate from this hosted route.
+
+Current readiness and remaining contracts are tracked in
+[MITHRIL-450](https://linear.app/kotobalabs/issue/MITHRIL-450),
+[MITHRIL-58](https://linear.app/kotobalabs/issue/MITHRIL-58) and
+[MITHRIL-248](https://linear.app/kotobalabs/issue/MITHRIL-248).
