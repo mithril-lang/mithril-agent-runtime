@@ -121,6 +121,59 @@ def test_device_approval_roundtrip_is_profile_local(tmp_path, monkeypatch, outco
         worker.join(timeout=2)
 
 
+def test_connector_login_keeps_inference_settings_without_model_lookup(tmp_path, monkeypatch):
+    from hermes_cli import config
+    import hermes_constants
+
+    hermes_constants.pin_process_hermes_home(None)
+    home = tmp_path / "profile"
+    home.mkdir()
+    monkeypatch.setenv("HERMES_HOME", str(home))
+    monkeypatch.setattr(sys, "stdin", io.StringIO())  # Headless login must not ask for a model.
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    original_config = (
+        "model:\n"
+        "  provider: Other\n"
+        "  default: other/model\n"
+        "  base_url: https://other.example/v1\n"
+        "providers:\n"
+        "  Other:\n"
+        "    name: Other\n"
+        "    key_env: OTHER_SECRET\n"
+    ).encode()
+    (home / "config.yaml").write_bytes(original_config)
+    (home / ".env").write_text("OTHER_SECRET=preserved\n")
+    approved_token = "mf_" + "a" * 43
+    requested_scopes = auth.SCOPES | auth.CONNECTOR_SCOPES
+    requests = []
+
+    def request(path, body=None, token=None):
+        requests.append(path)
+        if path == "/v1/device/code":
+            assert body["scope"] == " ".join(sorted(requested_scopes))
+            return {"device_code": "a" * 43, "user_code": "ABCD-EFGH",
+                    "verification_uri": auth.CONSOLE,
+                    "verification_uri_complete": auth.CONSOLE + "?user_code=ABCD-EFGH",
+                    "expires_in": 40, "interval": 1}
+        if path == "/v1/device/token":
+            return {"access_token": approved_token, "token_type": "Bearer",
+                    "scope": " ".join(sorted(requested_scopes))}
+        if path == "/v1/me":
+            assert token == approved_token
+            return {"user": {"id": "account"}, "scopes": list(requested_scopes)}
+        raise AssertionError(f"Unexpected request: {path}")
+
+    monkeypatch.setattr(auth, "request", request)
+    original_poll = auth.poll
+    monkeypatch.setattr(auth, "poll", lambda grant, **kwargs: original_poll(
+        grant, call=request, wait=lambda _: None, **kwargs))
+
+    assert auth.main(["login", "--connectors", "--no-browser"], profile_selected=True) == 0
+    assert requests == ["/v1/device/code", "/v1/device/token", "/v1/me"]
+    assert (home / "config.yaml").read_bytes() == original_config
+    assert config.load_env() == {"OTHER_SECRET": "preserved", auth.TOKEN_ENV: approved_token}
+
+
 @pytest.mark.parametrize("argv,marker,tty,result,starts", [
     ([], True, True, 0, True),
     ([], True, True, 1, False),
