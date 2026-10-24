@@ -10,12 +10,17 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from agent.auxiliary_client import _named_custom_api_key
-from agent.secret_scope import reset_secret_scope, set_multiplex_active, set_secret_scope
+from agent.secret_scope import (
+    reset_secret_scope,
+    set_multiplex_active,
+    set_secret_scope,
+)
 from hermes_cli.mithril_account import mithril_inference_token_for_base_url
 import hermes_cli.runtime_provider_custom as custom_runtime
 
 
 TOKEN = "mf_test_token_1234567890"
+EXPLICIT = "sk-explicit-one-off-key"
 
 
 class MithrilAccountTokenTests(unittest.TestCase):
@@ -64,6 +69,20 @@ class MithrilAccountTokenTests(unittest.TestCase):
         )
         self.assertEqual(api_key, TOKEN)
 
+    def test_auxiliary_custom_provider_prefers_account_token_over_key_cmd(self):
+        self.write_profile_token()
+        sentinel = object()
+        with patch(
+            "agent.command_token_source.build_command_token_provider",
+            return_value=sentinel,
+        ):
+            api_key = _named_custom_api_key(
+                {"key_cmd": "echo legacy-cmd-token"},
+                "Mithril",
+                "https://api.mithril.fund/v1",
+            )
+        self.assertEqual(api_key, TOKEN)
+
     def test_auxiliary_custom_provider_keeps_legacy_key_for_other_hosts(self):
         self.write_profile_token()
         api_key = _named_custom_api_key(
@@ -73,12 +92,36 @@ class MithrilAccountTokenTests(unittest.TestCase):
         )
         self.assertEqual(api_key, "legacy-provider-key")
 
+    def test_auxiliary_custom_provider_keeps_key_cmd_for_other_hosts(self):
+        self.write_profile_token()
+        sentinel = object()
+        with patch(
+            "agent.command_token_source.build_command_token_provider",
+            return_value=sentinel,
+        ):
+            api_key = _named_custom_api_key(
+                {"key_cmd": "echo provider-token"},
+                "Custom",
+                "https://provider.example/v1",
+            )
+        self.assertIs(api_key, sentinel)
+
     def test_unscoped_multiplexing_does_not_read_process_token(self):
         os.environ["MITHRIL_ACCOUNT_TOKEN"] = TOKEN
         set_multiplex_active(True)
         self.assertIsNone(
             mithril_inference_token_for_base_url("https://api.mithril.fund/v1")
         )
+
+    def test_scoped_multiplexing_keeps_env_only_token(self):
+        set_multiplex_active(True)
+        token = set_secret_scope({"MITHRIL_ACCOUNT_TOKEN": TOKEN}, profile_home=self.home.name)
+        try:
+            self.assertEqual(
+                mithril_inference_token_for_base_url("https://api.mithril.fund/v1"), TOKEN
+            )
+        finally:
+            reset_secret_scope(token)
 
     def test_named_runtime_custom_provider_uses_account_token(self):
         self.write_profile_token()
@@ -108,6 +151,97 @@ class MithrilAccountTokenTests(unittest.TestCase):
             )
         self.assertEqual(result["api_key"], TOKEN)
 
+    def test_named_runtime_explicit_api_key_wins_over_account_token(self):
+        self.write_profile_token()
+        for pooled in (False, True):
+            with self.subTest(pooled=pooled):
+                runtime = SimpleNamespace(
+                    _get_named_custom_provider=lambda _name: {
+                        "name": "Mithril",
+                        "base_url": "https://api.mithril.fund/v1",
+                        "api_key": "legacy-rejected-key",
+                    },
+                    _try_resolve_from_custom_pool=lambda *args, **kwargs: (
+                        {"api_key": "pool-key"} if pooled else None
+                    ),
+                    _resolves_to_custom=lambda _name: False,
+                    _host_gated_env_key_candidates=lambda *args, **kwargs: [],
+                    has_usable_secret=lambda value: bool(value),
+                    _get_model_config=lambda: {},
+                )
+                with (
+                    patch.object(custom_runtime, "_rp", return_value=runtime),
+                    patch.object(custom_runtime, "_custom_runtime",
+                                 side_effect=lambda _rp, url, key, *_args, **_kwargs: {
+                                     "base_url": url, "api_key": key,
+                                 }),
+                    patch.object(custom_runtime, "_apply_custom_provider_extras"),
+                    patch.object(custom_runtime, "_opencode_family_for_custom", return_value=None),
+                ):
+                    result = custom_runtime._resolve_named_custom_runtime(
+                        requested_provider="Mithril",
+                        explicit_api_key=EXPLICIT,
+                    )
+                self.assertEqual(result["api_key"], EXPLICIT)
+
+    def test_direct_alias_explicit_api_key_wins_over_account_token(self):
+        self.write_profile_token()
+        for pooled in (False, True):
+            with self.subTest(pooled=pooled):
+                runtime = SimpleNamespace(
+                    _try_resolve_from_custom_pool=lambda *args, **kwargs: (
+                        {"api_key": "pool-key"} if pooled else None
+                    ),
+                    _host_gated_env_key_candidates=lambda *args, **kwargs: [],
+                    has_usable_secret=lambda value: bool(value),
+                    _get_model_config=lambda: {},
+                )
+                with (
+                    patch.object(custom_runtime, "_rp", return_value=runtime),
+                    patch.object(custom_runtime, "_custom_runtime",
+                                 side_effect=lambda _rp, url, key, *_args, **_kwargs: {
+                                     "base_url": url, "api_key": key,
+                                 }),
+                ):
+                    result = custom_runtime._resolve_direct_alias_runtime(
+                        "custom",
+                        EXPLICIT,
+                        "https://api.mithril.fund/v1",
+                    )
+                self.assertEqual(result["api_key"], EXPLICIT)
+
+    def test_named_runtime_account_token_wins_over_key_cmd(self):
+        self.write_profile_token()
+        sentinel = object()
+        runtime = SimpleNamespace(
+            _get_named_custom_provider=lambda _name: {
+                "name": "Mithril",
+                "base_url": "https://api.mithril.fund/v1",
+                "key_cmd": "echo legacy-cmd-token",
+            },
+            _try_resolve_from_custom_pool=lambda *args, **kwargs: None,
+            _resolves_to_custom=lambda _name: False,
+            _host_gated_env_key_candidates=lambda *args, **kwargs: [],
+            has_usable_secret=lambda value: bool(value),
+            _get_model_config=lambda: {},
+        )
+        with (
+            patch.object(custom_runtime, "_rp", return_value=runtime),
+            patch.object(custom_runtime, "_custom_runtime",
+                         side_effect=lambda _rp, url, key, *_args, **_kwargs: {
+                             "base_url": url, "api_key": key,
+                         }),
+            patch.object(custom_runtime, "_apply_custom_provider_extras"),
+            patch.object(custom_runtime, "_opencode_family_for_custom", return_value=None),
+            patch(
+                "agent.command_token_source.build_command_token_provider",
+                return_value=sentinel,
+            ),
+        ):
+            result = custom_runtime._resolve_named_custom_runtime(
+                requested_provider="Mithril"
+            )
+        self.assertEqual(result["api_key"], TOKEN)
 
 if __name__ == "__main__":
     unittest.main()
