@@ -285,7 +285,7 @@
     {
       "path": "agent/auxiliary_client.py",
       "sourceBlob": "2de9e47b44eda9c39a7ca70c4b8a6f5277160c7d",
-      "sha256": "4a1173a9ffe898c987e8abaf6e9e5b2fcba8745089ed6a504f6f420c837bff6d",
+      "sha256": "9ba2534c1f0b812a28e682d2e919ee6d5dd449ce1c2cb0b5b424985154dd84b9",
       "mode": "100644"
     },
     {
@@ -645,7 +645,7 @@
     {
       "path": "agent/error_classifier.py",
       "sourceBlob": "6523ac7bad0341c263095b3d9d2c7d0fff65f4e8",
-      "sha256": "47385d2d2b37e3e0e18c1a1d281014de6e763f7b9c8c4c41aac70227da1eddd5",
+      "sha256": "fc424fea35f9f1d17f2c6711a8c1338ff5dce20416891f11eb5fbd9f656e84c2",
       "mode": "100644"
     },
     {
@@ -1401,7 +1401,7 @@
     {
       "path": "agent/secret_scope.py",
       "sourceBlob": "ca7f9357c1312171a3b0c28d8f053b874ed469b3",
-      "sha256": "601c6fd935b3b1043320521b4381b35a3e98ecc9f5e904861c4ab90eb17df7ca",
+      "sha256": "8485f3d895a1d7d152fcb461f55c3f17c5fd3acfc76f30e9d8f7f30299eae4e6",
       "mode": "100644"
     },
     {
@@ -1833,7 +1833,7 @@
     {
       "path": "agent/turn_overflow.py",
       "sourceBlob": "c875e4c7eed3667cb011c0dfc40066d9139667c3",
-      "sha256": "2daa47807026fdf16f0bc857c9ed18aa7d81fb74d17d1ecf3e5f26bdb2ffa4cf",
+      "sha256": "91dadc0f61b5c0722a8016d436137c80f18ea12c424d4548cd209418f92e3c5c",
       "mode": "100644"
     },
     {
@@ -26373,7 +26373,7 @@
     {
       "path": "hermes_cli/main.py",
       "sourceBlob": "32ef3ea8af994564fe949677390b43458bdddb81",
-      "sha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
+      "sha256": "ae4faed239f84b23d10db6b0fd6f1f2f24ed846a26fee086896efe77595ad631",
       "mode": "100644"
     },
     {
@@ -26515,10 +26515,22 @@
       "mode": "100644"
     },
     {
+      "path": "hermes_cli/mithril_account.py",
+      "sourceBlob": "9829c47673b5c642e57e61ba9fe24aa439ade462",
+      "sha256": "64dd76a471bf45ac99ce932adbc4cfadc1ced26fea278e243f87719f4de2dfe6",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/hermes_cli/mithril_account.py"
+    },
+    {
       "path": "hermes_cli/mithril_auth.py",
-      "sourceBlob": "32bff2293dca63b1bcb3548febd82dd65f20217f",
-      "sha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
-      "mode": "100644"
+      "sourceBlob": "00d1c69a1e4157b12b7bd8e9da0888ad654ba4f2",
+      "sha256": "cb2332d753721f27af987a4657850531f6899123611ad458c0ed7656e55ede59",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/hermes_cli/mithril_auth.py"
     },
     {
       "path": "hermes_cli/moa_cmd.py",
@@ -27369,7 +27381,7 @@
     {
       "path": "hermes_cli/runtime_provider_custom.py",
       "sourceBlob": "d0ee1a81eee255026bba09bebc887fb0fbab7366",
-      "sha256": "eebf063c777306996f4f0f088f51e46977b8d4dcb519bc7106f17665a28f58c1",
+      "sha256": "26b6c2579eb495fa417bfe97aaaf3bcb258154a7555a5cc8532eeec3136f26f5",
       "mode": "100644"
     },
     {
@@ -39813,7 +39825,7 @@
     {
       "path": "scripts/mithril",
       "sourceBlob": "2fa6c0a0c6795e5b533a250e23015b742e6a6280",
-      "sha256": "718fa123ad84b8b6a875de009e3b598eabc6d3f51e418532b18ba924d56860e3",
+      "sha256": "d7a398bccd9bab4540a6922f798900753f573e7a855ba6c54a58885b903c0117",
       "mode": "100755"
     },
     {
@@ -40035,13 +40047,13 @@
     {
       "path": "scripts/run_tests.sh",
       "sourceBlob": "8fcc4294f48a16968fd68f6d5edad45d74354166",
-      "sha256": "16cd6223a3b517326e023c3b716a182e2818fcc04ebf8a1855f83dc72e52743d",
+      "sha256": "9e4814fa934f4706d2eb1ba111175a0d1887600cccd0dd6cffca4d2c0e76050f",
       "mode": "100755"
     },
     {
       "path": "scripts/run_tests_parallel.py",
       "sourceBlob": "21178fd246edd2460d1d6ae4cfb7937262458ffc",
-      "sha256": "15b0f3e3702bab00d8352a56471111d08f3af7e98f7967130ff81e09b7b94015",
+      "sha256": "b4fda1a4914f6ed8fdddc7d1027ad97990efa7a23c729d5ac1c1ca515417cfec",
       "mode": "100644"
     },
     {
@@ -43100,9 +43112,12 @@
     },
     {
       "path": "tools/connectors/gateway/config.py",
-      "sourceBlob": "5a936e95cc2d15c13dc1bc7a7e71aedd5129ce88",
-      "sha256": "127841a91f329ecc6baa453632ae958a67b866dc85be2b0b5ff2d93b5a52b124",
-      "mode": "100644"
+      "sourceBlob": "6e18857088bf56921b3c911f9c7082c3368f059f",
+      "sha256": "28acb3337a4de332747eb1da8fab2a08960ee03656b39d1079ea6cd2bf77db0a",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/connectors/gateway/config.py"
     },
     {
       "path": "tools/connectors/gateway/errors.py",
@@ -43166,9 +43181,12 @@
     },
     {
       "path": "tools/connectors/portal/client.py",
-      "sourceBlob": "6bed3662b320cdc0addaa61fe691b1cdc11e155b",
-      "sha256": "eddba6277e88b2a37753d1f8071d7ed4e32278dd1f9a39f1b4dc98444ed33c8f",
-      "mode": "100644"
+      "sourceBlob": "5211a6b59a837f0e1411d83a6c37fd5ba822c8e9",
+      "sha256": "194c0340903498c31447cb636b42a545d7abb46a29db808b9041a5b0faa82979",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/connectors/portal/client.py"
     },
     {
       "path": "tools/connectors/portal/errors.py",
@@ -43640,9 +43658,12 @@
     },
     {
       "path": "tools/managed_gateway_auth.py",
-      "sourceBlob": "df503fc65bb7994b78bb28c65174f0452c3b6df9",
-      "sha256": "eff014169b867c5ede2201433e51c204918c67d55c032cbe074cace5505186bf",
-      "mode": "100644"
+      "sourceBlob": "a1dbb1b8ec2e81531c39c3e0a0692ea28ef5a1e6",
+      "sha256": "e97c5951c1a1cf6b1213fa2e3036833848164a79ce1b19523a651e0df6e0e3b6",
+      "mode": "100644",
+      "sourceRepository": "mithril-lang/mithril-fund",
+      "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+      "sourcePath": "services/agent/tools/managed_gateway_auth.py"
     },
     {
       "path": "tools/managed_tool_gateway.py",
@@ -49729,9 +49750,21 @@
       }
     ]
   },
+  "nativeConnectorAdaptation": {
+    "repository": "mithril-lang/mithril-fund",
+    "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
+    "paths": [
+      "hermes_cli/mithril_account.py",
+      "hermes_cli/mithril_auth.py",
+      "tools/managed_gateway_auth.py",
+      "tools/connectors/gateway/config.py",
+      "tools/connectors/portal/client.py"
+    ],
+    "scope": "native Mithril connector identity and transport"
+  },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "7e07c27e571c0c53d2186e6bb7923d08f5056f4ac79af8846bf2db2b7e2aa7d7",
+    "sha256": "4e6ccfdc7c1620d0efbcbc072b8294eec9c05c260854cea5eb7234bac250c4a5",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49751,12 +49784,12 @@
       {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "2107add4b555abe88dacfcbbe1d87b55699bbbcc34cac0d3af6667e4c94fde5b"
+        "sha256": "433274542639b1b3f8b5aa86e2ff26c35638a648a465b1267944f732f5342316"
       },
       {
         "path": "agent/auxiliary_client.py",
         "baseSha256": "c034b1b6b3b19bfab81aebd3aa01fd7d78bcabf77f7d264d99917ca5162af21d",
-        "sha256": "c034b1b6b3b19bfab81aebd3aa01fd7d78bcabf77f7d264d99917ca5162af21d"
+        "sha256": "9ba2534c1f0b812a28e682d2e919ee6d5dd449ce1c2cb0b5b424985154dd84b9"
       },
       {
         "path": "agent/error_classifier.py",
@@ -49787,12 +49820,12 @@
       {
         "path": "hermes_cli/mithril_account.py",
         "baseSha256": "ba2548a50977ca950268b52b232176596ef24513635a3de8df2e62f40b537d36",
-        "sha256": "ba2548a50977ca950268b52b232176596ef24513635a3de8df2e62f40b537d36"
+        "sha256": "64dd76a471bf45ac99ce932adbc4cfadc1ced26fea278e243f87719f4de2dfe6"
       },
       {
         "path": "hermes_cli/mithril_auth.py",
         "baseSha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
-        "sha256": "f20371f4c024f2187f38752e39a2455ba5b5f5c5e3243da55ab98c8cea553815",
+        "sha256": "cb2332d753721f27af987a4657850531f6899123611ad458c0ed7656e55ede59",
         "canonicalSource": {
           "repository": "mithril-lang/mithril-fund",
           "revision": "039310d864f77c4322bc6b3591ce158818e06ce3",
@@ -49814,7 +49847,7 @@
       {
         "path": "hermes_cli/runtime_provider_custom.py",
         "baseSha256": "57bece2cc527e93abb4448674a411e8cf353eb18e097b9e15e3347c5fec8ffd6",
-        "sha256": "57bece2cc527e93abb4448674a411e8cf353eb18e097b9e15e3347c5fec8ffd6"
+        "sha256": "26b6c2579eb495fa417bfe97aaaf3bcb258154a7555a5cc8532eeec3136f26f5"
       },
       {
         "path": "scripts/install-mithril.sh",
@@ -49873,7 +49906,7 @@
       {
         "path": "tests/test_mithril_account_token.py",
         "baseSha256": "5782052fdf2892edc501d1a0a9a351cfab3217689a09359f8964fadc087ee61a",
-        "sha256": "5782052fdf2892edc501d1a0a9a351cfab3217689a09359f8964fadc087ee61a"
+        "sha256": "9e74e41a85671db733032b88de7a0bac63fac6482c55a7222461debf20aad9f8"
       },
       {
         "path": "tests/test_mithril_first_login.py",

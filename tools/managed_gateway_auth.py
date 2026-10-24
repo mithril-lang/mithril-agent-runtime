@@ -1,6 +1,7 @@
 """First-party gateway bearer trust, ported from connectors-only 43608084f4."""
 
 import logging
+import os
 from typing import Callable, Optional
 from urllib.parse import urlsplit
 
@@ -16,6 +17,9 @@ def managed_gateway_origin() -> str:
 
 def connector_gateway_origin() -> str:
     """Separate connector deployment; honors CONNECTOR_GATEWAY_URL."""
+    from hermes_cli.mithril_account import ORIGIN, account_token
+    if not (os.getenv("CONNECTOR_GATEWAY_URL") or os.getenv("TOOL_GATEWAY_DOMAIN")) and account_token():
+        return ORIGIN
     return build_vendor_gateway_url("connector")
 
 
@@ -40,10 +44,8 @@ def is_managed_nous_gateway_url(
 
     build_origin = gateway_builder or build_vendor_gateway_url
     try:
-        expected = {
-            urlsplit(build_origin(label))[:2]
-            for label in ("tool", "connector")
-        }
+        expected = {urlsplit(build_origin("tool"))[:2],
+                    urlsplit(build_origin("connector") if gateway_builder else connector_gateway_origin())[:2]}
         actual = urlsplit(url.strip())
     except ValueError:
         return False
@@ -63,10 +65,18 @@ def managed_gateway_auth_headers(
     bearer. Returns ``{}`` rather than raising when no token is available, so a
     caller can report "sign in" instead of sending an unauthenticated request.
     """
+    from hermes_cli.mithril_account import account_token, native_connector_url
+    # Trust in the connector origin does not authorize a Nous bearer on other Mithril routes.
+    try:
+        if urlsplit(str(url)).hostname == "api.mithril.fund" and not native_connector_url(url):
+            return {}
+    except ValueError:
+        return {}
     if not is_managed_nous_gateway_url(url, gateway_builder):
         return {}
 
-    resolved_token_reader = token_reader or read_nous_access_token
+    # An explicit override can never send a Mithril credential to a Nous/vendor origin.
+    resolved_token_reader = token_reader or (account_token if native_connector_url(url) else read_nous_access_token)
     try:
         token = resolved_token_reader()
     except Exception as exc:  # pragma: no cover — defensive
