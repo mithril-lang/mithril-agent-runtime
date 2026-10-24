@@ -48,6 +48,28 @@ _GITHUB_MODELS_HINT = (
 )
 
 _MINIMAX_ANTHROPIC_URLS = ("https://api.minimax.io/anthropic", "https://api.minimaxi.com/anthropic")
+_INPUT_CHAR_LIMIT = re.compile(r"chat input is (\d+) characters; this model accepts at most (\d+)", re.I)
+
+
+def _chat_input_chars(messages: List[Dict[str, Any]]) -> int:
+    """Count text as the chat route does (JavaScript UTF-16 code units)."""
+    def part_text(part: Any) -> str:
+        if isinstance(part, str):
+            return part
+        value = part.get("text") if isinstance(part, dict) else None
+        return value if isinstance(value, str) else ""
+
+    def text(content: Any) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(map(part_text, content))
+        return ""
+
+    return sum(
+        len(text(message.get("content")).encode("utf-16-le", errors="surrogatepass")) // 2
+        for message in messages
+    )
 
 
 @dataclass
@@ -458,6 +480,39 @@ def _recover_context_length(st: _Recovery, _retry: TurnRetryState, error_msg: st
     )
 
 
+def _recover_input_char_limit(st: _Recovery, _retry: TurnRetryState, error_msg: str) -> OverflowVerdict:
+    """A measured message-text cap needs character-scored progress, not token estimates."""
+    agent = st.agent
+    match = _INPUT_CHAR_LIMIT.search(error_msg)
+    if match is None:
+        return st.done("fallthrough")
+    actual, limit = map(int, match.groups())
+    exhausted = st.count_attempt()
+    if exhausted is not None:
+        return exhausted
+    agent._buffer_diagnostic_status(
+        f"⚠️  Chat input exceeds the model's {limit:,}-character limit "
+        f"({actual:,}); compression attempt {st.compression_attempts}/{st.max_compression_attempts}..."
+    )
+    original_chars = _chat_input_chars(st.messages)
+    deferred = st.compress(st.request_tokens(), fail_on_timeout=True)
+    if deferred is not None:
+        return deferred
+    new_chars = _chat_input_chars(st.messages)
+    if new_chars < original_chars:
+        agent._buffer_diagnostic_status(
+            f"🗜️ Compressed chat text by {original_chars - new_chars:,} characters; retrying..."
+        )
+        st.provider_overflow_recovery_pending = True
+        _retry.restart_with_compressed_messages = True
+        return st.done("break")
+    return st.fail_turn(
+        site_copy("context_overflow", model=agent.model),
+        notices=("❌ Chat input exceeds the model's character limit and cannot compress further.", _RETRY_HINT),
+        log=("%sChat input exceeded %s characters; compression made no progress.", agent.log_prefix, limit),
+    )
+
+
 def recover_from_overflow(
     agent: Any, api_error: Exception, classified: Any, _retry: TurnRetryState, *,
     status_code: Optional[int], error_msg: str, wrapped_output_cap_budget: Optional[int],
@@ -504,5 +559,7 @@ def recover_from_overflow(
         or wrapped_output_cap_budget is not None
     )
     if st.is_context_length_error:
+        if _INPUT_CHAR_LIMIT.search(error_msg):
+            return _recover_input_char_limit(st, _retry, error_msg)
         return _recover_context_length(st, _retry, error_msg)
     return st.done("fallthrough")

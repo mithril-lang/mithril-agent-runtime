@@ -1130,6 +1130,11 @@ def _oversized_message_content_rejection(body: Any) -> bool:
 def _classify_400(c: _Ctx) -> Verdict:
     """400 Bad Request — image/tool shapes, request-shape rejections, overflow, or generic."""
     msg, code = c.msg, c.code
+    # Mithril's chat route limits joined message text in characters, independently
+    # of the token window. Require the measured-input wording because the same error
+    # code is also used for unrelated request-body limits; some relays drop the code.
+    if re.search(r"chat input is \d+ characters; this model accepts at most \d+", msg):
+        return _V_CONTEXT_OVERFLOW
     # A size cap reported *through* a message content field must beat the keyword
     # multimodal rule, which would otherwise claim "input should be a valid string".
     if _oversized_message_content_rejection(c.body):
