@@ -273,7 +273,6 @@ def main(argv=None, *, continue_on_login=False, profile_selected=False):
         current = current.get("default") if isinstance(current, dict) else current
         if args.connectors and args.model:
             raise SignInError("Use a separate mithril login --model command to change the inference model.")
-        model = None if args.connectors else select_model(request("/v1/models"), args.model, current)
         requested = SCOPES | CONNECTOR_SCOPES if args.connectors else SCOPES
         grant = request("/v1/device/code", {"device_name": "Mithril Agent CLI", "scope": " ".join(sorted(requested))})
         url = validate_grant(grant)
