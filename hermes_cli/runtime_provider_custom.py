@@ -38,6 +38,46 @@ def _clean(value: Any) -> str:
     return str(value or "").strip()
 
 
+def _resolve_custom_api_key(
+    *,
+    explicit_key: str,
+    mithril_token: Optional[str],
+    legacy_candidates: list,
+    rp: Any,
+    key_cmd: str = "",
+    key_cmd_label: str = "custom",
+) -> Any:
+    """Precedence for custom runtimes: explicit one-off key, then Mithril account token on the canonical host,
+    then legacy provider material and ``key_cmd``."""
+    explicit_key = (explicit_key or "").strip()
+    if rp.has_usable_secret(explicit_key):
+        return explicit_key
+    if mithril_token:
+        return mithril_token
+    api_key: Any = next((c for c in legacy_candidates if rp.has_usable_secret(c)), "")
+    key_cmd = _clean(key_cmd)
+    if key_cmd:
+        from agent.command_token_source import build_command_token_provider
+        token_provider = build_command_token_provider(key_cmd, key_cmd_label)
+        if token_provider is not None:
+            api_key = token_provider
+    return api_key
+
+
+def _apply_mithril_pool_api_key(
+    pool_result: Dict[str, Any],
+    *,
+    explicit_key: str,
+    mithril_token: Optional[str],
+    rp: Any,
+) -> None:
+    explicit_key = (explicit_key or "").strip()
+    if rp.has_usable_secret(explicit_key):
+        pool_result["api_key"] = explicit_key
+    elif mithril_token:
+        pool_result["api_key"] = mithril_token
+
+
 def _key_env_secret(entry: Dict[str, Any], label: str) -> str:
     """The credential named by ``key_env`` / ``api_key_env`` on a config block, or "".
 
@@ -490,20 +530,27 @@ def _resolve_direct_alias_runtime(requested_provider: str, explicit_api_key: Opt
     mithril_token = mithril_inference_token_for_base_url(base_url)
     # Pool first — mirrors the named-custom path so bare `provider: custom` with a configured
     # custom_providers entry gets its api_key from the pool instead of env fallbacks.
+    explicit_key = (explicit_api_key or "").strip()
     pool_result = rp._try_resolve_from_custom_pool(base_url, "custom", None)
     if pool_result:
         pool_result["source"] = "direct-alias"
-        if mithril_token:
-            pool_result["api_key"] = mithril_token
+        _apply_mithril_pool_api_key(
+            pool_result, explicit_key=explicit_key, mithril_token=mithril_token, rp=rp,
+        )
         return pool_result
     # OLLAMA_API_KEY gets its own gate here: without it a `model_aliases:` entry pointing at
     # Ollama Cloud resolved no key at all.
     # ``model.key_env`` only when this alias endpoint IS the configured model.base_url (#67453).
-    candidates = [(explicit_api_key or "").strip(), _model_cfg_key_env_for(rp._get_model_config(), base_url),
-                  *rp._host_gated_env_key_candidates(base_url, ollama=True)]
-    api_key = next((c for c in candidates if rp.has_usable_secret(c)), "")
-    if mithril_token:
-        api_key = mithril_token
+    legacy_candidates = [
+        _model_cfg_key_env_for(rp._get_model_config(), base_url),
+        *rp._host_gated_env_key_candidates(base_url, ollama=True),
+    ]
+    api_key = _resolve_custom_api_key(
+        explicit_key=explicit_key,
+        mithril_token=mithril_token,
+        legacy_candidates=legacy_candidates,
+        rp=rp,
+    )
     return _custom_runtime(rp, base_url, api_key, None, source="direct-alias", requested_provider=requested_provider)
 
 
@@ -560,33 +607,28 @@ def _resolve_named_custom_runtime(*, requested_provider: str, explicit_api_key: 
         base_url, "custom", custom_provider.get("api_mode"),
         provider_name=custom_provider.get("provider_key") or custom_provider.get("name"),
     )
+    explicit_key = (explicit_api_key or "").strip()
     if pool_result:
         # The pool doesn't know the custom_providers fields — propagate them here too.
         _apply_custom_provider_extras(custom_provider, target_model, pool_result)
-        if mithril_token:
-            pool_result["api_key"] = mithril_token
+        _apply_mithril_pool_api_key(
+            pool_result, explicit_key=explicit_key, mithril_token=mithril_token, rp=rp,
+        )
         return pool_result
-    explicit_key = (explicit_api_key or "").strip()
-    candidates = [
-        explicit_key,
+    legacy_candidates = [
         _clean(custom_provider.get("api_key", "")),
         _key_env_secret(custom_provider, f"custom provider '{custom_provider.get('name', requested_provider)}'"),
         *rp._host_gated_env_key_candidates(base_url, ollama=False),
     ]
-    api_key: Any = next((c for c in candidates if rp.has_usable_secret(c)), "")
-    # ``key_cmd`` credentials are minted per request (short-lived bearers would go stale
-    # mid-session); both wire clients accept a callable api_key (the Entra ID contract). An
-    # explicit --api-key still wins as the one-off recovery escape hatch.
-    # Prefer the device-approved account token even when a legacy custom-provider
-    # entry still contains a rejected hand-entered key.
-    if mithril_token:
-        api_key = mithril_token
-    key_cmd = _clean(custom_provider.get("key_cmd", ""))
-    if key_cmd and not rp.has_usable_secret(explicit_key):
-        from agent.command_token_source import build_command_token_provider
-        token_provider = build_command_token_provider(key_cmd, str(custom_provider.get("name", requested_provider) or "custom"))
-        if token_provider is not None:
-            api_key = token_provider
+    provider_label = str(custom_provider.get("name", requested_provider) or "custom")
+    api_key = _resolve_custom_api_key(
+        explicit_key=explicit_key,
+        mithril_token=mithril_token,
+        legacy_candidates=legacy_candidates,
+        rp=rp,
+        key_cmd=_clean(custom_provider.get("key_cmd", "")),
+        key_cmd_label=provider_label,
+    )
     result = _custom_runtime(rp, base_url, api_key, custom_provider.get("api_mode"),
                              source=f"custom_provider:{custom_provider.get('name', requested_provider)}",
                              requested_provider=requested_provider)
