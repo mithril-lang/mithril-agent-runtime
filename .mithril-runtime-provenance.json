@@ -189,7 +189,7 @@
     {
       "path": "activate.ps1",
       "sourceBlob": "e58ed04c91a3e61d1dac481a8642f6ded946d056",
-      "sha256": "bd910cbfd387a20e05f8b4faea8e5e96373dfca397358887cebb3af7c34b04e0",
+      "sha256": "d1511a1faaea3174db65cb834e75c93cf66e4561da49c00bb1625b250535d432",
       "mode": "100755"
     },
     {
@@ -7341,7 +7341,7 @@
     {
       "path": "apps/desktop/scripts/update-relaunch-waiter.ps1",
       "sourceBlob": "f1b92db75efc8aa9fe053b2dc0d9d322c7518dfc",
-      "sha256": "e1753dd76c813f5037a0ebae2b360d51842daa7dfe0af6068ff2a30dc97daf94",
+      "sha256": "64fa941fd85a3358cdc5ef05411f2cccbaeed85b945c1250e0652875867aa778",
       "mode": "100644"
     },
     {
@@ -7359,7 +7359,7 @@
     {
       "path": "apps/desktop/scripts/verify-signed-payloads.ps1",
       "sourceBlob": "fc486d119cbb6946c9824f89709acdad8b406aa6",
-      "sha256": "1d93d32f77776f69f26997fc91a5ed02d9e1b9f8fd194a6940b5e098a7c32055",
+      "sha256": "34553dcc5b0b2a5e4bb03099329f3dedf65a48d826ddd8a184d43d28b6cf2b97",
       "mode": "100644"
     },
     {
@@ -34083,7 +34083,7 @@
     {
       "path": "optional-skills/software-development/ast-grep/install.ps1",
       "sourceBlob": "65dd6d8b6c999f8323f94df4bfec679b599708ec",
-      "sha256": "7ef8544f6560231ffa4e3886e94dd3038c461c6532e7941b82cb7d3c567c7268",
+      "sha256": "e61f32729a8b54dc7bcc27adcafd91511cbbd0ea963493e1d2e79a221b683bbf",
       "mode": "100644"
     },
     {
@@ -39369,7 +39369,7 @@
     {
       "path": "scripts/build/windows-deps.ps1",
       "sourceBlob": "35c5c171937ce54260a6eb2176c3d4096d317682",
-      "sha256": "1be19c44cf9195161b51e7535287632c2f164532793cb1c5d32a25795e8f6973",
+      "sha256": "47506484c41193a61bce7ae816e4107b2a5dab424ac02da90f5273fcbc604eb0",
       "mode": "100644"
     },
     {
@@ -39639,7 +39639,7 @@
     {
       "path": "scripts/desktop-update.ps1",
       "sourceBlob": "7b9647873d96278e95f233429d80bff6a269d327",
-      "sha256": "63cdce628baf5022f1c851885af5289df884581f7ca7cc732a979f07893b5d9a",
+      "sha256": "59c9147e13d77660b42e27be6376ef958f39f08d9fb976b35488c1dcbbb06ba1",
       "mode": "100644"
     },
     {
@@ -39657,7 +39657,7 @@
     {
       "path": "scripts/desktop-update/runtime.ps1",
       "sourceBlob": "283b02b0db8a0e539ab39232312376e8e8eaad16",
-      "sha256": "0ca1996f7d12341cb710a1d43242b362da10d6f832cd6fa9a1b7da4886118ebe",
+      "sha256": "e1f3f01f2145f3988aae57c52bdd1048cfdcdfa95460b959a554d76a04024525",
       "mode": "100644"
     },
     {
@@ -39681,7 +39681,7 @@
     {
       "path": "scripts/desktop-update/windows.ps1",
       "sourceBlob": "bb1f0a93a2a278e5deb33cb5db0fa4e8d708ade5",
-      "sha256": "b63951c8551df1c44ed3ec15a88322b39316306835ffdf4b4fed2f4f1d28418b",
+      "sha256": "2a5797838848817b96769b5804b5f2ebd9c9d76020e6776854e64913562dc0c5",
       "mode": "100644"
     },
     {
@@ -39777,7 +39777,7 @@
     {
       "path": "scripts/install.ps1",
       "sourceBlob": "7ab82037d1f8d9755bc1e44e9cd225469e106145",
-      "sha256": "34edf108ea395f9a1c0bf09ab10bd064107a26bfb7ea7a3d2b5be88d912e6f1d",
+      "sha256": "5204fb92ced8b94af58e9ce37151cbbbc489b3b03ca81830a57362362d3d20da",
       "mode": "100644"
     },
     {
@@ -40377,7 +40377,7 @@
     {
       "path": "scripts/update-test/hermes-update-rehearsal.ps1",
       "sourceBlob": "7c193027c500dae552797cf917422d7cd9ba73e4",
-      "sha256": "50bad819abe441ecb4c7079e6405243833cee534baf7132452558f31a2eba1b1",
+      "sha256": "c68709fc17005d4e104971956f1694e6c29b31dbf404243f210fa2ec133554e6",
       "mode": "100755"
     },
     {
@@ -40389,7 +40389,7 @@
     {
       "path": "scripts/update-test/smoke-test.ps1",
       "sourceBlob": "d875454651b4c42669ed53b2a712d9d00e4b07f1",
-      "sha256": "5da7b660d049f3f03403f67df1b6dc5e0ee8df758508adf681808930771f49a3",
+      "sha256": "87117b2a6f679b9dd21e6349d500b9068448273a2cd562eece8f8fbf8108d978",
       "mode": "100755"
     },
     {
@@ -40491,13 +40491,13 @@
     {
       "path": "scripts/windows-build-deps.ps1",
       "sourceBlob": "92371454b603f8ed46fa089cfdccffdf4140bdd3",
-      "sha256": "387d9cf46a5bbf4b0d1a9e7e4ef3abf0cc861ce3b739824f444934127c50a210",
+      "sha256": "333d0f709e41cc2e1c5f1fd542aa01c6ddd59171185fdfde8b5555669be0e1e8",
       "mode": "100644"
     },
     {
       "path": "scripts/windows_e2e_harness.ps1",
       "sourceBlob": "b3e229dfd98352dae375e2a67ca804d902b128d7",
-      "sha256": "ff46e194223f9abf9f24f674b47758524aae2a15c4dc90996250355a96b5321b",
+      "sha256": "417d662cfef7e7309ebcafa8e37d8b8cef5c8d35bf3000374a501c2ada29aef9",
       "mode": "100644"
     },
     {
@@ -40509,7 +40509,7 @@
     {
       "path": "setup-hermes.ps1",
       "sourceBlob": "b96b8bd77ae254946f26e0c59e9da22abda7114d",
-      "sha256": "47ca171f1ed82e4dc492a0bf051f29c5b59f412bd1b9481ea3e39effc585b530",
+      "sha256": "4dfd89f7f8e3d4ec658c3317cf23e84f4b43602a156aa25420315ab38f701ea7",
       "mode": "100644"
     },
     {
