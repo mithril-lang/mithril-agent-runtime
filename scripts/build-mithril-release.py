@@ -109,10 +109,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
     parser.add_argument("--sequence", type=int, required=True)
-    parser.add_argument("--previous-revision", action="append", required=True)
+    parser.add_argument("--previous-revision", action="append", required=True,
+                        help="Compatible exact runtime revisions; repeat or comma-separate")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    build(args.version, args.sequence, args.previous_revision, args.out)
+    previous = [revision for group in args.previous_revision for revision in group.split(",")]
+    build(args.version, args.sequence, previous, args.out)
 
 
 if __name__ == "__main__":
