@@ -1,16 +1,23 @@
+require "digest"
+
 class MithrilAgent < Formula
   desc "Mithril terminal agent installer based on Hermes"
   homepage "https://console.mithril.fund/agent"
   url "https://github.com/mithril-lang/mithril-agent-runtime.git",
       using: :git,
-      revision: "283efea522e4b9769fa76d8f6236db92310e6642"
-  version "0.1.0-preview.6"
+      revision: "f8ff45e9852284d9d58e133c7fc73031a6938123"
+  version "0.1.0-preview.7"
   license "MIT"
 
   def install
     # The source archive predates this tap update; bind its bootstrap to this formula.
     runtime_revision = stable.specs.fetch(:revision)
     inreplace "scripts/install-mithril.sh", /^revision='[0-9a-f]{40}'$/, "revision='#{runtime_revision}'"
+    bootstrap_sha256 = Digest::SHA256.file("scripts/install.sh").hexdigest
+    inreplace "scripts/install-mithril.sh", /^installer_sha256='[0-9a-f]{64}'$/, "installer_sha256='#{bootstrap_sha256}'"
+    (libexec/"hermes_cli").install "hermes_cli/mithril_updates.py"
+    (libexec/"distributions/mithril").install "distributions/mithril/update-trust.json"
+    libexec.install "scripts/mithril-update-bootstrap.py"
     libexec.install "scripts/install-mithril.sh"
     libexec.install "scripts/mithril-brew-launcher" => "mithril"
     bin.write_exec_script libexec/"mithril"
