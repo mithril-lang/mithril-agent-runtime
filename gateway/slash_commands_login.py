@@ -7,6 +7,7 @@ import concurrent.futures
 import contextlib
 import dataclasses
 import logging
+import os
 import threading
 from contextvars import copy_context
 from typing import Any
@@ -15,7 +16,6 @@ from uuid import uuid4
 from agent.i18n import t
 from gateway.run_agent_cache import _first_agent
 from gateway.slash_access import policy_for_runner_source
-from hermes_cli import anon_auth
 
 logger = logging.getLogger("gateway.run")
 
@@ -63,6 +63,7 @@ class GatewayLoginCommandsMixin:
 
     async def _handle_login_command(self, event) -> str:
         src = event.source
+        mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
         platform = str(getattr(src.platform, "value", src.platform)).lower()
         paired_dm = (
             getattr(src, "chat_type", None) in {"dm", "private"}
@@ -70,12 +71,22 @@ class GatewayLoginCommandsMixin:
             and platform not in _LOGIN_BLOCKED_PLATFORMS
         )
         if not paired_dm:
+            if mithril_agent:
+                return "Mithril sign-in requires a paired private message."
+            from hermes_cli import anon_auth
             return anon_auth.LOGIN_DM_ONLY
 
         policy = policy_for_runner_source(self, src)
         if policy.enabled and not policy.is_admin(getattr(src, "user_id", None)):
+            if mithril_agent:
+                return "Only an authorized Agent administrator can request account sign-in."
+            from hermes_cli import anon_auth
             return anon_auth.LOGIN_NOT_ALLOWED
 
+        if mithril_agent:
+            return "Sign in to Mithril on the Agent host with `mithril login` for this Profile."
+
+        from hermes_cli import anon_auth
         key = (str(getattr(src.platform, "value", src.platform)), str(src.chat_id),
                str(getattr(src, "user_id", "") or ""))
         lock, attempts = self._login_registry()
@@ -107,6 +118,7 @@ class GatewayLoginCommandsMixin:
         return anon_auth.UPGRADE_START
 
     async def _run_login(self, attempt: _SignInAttempt) -> None:
+        from hermes_cli import anon_auth
         lock, attempts = self._login_registry()
 
         def _cancelled() -> bool:
@@ -157,6 +169,7 @@ class GatewayLoginCommandsMixin:
             logger.warning("/login %s: push failed", attempt.attempt_id, exc_info=True)
 
     async def _render_login_state(self, attempt: _SignInAttempt, state) -> None:
+        from hermes_cli import anon_auth
         if isinstance(state, anon_auth.Code):
             await self._push_login(attempt, state.link)
             await self._push_login(attempt, state.code)

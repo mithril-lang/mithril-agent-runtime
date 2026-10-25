@@ -14,6 +14,7 @@ Two audiences, two rules:
 from __future__ import annotations
 
 import logging
+import os
 from collections import OrderedDict
 
 from agent.i18n import t
@@ -42,7 +43,8 @@ def pairing_code_reply(platform_name: str, code: str, profile_arg: str = "") -> 
     whether they are the owner or a guest, and that they must message again after approval."""
     hours = max(1, CODE_TTL_SECONDS // 3600)
     validity = t("gateway.pairing.validity_hour" if hours == 1 else "gateway.pairing.validity_hours", hours=hours)
-    approve_cmd = f"hermes {profile_arg}pairing approve {platform_name} {code}"
+    cli_name = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    approve_cmd = f"{cli_name} {profile_arg}pairing approve {platform_name} {code}"
     return t("gateway.pairing.code_reply", code=code, validity=validity, approve_cmd=approve_cmd)
 
 

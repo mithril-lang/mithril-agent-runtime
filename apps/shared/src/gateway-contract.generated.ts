@@ -3369,6 +3369,7 @@ export interface SessionUsageResult {
   cost_usd?: number | null
   cost_status?: string | null
   credits_lines?: string[] | null
+  mithril_balance_lines?: string[] | null
   [key: string]: unknown
 }
 export interface SessionContextBreakdownParams {

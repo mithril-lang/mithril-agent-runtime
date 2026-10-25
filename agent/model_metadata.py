@@ -9,6 +9,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import os
 import re
 import time
 from pathlib import Path
@@ -1025,8 +1026,18 @@ def _parse_models_payload(payload: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 def fetch_endpoint_model_metadata(base_url: str, api_key: str = "", force_refresh: bool = False) -> Dict[str, Dict[str, Any]]:
     """Model metadata from an OpenAI-compatible ``/models`` endpoint (cached per base URL)."""
+    if isinstance(api_key, str) and api_key.startswith("mf_"):
+        from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+        _guard_mithril_account_token_origin({
+            "provider": "mithril",
+            "api_key": api_key,
+            "base_url": base_url,
+        })
     normalized = _normalize_base_url(base_url)
     if not normalized or base_url_host_matches(normalized, "openrouter.ai"):
+        return {}
+    if os.environ.get("MITHRIL_AGENT") == "1" and base_url_host_matches(normalized, "nousresearch.com"):
+        logger.debug("Skipping Nous model metadata in Mithril Agent mode")
         return {}
     local = is_local_endpoint(normalized)
     memo_key = _endpoint_memo_key(normalized, api_key)

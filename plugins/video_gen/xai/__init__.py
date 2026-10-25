@@ -13,6 +13,7 @@ import asyncio
 import base64
 import logging
 import mimetypes
+import os
 import uuid
 from contextlib import closing
 from pathlib import Path
@@ -75,8 +76,12 @@ def _resolve_xai_credentials() -> Tuple[str, str]:
 
 
 def _xai_headers(api_key: str) -> Dict[str, str]:
-    return {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-            "User-Agent": _xai_http("hermes_xai_user_agent", "hermes-agent/video_gen")}
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    fallback = None if os.environ.get("MITHRIL_AGENT") == "1" else "hermes-agent/video_gen"
+    user_agent = _xai_http("hermes_xai_user_agent", fallback)
+    if user_agent:
+        headers["User-Agent"] = user_agent
+    return headers
 
 
 def _xai_error(error: str, error_type: str, prompt: str, model: str = "", aspect_ratio: str = "") -> Dict[str, Any]:

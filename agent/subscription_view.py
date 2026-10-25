@@ -171,6 +171,8 @@ def subscription_state_from_payload(payload: dict[str, Any], *, portal_url: Opti
 def build_subscription_state(*, timeout: float = 15.0) -> SubscriptionState:
     """Fetch + parse ``GET /api/billing/subscription``; fail-open like ``fetch_portal_state``.
     ``HERMES_DEV_SUBSCRIPTION_FIXTURE`` short-circuits to a fixture so every state is testable offline."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return SubscriptionState(logged_in=False, error="billing_unavailable_in_mithril_agent")
     fixture = dev_fixture_subscription_state()
     if fixture is not None:
         return fixture
@@ -190,6 +192,8 @@ def subscription_manage_url(state: SubscriptionState, tier_id: Optional[str] = N
     (the stable ``tiers[]`` id, never a name/slug) preselects the plan — the portal ignores an
     unknown tier, so it's appended unconditionally.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
     try:
@@ -274,6 +278,8 @@ def _dev_plan(tier_id: str, remaining: str, **over: Any) -> dict[str, Any]:
 def dev_fixture_subscription_state() -> Optional[SubscriptionState]:
     """``HERMES_DEV_SUBSCRIPTION_FIXTURE`` (``free | mid | top | not-admin | downgrade | cancel | team |
     logged-out``) -> fixture state; None when unset; unknown name → logged-out with ``error`` set."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     name = (os.getenv("HERMES_DEV_SUBSCRIPTION_FIXTURE") or "").strip().lower()
     if not name:
         return None

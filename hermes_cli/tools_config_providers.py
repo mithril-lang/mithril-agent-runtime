@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import logging
+import os
 from functools import partial
 from typing import Callable, Optional
 
@@ -136,18 +137,23 @@ def _visible_providers(
     advertise the capability."""
     from hermes_cli.tools_config import get_nous_subscription_features
 
-    if features is None:
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    if features is None and not mithril_agent:
         features = get_nous_subscription_features(config, force_fresh=force_fresh)
-    acct = features.account_info
+    acct = features.account_info if features is not None else None
     # Pool-only users (free tool pool, no paid access) get image gen but NOT video gen — the pool doesn't
     # fund `fal-video`, so hide the managed video row rather than advertise a denial.
     pool_only = bool(acct and acct.logged_in and acct.paid_service_access is not True and acct.tool_gateway_entitled)
     visible = []
     for provider in cat.get("providers", []):
         managed = provider.get("managed_nous_feature")
-        # Managed rows stay visible regardless of auth (selecting one drives an inline Portal login); a
-        # `requires_nous_auth` row without a managed feature hides until logged in.
-        if provider.get("requires_nous_auth") and not managed and not features.nous_auth_present:
+        # Mithril has no Nous Portal entitlement contract. Keep managed and auth-gated Nous rows out of
+        # every picker so the Dashboard and CLI cannot select a provider that this distribution cannot use.
+        if mithril_agent and (managed or provider.get("requires_nous_auth")):
+            continue
+        # Managed rows stay visible in Hermes regardless of auth; a `requires_nous_auth` row without a
+        # managed feature hides until logged in.
+        if provider.get("requires_nous_auth") and not managed and not (features and features.nous_auth_present):
             continue
         if pool_only and managed == "video_gen" and not (acct and acct.tool_gateway_entitled_for("fal-video")):
             continue
@@ -157,6 +163,11 @@ def _visible_providers(
     builder = _PLUGIN_ROW_BUILDERS.get(cat.get("name"))
     if builder is not None:
         visible.extend(builder())
+    if mithril_agent:
+        visible = [
+            provider for provider in visible
+            if not provider.get("managed_nous_feature") and not provider.get("requires_nous_auth")
+        ]
     return visible
 
 

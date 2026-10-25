@@ -169,12 +169,12 @@ _IMAGE_API_INTS = (
     ("output_compression", "compression", lambda v: max(0, min(100, v))), ("seed", "seed", lambda v: v),
 )
 
-_ATTRIBUTION_HEADERS = {
-    "Content-Type": "application/json",
-    # OpenRouter attribution headers (harmless against Nous Portal).
-    "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
-    "X-Title": "Hermes Agent",
-}
+_ATTRIBUTION_HEADERS = {"Content-Type": "application/json"}
+if os.environ.get("MITHRIL_AGENT") != "1":
+    _ATTRIBUTION_HEADERS.update({
+        "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
+        "X-Title": "Hermes Agent",
+    })
 
 
 def _to_image_url_part(ref: str) -> Optional[str]:

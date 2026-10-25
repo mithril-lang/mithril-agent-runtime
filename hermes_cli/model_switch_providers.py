@@ -448,6 +448,8 @@ def _nous_picker_model_ids(curated: dict, force_fresh_nous_tier: bool) -> list:
     with the Portal's free/paid recommendations (new models surface without a CLI release) and
     narrowed by org policy. Mirrors ``_model_flow_nous`` so GUI pickers match the CLI. A failed
     recommendation fetch still yields a policy-filtered curated list."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     model_ids = curated.get("nous", [])
     try:
         from hermes_cli.models_pricing import get_pricing_for_provider
@@ -1204,6 +1206,9 @@ def list_authenticated_providers(
     from hermes_cli.config import coerce_provider_id, stringify_provider_map
 
     non_blocking_catalogs = bool(non_blocking_catalogs)
+    effective_excluded = list(excluded_providers or [])
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        effective_excluded.extend(("nous", "nous-portal", "nousresearch"))
 
     # Explicit refresh: drop every cached list so the calls below re-fetch live. A stale cache
     # can fall back to the curated static list when its live fetch fails, silently dropping
@@ -1230,7 +1235,7 @@ def list_authenticated_providers(
         current_provider=current_provider, current_base_url=current_base_url, current_model=current_model,
         max_models=max_models, for_picker=for_picker, force_fresh_nous_tier=force_fresh_nous_tier,
         probe_custom_providers=probe_custom_providers, probe_current_custom_provider=probe_current_custom_provider,
-        refresh=refresh, excluded={str(p).strip().lower() for p in (excluded_providers or []) if p},
+        refresh=refresh, excluded={str(p).strip().lower() for p in effective_excluded if p},
         non_blocking_catalogs=non_blocking_catalogs,
         curated=_build_curated_lists(current_provider, current_base_url, current_model,
                                      non_blocking=non_blocking_catalogs))
@@ -1241,7 +1246,7 @@ def list_authenticated_providers(
     # collects nothing either: every cache-only row read spawns its own deduped background refresh,
     # so no thread pool is joined and no probe can hold up the response.
     prefetch_slugs = ([] if (refresh or non_blocking_catalogs)
-                      else _collect_authed_provider_slugs(data, b.curated, excluded_providers or []))
+                      else _collect_authed_provider_slugs(data, b.curated, effective_excluded))
     if len(prefetch_slugs) > 3:
         try:
             _prefetch_provider_models_parallel(prefetch_slugs)

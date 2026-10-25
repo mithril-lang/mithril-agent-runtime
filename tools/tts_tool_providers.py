@@ -334,9 +334,10 @@ def _generate_xai_tts(text: str, output_path: str, tts_config: Dict[str, Any]) -
         payload["optimize_streaming_latency"] = optimize_streaming_latency
     if text_normalization:
         payload["text_normalization"] = True
-    response = _post_json(f"{base_url}/tts", payload, {
-        "Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-        "User-Agent": hermes_xai_user_agent()})
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    if user_agent := hermes_xai_user_agent():
+        headers["User-Agent"] = user_agent
+    response = _post_json(f"{base_url}/tts", payload, headers)
     response.raise_for_status()
     return _write_bytes(output_path, _read_tts_response_bytes(response, label="xAI TTS"))
 

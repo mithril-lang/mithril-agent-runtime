@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import locale
 import math
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -318,6 +319,13 @@ def recover_before_classification(
 def _print_nous_401_diagnostics(agent: Any, api_error: Exception) -> None:
     """Nous 401 that survived a credential refresh: likely Portal OAuth expired/revoked,
     no credits, or agent key blocked."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _plines(
+            agent,
+            "Nous-managed inference is unavailable in Mithril Agent.",
+            "Choose a supported provider or model with /model. No Nous sign-in or billing action can recover this route.",
+        )
+        return
     from agent.conversation_loop import _print_nous_entitlement_guidance
     from hermes_constants import display_hermes_home
     _body_text = ""
@@ -356,7 +364,6 @@ def _print_anthropic_401_diagnostics(agent: Any, key: Any) -> None:
     """Anthropic 401 that survived a credential refresh: show auth method + fixes."""
     from agent.anthropic_credentials import _is_oauth_token
     from agent.azure_identity_adapter import is_token_provider
-    from hermes_constants import display_hermes_home
     _plines(agent, "🔐 Anthropic 401 — authentication failed.")
     if is_token_provider(key):
         # Azure Foundry Entra ID: JWT minted per-request by an httpx hook; 401 = Azure
@@ -374,6 +381,18 @@ def _print_anthropic_401_diagnostics(agent: Any, key: Any) -> None:
             f"   Auth method: {auth_method}",
             f"   Token prefix: {key[:12]}..." if isinstance(key, str) and len(key) > 12 else "   Token: (empty or short)",
         )
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if is_token_provider(key):
+            _plines(agent, "   Run `az login` if your developer session expired.")
+        else:
+            _plines(
+                agent,
+                "   Check the Anthropic credential configured for the selected Mithril Profile.",
+                "   For API keys: verify at https://platform.claude.com/settings/keys",
+                "   Select another supported provider with `/model` if needed.",
+            )
+        return
+    from hermes_constants import display_hermes_home
     _dhh = display_hermes_home()
     _plines(
         agent,
@@ -419,6 +438,9 @@ def _refresh_credentials_after_401(
         and not _retry.nous_auth_retry_attempted
     ):
         _retry.nous_auth_retry_attempted = True
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            _print_nous_401_diagnostics(agent, api_error)
+            return False
         if agent._try_refresh_nous_client_credentials(force=True):
             agent._buffer_vprint("🔐 Nous agent key refreshed after 401. Retrying request...")
             return True

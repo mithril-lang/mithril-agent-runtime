@@ -8,6 +8,9 @@ return class NativeSharedGateway extends DurableObject {
     super(ctx, env);
     this.starting = null;
     this.stopping = false;
+    this.destroying = null;
+    this.destroyAcknowledged = false;
+    this.runtimeGeneration = 0;
   }
 
   async bind(name) {
@@ -60,18 +63,25 @@ return class NativeSharedGateway extends DurableObject {
 
   async wake() {
     if (this.stopping) return json({error: 'runtime-sleeping'}, 409);
+    if (this.destroying) return json({error: 'runtime-destroy-pending'}, 409);
     if (!this.starting) this.starting = this.start().finally(() => { this.starting = null; });
     await this.starting;
     return this.status();
   }
 
   async start() {
+    // A timed-out destroy remains an unknown in-flight operation. Do not let a
+    // replay create a later container generation until that same destroy settles.
+    if (this.stopping || this.destroying) throw Error('Runtime transition is unresolved');
     const row = await this.row();
     const container = this.ctx.container;
     if (!container.running) {
+      this.runtimeGeneration++;
+      this.destroyAcknowledged=false;
       const storeToken = crypto.randomUUID() + crypto.randomUUID();
       await this.ctx.storage.put('storeToken', storeToken);
       container.start({enableInternet: true, entrypoint: ['/opt/hermes/.venv/bin/python', '/opt/hermes/gateway-desktop.py'], ...(row.labels ? {labels:row.labels} : {}), env: {
+        MITHRIL_AGENT: '1',
         API_SERVER_KEY: row.apiKey,
         HERMES_DASHBOARD_SESSION_TOKEN: row.apiKey,
         CUSTOM_PROVIDER_MITHRIL_KEY: row.providerKey,
@@ -109,19 +119,49 @@ return class NativeSharedGateway extends DurableObject {
     return json(await response.json(), response.status);
   }
 
+  async destroyContainer() {
+    // Retry the wait, not a second unknown destroy against a potentially later generation.
+    if(this.destroyAcknowledged)return;
+    if(!this.destroying){
+      const generation=this.runtimeGeneration;
+      let pending;
+      pending=Promise.resolve().then(()=>this.ctx.container.destroy()).then(()=>{
+        if(this.runtimeGeneration===generation)this.destroyAcknowledged=true;
+      }).finally(()=>{if(this.destroying===pending)this.destroying=null;});
+      this.destroying=pending;
+    }
+    return this.stopOperation(()=>this.destroying);
+  }
+
+  async stopOperation(operation) {
+    const abort=new AbortController();let timer;
+    const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(Error('Runtime stop deadline exceeded'));},5000);});
+    try {return await Promise.race([Promise.resolve().then(()=>operation(abort.signal)),deadline]);}
+    finally {clearTimeout(timer);}
+  }
+
   async sleep() {
     if (this.starting || this.stopping) return json({error: 'runtime-busy'}, 409);
     if (!this.ctx.container.running) return json({running: false});
     this.stopping = true;
     try {
       const row = await this.row();
-      const response = await this.ctx.container.getTcpPort(7860).fetch('http://container/_native/quiesce', {method: 'POST', headers: {'Authorization': 'Bearer ' + row.apiKey}});
-      if (!response.ok) { await this.touch(); return json({error: 'checkpoint-or-runtime-busy'}, response.status); }
-      const checkpoint = await response.json();
-      await this.ctx.container.destroy();
+      const outcome=await this.stopOperation(async signal=>{
+        const response=await this.ctx.container.getTcpPort(7860).fetch('http://container/_native/quiesce',{method:'POST',headers:{Authorization:'Bearer '+row.apiKey},signal});
+        if(!response.ok)return {status:response.status};
+        return {status:response.status,checkpoint:await response.json()};
+      });
+      if (!outcome.checkpoint) { await this.touch(); return json({error: 'checkpoint-or-runtime-busy'}, outcome.status); }
+      const checkpoint=outcome.checkpoint;
+      if (!/^[a-f0-9]{64}$/.test(checkpoint?.sha256 || '')) { await this.touch(); return json({error:'checkpoint-invalid'},503); }
+      await this.destroyContainer();
       await this.ctx.storage.delete('storeToken');
       await this.ctx.storage.deleteAlarm();
       return json({running: false, checkpoint: checkpoint.sha256});
+    } catch {
+      // A thrown transport/destroy failure must leave a durable retry, including explicit sleep.
+      await this.touch();
+      return json({error:'runtime-stop-unavailable'},503);
     } finally { this.stopping = false; }
   }
 

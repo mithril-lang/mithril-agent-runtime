@@ -486,10 +486,11 @@ class SessionUsageParams(SessionParams):
 
 class SessionUsageResult(Usage):
     credits_lines: list[str] | None = None
+    mithril_balance_lines: list[str] | None = None
 
 
 method("session.usage", params=SessionUsageParams, result=SessionUsageResult,
-       doc="Token / context / cost counters for the session (+ Nous credit lines when available).")
+       doc="Token / context / cost counters for the session (+ verified Mithril balance or Nous credit lines when available).")
 
 
 class SessionContextBreakdownParams(SessionParams):

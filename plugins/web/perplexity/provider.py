@@ -35,6 +35,7 @@ Use Firecrawl / Exa / Parallel when a verbatim full-page dump is required.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
@@ -48,10 +49,10 @@ logger = logging.getLogger(__name__)
 _DEFAULT_BASE_URL = "https://api.perplexity.ai"
 _KEY_URL = "https://www.perplexity.ai/account/api"
 
-# Identify Hermes to Perplexity: the same static harness identity Hermes sends Kimi and
-# OpenCode, plus Perplexity's integration header. No per-user identifier and no separate
-# request; the call already carries the user's own API key.
-_HEADERS = {
+# Optional harness attribution is disabled in Mithril mode; direct BYOK requests need no
+# product identity in provider headers.
+_MITHRIL_MODE = os.environ.get("MITHRIL_AGENT") == "1"
+_HEADERS = {} if _MITHRIL_MODE else {
     "HTTP-Referer": "https://hermes-agent.nousresearch.com",
     "X-Title": "Hermes Agent",
     "User-Agent": f"HermesAgent/{get_version_info().base_version}",
@@ -92,8 +93,11 @@ def _perplexity_request(endpoint: str, payload: Dict[str, Any], gateway=None) ->
     api_key = get_provider_env("PERPLEXITY_API_KEY")
     headers = _HEADERS
     if gateway is not None:
-        # Nous-owned key behind the gateway: identify the harness only, not a per-user integration.
-        base_url, api_key, headers = gateway.gateway_origin.rstrip("/"), gateway.nous_user_token, {"User-Agent": _HEADERS["User-Agent"]}
+        # Hermes compatibility mode identifies its harness; Mithril sends no optional attribution.
+        gateway_headers = {} if _MITHRIL_MODE else {"User-Agent": _HEADERS["User-Agent"]}
+        base_url = gateway.gateway_origin.rstrip("/")
+        api_key = gateway.nous_user_token
+        headers = gateway_headers
     elif api_key:
         base_url = (get_provider_env("PERPLEXITY_BASE_URL") or _DEFAULT_BASE_URL).rstrip("/")
     else:

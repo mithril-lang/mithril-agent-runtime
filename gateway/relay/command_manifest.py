@@ -12,6 +12,7 @@ connector drops invalid entries, never the whole manifest).
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List
 
 # Discord option type 3 = STRING.
@@ -45,9 +46,13 @@ _REASONING_CHOICES = [
 
 def build_relay_command_manifest() -> List[Dict[str, Any]]:
     """The relay lane's Discord slash-command manifest (native-tree mirror)."""
-    return [
+    mithril_mode = os.environ.get("MITHRIL_AGENT") == "1"
+    agent_name = "Mithril Agent" if mithril_mode else "Hermes Agent"
+    session_name = "Mithril" if mithril_mode else "Hermes"
+    gateway_name = "Mithril Gateway" if mithril_mode else "Hermes gateway"
+    commands = [
         _cmd("new", "Start a new conversation"),
-        _cmd("reset", "Reset your Hermes session"),
+        _cmd("reset", f"Reset your {session_name} session"),
         _cmd("model", "Show or change the model",
              _opt("name", "Model name. Leave empty to see current.")),
         _cmd("reasoning", "Show/change reasoning effort, or toggle showing it",
@@ -57,9 +62,9 @@ def build_relay_command_manifest() -> List[Dict[str, Any]]:
              _opt("name", "Personality name. Leave empty to list.")),
         _cmd("retry", "Retry your last message"),
         _cmd("undo", "Remove the last exchange"),
-        _cmd("status", "Show Hermes session status"),
+        _cmd("status", f"Show {session_name} session status"),
         _cmd("sethome", "Set this chat as the home channel"),
-        _cmd("stop", "Stop the running Hermes agent"),
+        _cmd("stop", f"Stop the running {agent_name}"),
         _cmd("steer", "Inject a message after the next tool call (no interrupt)",
              _opt("text", "What to tell the agent")),
         _cmd("compress", "Compress conversation context"),
@@ -73,13 +78,12 @@ def build_relay_command_manifest() -> List[Dict[str, Any]]:
         _cmd("reload-mcp", "Reload MCP servers from config"),
         _cmd("reload-skills", "Re-scan skills for new or removed entries"),
         _cmd("voice", "Toggle voice reply mode"),
-        _cmd("update", "Update Hermes Agent to the latest version"),
-        _cmd("restart", "Gracefully restart the Hermes gateway"),
+        _cmd("restart", f"Gracefully restart the {gateway_name}"),
         _cmd("approve", "Approve a pending dangerous command",
              _opt("scope", "Approval scope", choices=["once", "session", "always", "all"])),
         _cmd("deny", "Deny a pending dangerous command",
              _opt("reason", "Why (relayed to the agent)")),
-        _cmd("thread", "Create a new thread and start a Hermes session in it",
+        _cmd("thread", f"Create a new thread and start a {session_name} session in it",
              _opt("name", "Thread name")),
         _cmd("queue", "Queue a prompt for the next turn (doesn't interrupt)",
              _opt("text", "The prompt to queue")),
@@ -88,3 +92,6 @@ def build_relay_command_manifest() -> List[Dict[str, Any]]:
         _cmd("btw", "Ask a side question about the current conversation",
              _opt("text", "The question to answer")),
     ]
+    if not mithril_mode:
+        commands.insert(20, _cmd("update", "Update Hermes Agent to the latest version"))
+    return commands

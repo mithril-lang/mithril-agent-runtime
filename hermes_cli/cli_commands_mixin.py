@@ -2052,6 +2052,31 @@ class CLICommandsMixin:
 
     def _handle_login_command(self, cmd_original: str) -> None:
         """Start an in-chat sign-in without blocking the input loop while approval is pending."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            model = str(getattr(self, "model", "") or "").strip()
+            if not model or model.lower().startswith("nous/"):
+                _cp("  Sign in with `mithril login` from this terminal to choose a Mithril model.")
+                return
+
+            console = None if getattr(self, "_app", None) else getattr(self, "console", None)
+            _cp("  Starting Mithril Fund sign-in. The approval code and URL will appear here.")
+
+            def _mithril_sign_in() -> str:
+                from hermes_cli.mithril_auth import main as mithril_auth_main
+                result = mithril_auth_main(["login", "--model", model, "--no-browser"])
+                if result != 0:
+                    raise RuntimeError(
+                        "Mithril sign-in did not complete. Run `mithril login` to choose a model and retry."
+                    )
+                return "Mithril sign-in is complete. Start a new conversation to use the updated account."
+
+            thread = self._side_worker(
+                _mithril_sign_in, name="mithril-login", fail_label="Mithril sign-in",
+                header_lines=["  Mithril sign-in"], title_suffix="Mithril sign-in",
+                empty_note="  Mithril sign-in completed.", console=console)
+            thread.start()
+            return
+
         from hermes_cli import anon_auth
         # Pin the output target now. Under the live TUI ``self.console`` writes straight to
         # patch_stdout's StdoutProxy, which mangles Rich's escapes — there ``None`` keeps the

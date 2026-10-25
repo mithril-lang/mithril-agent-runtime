@@ -244,10 +244,9 @@ def x_search_tool(
         }
         if reasoning_effort:
             payload["reasoning"] = {"effort": reasoning_effort}
-        headers = {
-            "Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-            "User-Agent": hermes_xai_user_agent(),
-        }
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        if user_agent := hermes_xai_user_agent():
+            headers["User-Agent"] = user_agent
         data = _post_with_retries(f"{base_url}/responses", headers, payload).json()
         citations = list(data.get("citations") or [])
         inline_citations = _extract_inline_citations(data)

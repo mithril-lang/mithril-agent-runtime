@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
@@ -43,12 +44,17 @@ def normalize_targets(raw: Any) -> Tuple[List[str], List[str], Optional[str]]:
 
 
 def validate_action(action: str, managed: List[str], mcp: List[str]) -> Optional[str]:
+    if os.environ.get("MITHRIL_AGENT") == "1" and action not in MCP_ACTIONS:
+        return (
+            "Hosted connector account actions are unavailable in Mithril Agent. "
+            "Use install, enable or authorize with a local MCP target containing mcp=true."
+        )
     if action not in ALL_ACTIONS:
         return (
             f"action must be one of {', '.join(ALL_ACTIONS)}. "
             f"{', '.join(MCP_ACTIONS)} apply to local MCP servers "
             "(targets {\"name\": ..., \"mcp\": true}); the rest apply to managed connectors. "
-            "Disconnecting an account is done by the user in the Nous Portal dashboard, not "
+            "Disconnecting an account is done by the user in the connector provider's dashboard, not "
             "through this tool."
         )
     if action in MCP_ACTIONS:

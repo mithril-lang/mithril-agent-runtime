@@ -4,6 +4,7 @@ Both route api_mode per model in core; these profiles carry the
 chat_completions reasoning translations (GLM-5.2, Kimi K2, DeepSeek, Ox Alpha).
 """
 
+import os
 from typing import Any
 
 from agent import reasoning_effort as re_
@@ -11,9 +12,8 @@ from hermes_cli.version_info import get_version_info
 from providers import register_provider
 from providers.base import ProviderProfile
 
-# Attribution headers (same values as OpenRouter / Vercel / Fireworks); via
-# default_headers so they survive model switches and credential rotation.
-_ATTRIBUTION_HEADERS = {
+# Optional attribution is disabled in Mithril mode, which has no user opt-in.
+_ATTRIBUTION_HEADERS = {} if os.environ.get("MITHRIL_AGENT") == "1" else {
     "HTTP-Referer": "https://hermes-agent.nousresearch.com",
     "X-Title": "Hermes Agent",
     "User-Agent": f"HermesAgent/{get_version_info().base_version}",

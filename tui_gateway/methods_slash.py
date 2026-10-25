@@ -7,6 +7,7 @@ method_ctx.bind_module), so they reference server.py globals bare.
 from __future__ import annotations
 
 import contextlib
+import os
 
 from .method_ctx import HandlerRegistry, bind_module
 
@@ -110,7 +111,8 @@ def _format_live_history_output(sid: str, session: dict, arg: str) -> str:
     lines = ["Conversation History", "────────────────────────────────────────"]
     for idx, message in enumerate(messages, start=1):
         role = str(message.get("role") or "unknown")
-        label = {"user": "You", "assistant": "Hermes"}.get(role, role.title())
+        assistant_label = "Mithril Agent" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes"
+        label = {"user": "You", "assistant": assistant_label}.get(role, role.title())
         text = str(message.get("text") or message.get("context") or "").strip()
         text = f"{text[:400]}..." if len(text) > 400 else text
         lines.append(f"[{label} #{idx}] {text or '(no text)'}")

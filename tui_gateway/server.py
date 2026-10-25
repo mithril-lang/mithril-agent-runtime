@@ -1387,11 +1387,12 @@ _TOUR_TIMEOUT_S = 45
 # Until a session's client has proven it answers at all, hold it to a deadline a working renderer cannot miss.
 _TOUR_PROBE_TIMEOUT_S = 10
 
+_DESKTOP_PRODUCT_NAME = "Mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes Desktop"
 _TOUR_BRIDGE_UNAVAILABLE = json.dumps({
     "success": False,
-    "error": ("No Hermes Desktop window answered the tour request. The tour is driven by the desktop app's "
+    "error": (f"No {_DESKTOP_PRODUCT_NAME} window answered the tour request. The tour is driven by the desktop app's "
               "renderer, which updates separately from this backend, so an app build older than the tour tool "
-              "has nothing listening. Update the Hermes Desktop app and start a new session. Do not retry tour "
+              f"has nothing listening. Update the {_DESKTOP_PRODUCT_NAME} app and start a new session. Do not retry tour "
               "in this session.")})
 
 
@@ -3439,19 +3440,21 @@ def _rank_slash_completions(items: list[dict], usage, origin_of, *, browsing: bo
     return commands[:_SLASH_COMPLETION_LIMIT] + skills[:_SLASH_COMPLETION_LIMIT]
 
 
+_CLI_NAME = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+
 # argv shapes that must not run headless in the gateway process → user hint.
 _CLI_EXEC_BLOCKED = {
-    ("setup",): "`hermes setup` needs a full terminal — run it outside the TUI",
-    ("gateway",): "`hermes gateway` is long-running — run it in another terminal",
-    ("sessions", "browse"): "`hermes sessions browse` is interactive — use /resume here, or run browse in another terminal",
-    ("config", "edit"): "`hermes config edit` needs $EDITOR in a real terminal",
+    ("setup",): f"`{_CLI_NAME} setup` needs a full terminal — run it outside the TUI",
+    ("gateway",): f"`{_CLI_NAME} gateway` is long-running — run it in another terminal",
+    ("sessions", "browse"): f"`{_CLI_NAME} sessions browse` is interactive — use /resume here, or run browse in another terminal",
+    ("config", "edit"): f"`{_CLI_NAME} config edit` needs $EDITOR in a real terminal",
 }
 
 
 def _cli_exec_blocked(argv: list[str]) -> str | None:
     """Return user hint if this argv must not run headless in the gateway process."""
     if not argv:
-        return "bare `hermes` is interactive — use `/hermes chat -q …` or run `hermes` in another terminal"
+        return f"bare `{_CLI_NAME}` is interactive — use `/hermes chat -q …` or run `{_CLI_NAME}` in another terminal"
     head = tuple(a.lower() for a in argv[:2])
     return _CLI_EXEC_BLOCKED.get(head[:1]) or _CLI_EXEC_BLOCKED.get(head)
 

@@ -34,7 +34,7 @@ function run(cmd,args,{input,log,timeout=3600000}={}) {
 }
 const git=async (...args)=>(await run('git',args)).toString().trim();
 const privateFile=path=>{const s=statSync(path);if(!s.isFile()||s.uid!==process.getuid()||(s.mode&0o077))throw Error('Owner-only external file required');return readFileSync(path);};
-const recipeFiles=['Dockerfile','scripts/standalone/gateway.mjs','scripts/standalone/gateway-contract.mjs','scripts/standalone/gateway-image-probe.py','scripts/standalone/gateway-http-probe.py','scripts/standalone/gateway-test.Dockerfile','scripts/standalone/gateway-trial.Dockerfile','scripts/standalone/gateway-trial-start.py','scripts/standalone/gateway-persistence.py','scripts/standalone/gateway-desktop.py','scripts/standalone/gateway-tenant.py','scripts/standalone/cloudflare/policy.mjs','scripts/standalone/cloudflare/worker.mjs','scripts/standalone/cloudflare/controller.mjs','scripts/standalone/cloudflare/deploy.py','scripts/standalone/cloudflare/live-probe.py','scripts/standalone/cloudflare/managed-policy.mjs','scripts/standalone/cloudflare/managed-controller.mjs','scripts/standalone/cloudflare/managed-worker.mjs','tests/scripts/standalone/cloudflare-managed.test.mjs'];
+const recipeFiles=['Dockerfile','scripts/mithril','scripts/standalone/mithril-gateway-oci-entrypoint.sh','scripts/standalone/gateway.mjs','scripts/standalone/gateway-contract.mjs','scripts/standalone/gateway-image-probe.py','scripts/standalone/gateway-http-probe.py','scripts/standalone/gateway-test.Dockerfile','scripts/standalone/gateway-trial.Dockerfile','scripts/standalone/gateway-trial-start.py','scripts/standalone/gateway-persistence.py','scripts/standalone/gateway-desktop.py','scripts/standalone/gateway-tenant.py','scripts/standalone/cloudflare/policy.mjs','scripts/standalone/cloudflare/worker.mjs','scripts/standalone/cloudflare/controller.mjs','scripts/standalone/cloudflare/deploy.py','scripts/standalone/cloudflare/live-probe.py','scripts/standalone/cloudflare/managed-policy.mjs','scripts/standalone/cloudflare/managed-controller.mjs','scripts/standalone/cloudflare/managed-worker.mjs','tests/scripts/standalone/cloudflare-managed.test.mjs'];
 const selectedManaged = opts.profile === 'managed';
 const {managedProfile, requireManagedOwner, admitManaged} = await import('./cloudflare/managed-release-contract.mjs');
 const selectedProfile = selectedManaged ? managedProfile : profile;
@@ -44,7 +44,7 @@ let lockFd,lockPath;
 try {
   if(!['plan','verify','admit'].includes(command))throw Error('Usage: gateway.mjs plan | verify/admit --state PATH --owner PATH [--receipt PATH]');
   const sha=await git('rev-parse','HEAD');
-  if(command==='plan'){console.log(JSON.stringify({repository:'mithril-lang/mithril-agent',sha,recipeDigest,...selectedProfile,productionEligible:false},null,2));process.exit(0);}
+  if(command==='plan'){console.log(JSON.stringify({repository:'mithril-lang/mithril-agent-runtime',sha,recipeDigest,...selectedProfile,productionEligible:false},null,2));process.exit(0);}
   if(!opts.state||!opts.owner)throw Error('External --state and --owner are required');
   if(opts.state===root||opts.state.startsWith(root+'/')||opts.owner.startsWith(root+'/'))throw Error('Owner and state must be outside source');
   mkdirSync(opts.state,{recursive:true,mode:0o700});
@@ -52,7 +52,7 @@ try {
   const owner=validateOwner(JSON.parse(privateFile(opts.owner)),hostname(),root);
   if(selectedManaged)requireManagedOwner(owner);
   const ownerIdentity=digest(owner);
-  const identity={repository:owner.repository,sha,recipeDigest,ownerIdentity,profile:selectedProfile.name};
+  const identity={repository:owner.repository,imageIdentity:owner.imageIdentity,sha,recipeDigest,ownerIdentity,profile:selectedProfile.name};
   const keyPath=join(opts.state,'authority.key');
   if(!existsSync(keyPath))writeFileSync(keyPath,randomBytes(32),{mode:0o600,flag:'wx'});
   const key=privateFile(keyPath);if(key.length!==32)throw Error('Invalid authority key');
@@ -62,7 +62,7 @@ try {
   }
   if(await git('status','--porcelain'))throw Error('Commit changes and use a clean exact source checkout');
   const remote=await git('remote','get-url','origin');
-  if(!/github.com[:/]mithril-lang\/mithril-agent(?:\.git)?$/.test(remote))throw Error('Unexpected source repository');
+  if(!/github.com[:/]mithril-lang\/mithril-agent-runtime(?:\.git)?$/.test(remote))throw Error('Unexpected source repository');
   lockPath=join(opts.state,'verify.lock');lockFd=openSync(lockPath,'wx',0o600);
   const id=sha.slice(0,12)+'-'+randomBytes(4).toString('hex');
   const receiptPath=join(opts.state,id+'.json');
@@ -70,10 +70,9 @@ try {
   const log=createWriteStream(join(opts.state,id+'.log'),{mode:0o600});
   const clientHome='/dev/shm/mithril-agent-trial-client';
   const dockerArgs=owner.socket?['--config',clientHome,'--host','unix://'+owner.socket]:[];
-  const remoteCommand=args=>['-o','BatchMode=yes','-o','ConnectTimeout=10','gad',args.map(quote).join(' ')];
-  const docker=async (...args)=>owner.runner==='gad'?run('ssh',remoteCommand(['docker',...dockerArgs,...args]),{log}):run('docker',[...dockerArgs,...args],{log});
-  const shell=async (script,input)=>owner.runner==='gad'?run('ssh',remoteCommand(['bash','-ec',script]),{input,log}):run('bash',['-ec',script],{input,log});
-  let source,imageId,testName,volume,container;const checks=[];
+  const docker=async (...args)=>run('docker',[...dockerArgs,...args],{log});
+  const shell=async (script,input)=>run('bash',['-ec',script],{input,log});
+  let source,imageId,trialImageId,testName,volume,container,trialVolume,trialContainer;const checks=[];
   let stage='runner-preflight';
   try {
     if(owner.socket)await shell(`mkdir -p -m 700 ${quote(clientHome)}; test -O ${quote(clientHome)}; chmod 700 ${quote(clientHome)}`);
@@ -87,10 +86,16 @@ try {
     await shell(`tar -xz -C ${quote(source)}`,archive);
     await shell(`cd ${quote(source)}; python3 -B scripts/write_install_stamp.py --output install-stamp.json --distribution docker --update-mechanism external --source ci --commit ${quote(sha)}; python3 -B scripts/ci/check_profile_archive_boundary.py`);
     stage='image-build';const image='mithril-agent-gateway:'+id;
-    await docker('build','--platform',profile.platform,'--network','host','--label','org.opencontainers.image.revision='+sha,'-t',image,source);
+    await docker('build','--platform',profile.platform,'--network','host','--label','org.opencontainers.image.revision='+sha,'--build-arg','MITHRIL_IMAGE_IDENTITY='+owner.imageIdentity,'--target','mithril_gateway','-t',image,source);
+    imageId=(await docker('image','inspect','--format','{{.Id}}',image)).toString().trim();
+    const imageConfig=JSON.parse((await docker('image','inspect','--format','{{json .Config}}',image)).toString().trim());
+    if(JSON.stringify(imageConfig.Entrypoint)!==JSON.stringify(['/opt/hermes/docker/entrypoint-dispatch.sh']) || JSON.stringify(imageConfig.Cmd)!==JSON.stringify(['/opt/hermes/docker/mithril-gateway-oci-entrypoint.sh']) || !imageConfig.Env?.includes('MITHRIL_AGENT=1'))throw Error('Mithril Gateway image contract mismatch');
+    const imageProvenance=JSON.parse((await docker('run','--rm','--network','none','--entrypoint','/bin/cat',imageId,'/etc/hermes/image-provenance.json')).toString().trim());
+    if(imageProvenance.schema!==1 || imageProvenance.deployment_kind!=='image' || imageProvenance.image!==owner.imageIdentity || imageProvenance.revision!==sha)throw Error('Mithril Gateway image provenance mismatch');
+    checks.push('image-provenance');
     const trialImage='mithril-agent-gateway-trial:'+id;
     await docker('build','--network','host','-f',source+'/scripts/standalone/gateway-trial.Dockerfile','--build-arg','VERIFIED_IMAGE='+image,'-t',trialImage,source);
-    imageId=(await docker('image','inspect','--format','{{.Id}}',trialImage)).toString().trim();
+    trialImageId=(await docker('image','inspect','--format','{{.Id}}',trialImage)).toString().trim();
     checks.push('image-build');
     stage='offline-regressions';testName='mithril-agent-gateway-test:'+id;
     await shell(`cp ${quote(source+'/.dockerignore')} ${quote(source+'/.dockerignore.runtime')}; printf '.git\n' > ${quote(source+'/.dockerignore')}`);
@@ -100,7 +105,7 @@ try {
     checks.push('offline-regressions');
     stage='image-runtime';volume='mithril-agent-gateway-volume-'+id;container='mithril-agent-gateway-'+id;
     await docker('volume','create',volume);
-    await docker('run','-d','--name',container,'--entrypoint','/opt/hermes/.venv/bin/hermes','--network','none','--cpus','2','--memory','4g','--pids-limit','256','--mount','type=volume,src='+volume+',dst=/opt/data','-e','API_SERVER_KEY=standalone-fixture-key-not-a-production-secret','-e','API_SERVER_HOST=127.0.0.1','-e','API_SERVER_PORT=7860',imageId,'gateway','run');
+    await docker('run','-d','--name',container,'--network','none','--cpus','2','--memory','4g','--pids-limit','256','--mount','type=volume,src='+volume+',dst=/opt/data','-e','API_SERVER_KEY=standalone-fixture-key-not-a-production-secret','-e','API_SERVER_HOST=127.0.0.1','-e','API_SERVER_PORT=7860',imageId);
     const probe=readFileSync(join(root,'scripts/standalone/gateway-image-probe.py'));
     let ready=false;
     for(let n=0;n<60;n++){
@@ -110,24 +115,43 @@ try {
     if(!ready)throw Error('Image did not prepare its unprivileged home');
     const execProbe=async restart=>{
       const args=['docker',...dockerArgs,'exec','-i','-u','hermes',container,'/opt/hermes/.venv/bin/python','-',sha,...(restart?['restart']:[])];
-      return owner.runner==='gad'?run('ssh',remoteCommand(args),{input:probe,log}):run(args.shift(),args,{input:probe,log});
+      return run('docker',args.slice(1),{input:probe,log});
     };
     await execProbe(false);
     const httpProbe=readFileSync(join(root,'scripts/standalone/gateway-http-probe.py'));
     const httpArgs=['docker',...dockerArgs,'exec','-i','-u','hermes',container,'/opt/hermes/.venv/bin/python','-','standalone-fixture-key-not-a-production-secret'];
-    const httpRun=()=>owner.runner==='gad'?run('ssh',remoteCommand(httpArgs),{input:httpProbe,log}):run('docker',httpArgs.slice(1),{input:httpProbe,log});
+    const httpRun=()=>run('docker',httpArgs.slice(1),{input:httpProbe,log});
     await httpRun();await docker('restart',container);await execProbe(true);await httpRun();
+    stage='trial-image-runtime';trialVolume='mithril-agent-gateway-trial-volume-'+id;trialContainer='mithril-agent-gateway-trial-'+id;
+    await docker('volume','create',trialVolume);
+    await docker('run','-d','--name',trialContainer,'--entrypoint','/opt/hermes/.venv/bin/hermes','--network','none','--cpus','2','--memory','4g','--pids-limit','256','--mount','type=volume,src='+trialVolume+',dst=/opt/data','-e','API_SERVER_KEY=standalone-fixture-key-not-a-production-secret','-e','API_SERVER_HOST=127.0.0.1','-e','API_SERVER_PORT=7860',trialImageId,'gateway','run','--no-supervise','--external-supervisor');
+    let trialReady=false;
+    for(let n=0;n<60;n++){
+      try{await docker('exec','-u','hermes',trialContainer,'test','-w','/opt/data');trialReady=true;break;}catch{}
+      await new Promise(ok=>setTimeout(ok,1000));
+    }
+    if(!trialReady)throw Error('Derived trial image did not prepare its unprivileged home');
+    const trialExecProbe=async restart=>{
+      const args=['docker',...dockerArgs,'exec','-i','-u','hermes',trialContainer,'/opt/hermes/.venv/bin/python','-',sha,...(restart?['restart']:[])];
+      return run('docker',args.slice(1),{input:probe,log});
+    };
+    await trialExecProbe(false);
+    const trialHttpArgs=['docker',...dockerArgs,'exec','-i','-u','hermes',trialContainer,'/opt/hermes/.venv/bin/python','-','standalone-fixture-key-not-a-production-secret'];
+    const trialHttpRun=()=>run('docker',trialHttpArgs.slice(1),{input:httpProbe,log});
+    await trialHttpRun();await docker('restart',trialContainer);await trialExecProbe(true);await trialHttpRun();
     checks.push('image-runtime');
     if(await git('rev-parse','HEAD')!==sha || await git('status','--porcelain'))throw Error('Source changed during qualification');
-    const r={...identity,status:'success',finishedAt:new Date().toISOString(),runner:owner.runner,imageId,checks,productionEligible:selectedManaged};
+    const r={...identity,status:'success',finishedAt:new Date().toISOString(),runner:owner.runner,imageId,trialImageId,checks,productionEligible:selectedManaged};
     writeFileSync(receiptPath,JSON.stringify(seal(r,key),null,2)+'\n',{mode:0o600});
     console.log(JSON.stringify({receipt:receiptPath,...r},null,2));
   }catch(error){
-    writeFileSync(receiptPath,JSON.stringify(seal({...identity,status:'failed',finishedAt:new Date().toISOString(),stage,imageId:imageId??null,checks,error:String(error.message),productionEligible:false},key),null,2)+'\n',{mode:0o600});
+    writeFileSync(receiptPath,JSON.stringify(seal({...identity,status:'failed',finishedAt:new Date().toISOString(),stage,imageId:imageId??null,trialImageId:trialImageId??null,checks,error:String(error.message),productionEligible:false},key),null,2)+'\n',{mode:0o600});
     throw Error(`${stage}: ${error.message}; failure receipt: ${receiptPath}`);
   }finally{
     if(container)await docker('rm','-f',container).catch(()=>{});
     if(volume)await docker('volume','rm',volume).catch(()=>{});
+    if(trialContainer)await docker('rm','-f',trialContainer).catch(()=>{});
+    if(trialVolume)await docker('volume','rm',trialVolume).catch(()=>{});
     if(testName)await docker('image','rm',testName).catch(()=>{});
     if(source)await shell(`rm -rf -- ${quote(source)}`).catch(()=>{});
     log.end();

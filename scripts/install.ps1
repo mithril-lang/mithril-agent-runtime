@@ -380,7 +380,7 @@ function Invoke-VerifiedDownload {
         [string]$MirrorUrl = ""
     )
     $urls = @($Url)
-    if ($MirrorUrl -and $MirrorUrl -ne $Url) { $urls += $MirrorUrl }
+    if ($env:MITHRIL_AGENT -ne "1" -and $MirrorUrl -and $MirrorUrl -ne $Url) { $urls += $MirrorUrl }
     $httpFailure = ""
     foreach ($candidate in $urls) {
         try {
@@ -1259,6 +1259,10 @@ if ($ShowResolvedPaths) {
 if ($Manifest) {
     @{ protocol_version = 1; stages = $Stages } | ConvertTo-Json -Depth 4 -Compress | Write-Output
     exit 0
+}
+
+if ($env:MITHRIL_AGENT -eq "1" -and $RepoUrl -ne "https://github.com/mithril-lang/mithril-agent-runtime.git") {
+    Fail "Mithril Agent installer requires the Mithril-owned runtime repository; no Hermes fallback is permitted"
 }
 
 if ($Stage) {

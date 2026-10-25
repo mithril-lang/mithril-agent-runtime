@@ -8,6 +8,8 @@ English identifiers; only labels/descriptions are translated."""
 
 from __future__ import annotations
 
+import os
+
 from agent.i18n import t
 
 _RULE = "─" * 41
@@ -237,6 +239,12 @@ class CLIBillingMixin:
         """Nous dollar balance block (two bars); True if anything printed. Shared dollar model first, then
         legacy ``nous_credits_lines``. Agent-independent (TUI slash-worker has no live agent). Fail-open."""
         from cli import _cprint, _b, _d
+        from agent.account_usage import mithril_account_balance_lines
+        if lines := mithril_account_balance_lines():
+            print()
+            for line in lines:
+                _cprint(f"  {line}")
+            return True
         usage = self._try_usage_model()
         if usage is not None and usage.available:
             from agent.billing_usage import format_renews
@@ -262,8 +270,8 @@ class CLIBillingMixin:
                 _cprint(ln)
             if head or tail:
                 return True
-        from agent.account_usage import nous_credits_lines
-        lines = nous_credits_lines()
+        from agent.account_usage import account_credit_lines
+        lines = account_credit_lines()
         if not lines:
             return False
         print()
@@ -273,12 +281,17 @@ class CLIBillingMixin:
 
     def _print_usage_cta(self) -> None:
         """The `/usage` call-to-action; mirrors the TUI's ``USAGE_CTA``. Nous-account only."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            return
         self._dim(t("cli.billing.usage_cta"))
 
     # ── /subscription — view plan + change it (CLI surface) ──
 
     def _show_subscription(self):
         """`/subscription` (alias `/upgrade`). Deep-links NAS's ``/manage-subscription`` (NOT Stripe); never charges."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            self._dim("Mithril billing is not available through this command.", icon="💳 ", lead=True)
+            return
         from agent.subscription_view import build_subscription_state, subscription_manage_url
         state = build_subscription_state()
         if not state.logged_in:
@@ -662,6 +675,9 @@ class CLIBillingMixin:
     def _show_billing(self, command: str = "/topup"):
         """`/topup` — ZERO sub-commands (argument ignored; Overview is the only route). Non-interactive never
         prompts. Money is Decimal end-to-end; the terminal never collects card details."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            self._dim("Mithril billing is not available through this command.", icon="💳 ", lead=True)
+            return
         from agent.billing_view import build_billing_state
         state = build_billing_state()
         if not state.logged_in:

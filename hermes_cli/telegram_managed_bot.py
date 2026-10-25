@@ -23,6 +23,15 @@ POLL_INTERVAL = 2
 _TELEGRAM_BOT_TOKEN_RE = re.compile(r"^\d+:[A-Za-z0-9_-]{30,}$")
 
 
+def _is_mithril_agent() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
+
+
+def managed_bot_onboarding_available() -> bool:
+    """Whether this distribution may offer the Hermes-hosted managed-bot flow."""
+    return not _is_mithril_agent()
+
+
 @dataclass(frozen=True)
 class TelegramPairing:
     """Pairing record returned by the Telegram onboarding service."""
@@ -89,6 +98,8 @@ def create_pairing(
     api_url: str | None = None, bot_name: str = DEFAULT_BOT_NAME, timeout: float = 10.0
 ) -> TelegramPairing | None:
     """POST a pairing; the returned poll token is only used as a bearer credential while polling."""
+    if _is_mithril_agent():
+        return None
     try:
         resp = httpx.post(f"{_api_url(api_url)}/v1/telegram/pairings", json={"bot_name": bot_name}, timeout=timeout)
         if resp.status_code not in (200, 201):
@@ -111,6 +122,8 @@ def poll_pairing_result_once(
     api_url: str | None, pairing: TelegramPairing, timeout: float = 10.0
 ) -> TelegramBotSetupResult | None:
     """Poll the onboarding service once. Returns setup metadata when ready."""
+    if _is_mithril_agent():
+        return None
     resp = httpx.get(f"{_api_url(api_url)}/v1/telegram/pairings/{pairing.pairing_id}",
                      headers={"Authorization": f"Bearer {pairing.poll_token}"}, timeout=timeout)
     if resp.status_code != 200:
@@ -130,6 +143,8 @@ def poll_for_setup_result(
     interval: float = POLL_INTERVAL, on_tick=None) -> Optional[TelegramBotSetupResult]:
     """Poll the pairing API until setup metadata is available or timeout. ``on_tick(elapsed_s)``
     runs before each attempt (progress display)."""
+    if _is_mithril_agent():
+        return None
     start = time.monotonic()
     deadline = start + timeout
     while time.monotonic() < deadline:
@@ -149,6 +164,12 @@ def auto_setup_telegram_bot_result(
     profile_name: Optional[str] = None, poll_timeout: float = DEFAULT_POLL_TIMEOUT,
 ) -> Optional[TelegramBotSetupResult]:
     """Run the full automatic Telegram bot creation flow."""
+    if _is_mithril_agent():
+        print(
+            "  Automatic Telegram bot onboarding is unavailable in Mithril Agent; "
+            "use manual setup with @BotFather."
+        )
+        return None
     _ = manager_bot, profile_name  # accepted for callers; the service decides both
     resolved_api_url = _api_url(api_url)
     print(f"\n  Contacting Hermes Telegram onboarding service: {resolved_api_url}")

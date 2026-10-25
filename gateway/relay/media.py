@@ -34,7 +34,10 @@ _REQUEST_TIMEOUT_S = 30.0
 
 # Discord's CDN (and other public hosts) 403 urllib's default UA, which
 # silently killed every CDN pass-through download. Always send a descriptive UA.
-_MEDIA_USER_AGENT = "HermesAgent-Relay/1.0 (+https://github.com/NousResearch/hermes-agent)"
+def _media_user_agent() -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return "MithrilAgent-Relay/1.0 (+https://github.com/mithril-lang/mithril-agent-runtime)"
+    return "HermesAgent-Relay/1.0 (+https://github.com/NousResearch/hermes-agent)"
 
 
 def media_base_url(relay_dial_url: str) -> str:
@@ -90,7 +93,7 @@ class RelayMediaClient:
             mime or mimetypes.guess_type(filename or path.name)[0] or "application/octet-stream"
         )
         headers = {
-            "User-Agent": _MEDIA_USER_AGENT,
+            "User-Agent": _media_user_agent(),
             "Authorization": f"Bearer {self._bearer()}",
             "Content-Type": content_type,
             "X-Media-Filename": (filename or path.name)[:255],
@@ -120,7 +123,7 @@ class RelayMediaClient:
         needs_auth = self.is_relay_media_url(url)
         if needs_auth and not self.enabled:
             return None
-        headers = {"User-Agent": _MEDIA_USER_AGENT}
+        headers = {"User-Agent": _media_user_agent()}
         if needs_auth:
             headers["Authorization"] = f"Bearer {self._bearer()}"
 

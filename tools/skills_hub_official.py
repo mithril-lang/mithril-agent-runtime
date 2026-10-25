@@ -1,6 +1,7 @@
 """Skills Hub official sources: repo-shipped optional skills and the centralized Hermes index."""
 
 import logging
+import os
 from pathlib import Path, PurePosixPath
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -11,6 +12,10 @@ from tools.skills_hub_models import (
 )
 
 logger = logging.getLogger("tools.skills_hub")
+
+
+def _mithril_agent_mode() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
 
 # Identifier prefixes stripped when matching index entries loosely.
 _INDEX_ID_PREFIXES = ("skills-sh/", "skills.sh/", "official/", "github/", "clawhub/")
@@ -157,6 +162,8 @@ class OptionalSkillSource(SkillSource):
         """Fetch an optional skill straight from the live default branch. Local installs lag
         ``main``; rather than demanding ``hermes update`` first, resolve against the live repo.
         ``rel`` is ``category/skill`` (used verbatim) or a bare skill name (located via the repo tree)."""
+        if _mithril_agent_mode():
+            return None
         parts = _clean_rel_parts(rel.strip("/"))
         if parts is None:
             return None
@@ -196,6 +203,9 @@ class OptionalSkillSource(SkillSource):
         """``category/skill`` dirs under optional-skills/ on live main. One repo-tree call (cached
         per-process by GitHubSource + the on-disk index cache). {} when the network/API is
         unavailable — callers degrade to local-only."""
+        if _mithril_agent_mode():
+            self._remote_dirs = {}
+            return self._remote_dirs
         if self._remote_dirs is not None:
             return self._remote_dirs
 
@@ -241,6 +251,10 @@ class OptionalSkillSource(SkillSource):
         """Fetch an upstream-maintained optional skill via GitHubSource.fetch() (full-tree download,
         symlink/unsafe-path rejection, quarantine + scan downstream) and re-label it as an official
         catalog entry."""
+        repo = upstream["repo"].strip("/").lower()
+        if _mithril_agent_mode() and repo.startswith("nousresearch/"):
+            logger.info("Mithril mode keeps Nous-hosted optional skills unavailable: %s", rel_id)
+            return None
         bundle = self._get_github().fetch(f"{upstream['repo']}/{upstream['path']}")
         if bundle is None:
             logger.warning("Upstream fetch failed for optional skill %s (%s:%s)",

@@ -5,6 +5,7 @@ method_ctx.bind_module), so they reference server.py globals bare.
 """
 
 import contextlib
+import os
 
 from .method_ctx import HandlerRegistry, bind_module
 
@@ -233,8 +234,9 @@ def _legacy_group_fence_error(rid, session, params):
         return _err(rid, 5122, _GROUP_PROBE_FAILED_MSG)
     if hosted or peer:
         owner = "its gateway" if hosted else "its home host"
+        desktop_name = "Mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes Desktop"
         return _err(
-            rid, 4122, f"This room is managed by {owner}. Update Hermes Desktop to continue it.")
+            rid, 4122, f"This room is managed by {owner}. Update {desktop_name} to continue it.")
     return None
 
 

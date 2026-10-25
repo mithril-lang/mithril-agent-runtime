@@ -2,7 +2,7 @@ import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 
 export const profile = Object.freeze({
   schema: 1, name: 'gateway-docker-linux-amd64', platform: 'linux/amd64',
-  coverage: ['repository Dockerfile', 'offline API gateway regression suite', 'real image provenance, SQLite, privilege drop and restart', 'Mithril branding, launcher, installer and audited runtime export'],
+  coverage: ['explicit Mithril OCI image target and first-party launcher through the generic dispatcher', 'offline API gateway regression suite', 'real image provenance, SQLite, privilege drop and external-supervisor restart', 'Mithril branding, launcher, installer and audited runtime export'],
   excluded: ['native Desktop and installers', 'messaging adapter delivery', 'other architectures', 'live inference', 'production publication'],
   minimumFreeBytes: 12 * 1024 ** 3,
   offlineTests: ['tests/hermes_cli/test_profile_handoff.py', 'tests/tui_gateway/test_profile_handoff.py', 'tests/tui_gateway/contracts/test_generated.py', 'tests/gateway/test_api_server*.py', 'tests/gateway/test_multiplex_api_server_routing.py', 'tests/gateway/test_config.py', 'tests/gateway/test_custom_provider_request_overrides.py', 'tests/hermes_cli/test_container_boot.py', 'tests/hermes_cli/test_gateway_external_supervisor.py', 'tests/hermes_cli/test_banner_skin_branding.py', 'tests/hermes_cli/test_startup_fast_guards.py', 'tests/hermes_cli/test_cli_skin_integration.py', 'tests/hermes_cli/test_mithril_auth.py', 'tests/hermes_cli/test_mithril_runtime_export.py', 'tests/scripts/test_mithril_install.py', 'tests/scripts/test_mithril_launcher.py'],
@@ -19,14 +19,16 @@ export function admit(envelope, key, expected, now = Date.now()) {
   const age = now - Date.parse(r.finishedAt);
   if (r.status !== 'success' || !Number.isFinite(age) || age < 0 || age > 86400000 || !/^sha256:[a-f0-9]{64}$/.test(r.imageId ?? '')) throw Error('Successful fresh image qualification required');
   if (r.productionEligible !== false) throw Error('Gateway trial qualification cannot authorize a production release');
-  for (const check of ['image-build','offline-regressions','image-runtime']) {
+  for (const check of ['image-build','image-provenance','offline-regressions','image-runtime']) {
     if (!Array.isArray(r.checks) || !r.checks.includes(check)) throw Error(`Missing qualification stage: ${check}`);
   }
   return r;
 }
 export function validateOwner(owner, host, checkout) {
-  if (owner.repository !== 'mithril-lang/mithril-agent' || owner.hostname !== host || owner.checkout !== checkout) throw Error('Deployment owner mismatch');
-  if (!['local','gad'].includes(owner.runner)) throw Error('Only configured local/gad runners are supported');
+  if (owner.repository !== 'mithril-lang/mithril-agent-runtime' || owner.hostname !== host || owner.checkout !== checkout) throw Error('Deployment owner mismatch');
+  if (owner.runner !== 'local') throw Error('Only the local verification runner is supported');
   if (owner.socket && !/^\/run\/mithril-agent-trial\/docker\.sock$/.test(owner.socket)) throw Error('Unexpected runner socket');
+  if (typeof owner.imageIdentity !== 'string' || !/^[a-z0-9][a-z0-9.-]*(?::[0-9]+)?(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+$/.test(owner.imageIdentity)) throw Error('Approved canonical Mithril image identity required');
+  if (/(?:^|\/)nousresearch(?:\/|$)/i.test(owner.imageIdentity) || /(?:^|\/)hermes-(?:agent|sandbox)$/i.test(owner.imageIdentity)) throw Error('Mithril image identity cannot name an upstream Hermes/Nous image');
   return owner;
 }

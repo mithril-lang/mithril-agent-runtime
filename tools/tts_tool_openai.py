@@ -15,8 +15,9 @@ from urllib.parse import urljoin
 
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
 from tools.tool_backend_helpers import (
-    NOUS_MANAGED_PROVIDER, managed_nous_tools_enabled, nous_tool_gateway_unavailable_message,
-    read_selection, resolve_openai_audio_api_key, selection_error)
+    NOUS_MANAGED_PROVIDER, managed_gateway_selection_failure, managed_nous_tools_enabled,
+    nous_tool_gateway_unavailable_message, read_selection, resolve_openai_audio_api_key,
+    selection_error)
 from tools.tts_tool_delivery import _origin, _section
 from tools.tts_tool_providers import _tts_response_format_from_path
 
@@ -51,7 +52,7 @@ def _resolve_openai_audio_client_config() -> tuple[str, str, bool]:
         if route is None:
             raise ValueError(selection_error(
                 "tts", NOUS_MANAGED_PROVIDER,
-                "the Nous Tool Gateway is not available (not entitled or unreachable)"))
+                managed_gateway_selection_failure("managed OpenAI audio for TTS")))
         return route
     direct_api_key = openai_cfg.get("api_key") or resolve_openai_audio_api_key()
     if direct_api_key:

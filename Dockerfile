@@ -528,3 +528,21 @@ VOLUME [ "/opt/data" ]
 # intercepted by /init's POSIX shell.
 ENTRYPOINT [ "/opt/hermes/docker/entrypoint-dispatch.sh" ]
 CMD [ ]
+
+# First-party Mithril Gateway image. Keep the shared runtime/default image
+# Hermes-compatible and without Mithril mode. This target scopes Mithril mode
+# to explicitly built fleet images and replaces the inherited upstream image
+# identity with the approved Mithril identity and exact install-stamp revision.
+# The identity is a required non-secret build input supplied by the private
+# standalone owner configuration; it is never selected by a default.
+FROM runtime AS mithril_gateway
+ARG MITHRIL_IMAGE_IDENTITY
+RUN python3 -c 'import json, os, pathlib, re, sys; marker = pathlib.Path("/etc/hermes/image-provenance.json"); data = json.loads(marker.read_text(encoding="utf-8")); identity = os.environ.get("MITHRIL_IMAGE_IDENTITY", ""); stamp = json.loads(pathlib.Path("/opt/hermes/install-stamp.json").read_text(encoding="utf-8")); revision = stamp.get("commit"); valid_revision = isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision) and set(revision) != {"0"}; sys.exit("MITHRIL_IMAGE_IDENTITY is required") if not identity else None; sys.exit("Mithril image identity is invalid") if identity != identity.strip() else None; sys.exit("Exact non-placeholder source revision is required") if not valid_revision else None; data["image"] = identity; data["revision"] = revision; marker.write_text(json.dumps(data, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8"); marker.chmod(0o444)'
+COPY --chmod=0755 scripts/standalone/mithril-gateway-oci-entrypoint.sh /opt/hermes/docker/mithril-gateway-oci-entrypoint.sh
+ENV MITHRIL_AGENT=1
+CMD [ "/opt/hermes/docker/mithril-gateway-oci-entrypoint.sh" ]
+
+# Keep the ordinary `docker build` result identical in behavior to the shared
+# Hermes-compatible runtime. Mithril deployments must opt into
+# `--target mithril_gateway` and qualify that exact target.
+FROM runtime AS default

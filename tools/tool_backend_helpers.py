@@ -19,6 +19,8 @@ def managed_nous_tools_enabled(*, force_fresh: bool = False) -> bool:
     """Coarse gate: entitled to the Nous Tool Gateway (paid Portal access OR a live free
     pool). Fails closed on unknown/error — never blocks startup. Callers narrow per category
     via ``tool_gateway_entitled_for``; ``force_fresh`` is for flows needing a just-bought grant."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         from hermes_cli.nous_account import get_nous_portal_account_info
         account_info = (get_nous_portal_account_info(force_fresh=True) if force_fresh
@@ -31,6 +33,9 @@ def managed_nous_tools_enabled(*, force_fresh: bool = False) -> bool:
 def nous_tool_gateway_unavailable_message(capability: str = "the Nous Tool Gateway", *,
                                           force_fresh: bool = False) -> str:
     """Return account-aware guidance for an unavailable Nous Tool Gateway path."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return (f"{capability} is unavailable in Mithril Agent. Configure a direct provider or use a supported "
+                "Mithril route.")
     try:
         from hermes_cli.nous_account import (
             format_nous_portal_entitlement_message, get_nous_portal_account_info)
@@ -43,6 +48,17 @@ def nous_tool_gateway_unavailable_message(capability: str = "the Nous Tool Gatew
         pass
     return (f"{capability} is unavailable. Run `hermes model` to refresh your "
             "Nous Portal login and billing status.")
+
+
+def managed_gateway_selection_failure(capability: str) -> str:
+    """Explain why a stored managed-provider choice cannot run in this distribution.
+
+    Keep Hermes' selection failure static so an error path does not trigger another Portal
+    entitlement refresh. Mithril gets distribution-specific guidance without contacting Nous.
+    """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return nous_tool_gateway_unavailable_message(capability)
+    return "the Nous Tool Gateway is not available (not entitled or unreachable)"
 
 
 def normalize_browser_cloud_provider(value: object | None) -> str:
@@ -267,8 +283,9 @@ def removed_backend_note(section: str, name: str) -> Optional[str]:
 def selection_error(section: str, selection_name: str, failure: str) -> str:
     """The uniform honest-error contract for a selected-but-broken provider."""
     failure = removed_backend_note(section, selection_name) or failure
-    return (f"{section} is configured to use {selection_name} (set via hermes "
-            f"tools), but {failure}. Run 'hermes tools' to change it.")
+    cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    return (f"{section} is configured to use {selection_name} (set via {cli} "
+            f"tools), but {failure}. Run '{cli} tools' to change it.")
 
 
 def fal_key_is_configured() -> bool:

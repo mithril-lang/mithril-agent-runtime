@@ -303,6 +303,9 @@ def _sync_status(ssc) -> int:
     import json as _json
     status = ssc.sync_status()
     print(_json.dumps(status, indent=2, ensure_ascii=False))
+    if status.get("mode") == "mithril":
+        _err("\nMithril skill sync is unavailable; no remote sync was attempted.")
+        return 0
     if status.get("org_available"):
         n = len(status.get("org_skills") or [])
         modified = status.get("org_skills_modified") or []
@@ -360,13 +363,19 @@ def cmd_sync(args):
     """Skill Sync — personal sync across devices, plus sharing with your org."""
     import json as _json
     sub = getattr(args, "sync_command", None)
+    from tools import skills_sync_client as ssc
+    if ssc.is_mithril_agent_mode():
+        if sub == "status":
+            return _sync_status(ssc)
+        _err("Mithril skill sync is unavailable until a Mithril-owned sync service is provisioned. "
+             "Run `mithril sync status` to check availability; no remote sync request was made.")
+        return 1
     if sub in {None, ""}:
         _err(_SYNC_USAGE)
         return 1
     if sub in {"enable", "disable"}:
         return _sync_toggle(args, sub)
 
-    from tools import skills_sync_client as ssc
     if sub == "device":
         return _sync_device(args, ssc)
     if sub == "propose":

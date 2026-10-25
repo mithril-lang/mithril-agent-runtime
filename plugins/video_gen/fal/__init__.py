@@ -9,6 +9,7 @@ path containing one) → ``DEFAULT_MODEL``. Auth via ``FAL_KEY`` or the managed 
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
@@ -319,10 +320,14 @@ def _upscale_video(video_url: str, source_request_id: Optional[str] = None) -> O
     return url
 
 
-_NO_BACKEND_MSG = ("No FAL backend available. Either set FAL_KEY (run `hermes tools` → Video Generation → FAL to configure) "
-                   "or sign in to Nous (`hermes setup`) for managed gateway access.")
+_NO_BACKEND_MSG = (
+    "No FAL backend available. Set FAL_KEY for direct FAL access; managed FAL is unavailable in Mithril Agent."
+    if os.environ.get("MITHRIL_AGENT") == "1"
+    else "No FAL backend available. Either set FAL_KEY (run `hermes tools` → Video Generation → FAL to configure) "
+         "or sign in to Nous (`hermes setup`) for managed gateway access."
+)
 _MODALITY_MISSING_MSG = {
-    "image": "FAL family {fid} has no image-to-video endpoint. Pick a family with image-to-video support via `hermes tools` → Video Generation.",
+    "image": "FAL family {fid} has no image-to-video endpoint. Pick a family with image-to-video support in Video Generation settings.",
     "text": "FAL family {fid} has no text-to-video endpoint. Pass an image_url to use its image-to-video endpoint, or pick a different family.",
 }
 

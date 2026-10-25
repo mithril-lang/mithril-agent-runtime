@@ -9,11 +9,24 @@ commands report that state rather than failing opaquely.
 from __future__ import annotations
 
 import argparse
+import os
 from typing import Callable
 
 
 def build_sync_parser(subparsers, *, cmd_sync: Callable) -> None:
     """Attach the ``sync`` subcommand (and its sub-actions) to ``subparsers``."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        sync_parser = subparsers.add_parser(
+            "sync", help="Skill sync unavailable until the Mithril service is provisioned",
+            description="Profile-scoped skill sync is not available in Mithril mode until a "
+                "Mithril-owned sync service is provisioned. Use `mithril sync status` to check "
+                "availability; no remote sync request will be sent.",
+            formatter_class=argparse.RawDescriptionHelpFormatter)
+        sync_sub = sync_parser.add_subparsers(dest="sync_command")
+        sync_sub.add_parser("status", help="Show sync availability and local state")
+        sync_parser.set_defaults(func=cmd_sync)
+        return
+
     sync_parser = subparsers.add_parser(
         "sync", help="Skill Sync — sync your skills across devices and with your team",
         description="Skill Sync keeps your skills with you. Personal sync moves your "

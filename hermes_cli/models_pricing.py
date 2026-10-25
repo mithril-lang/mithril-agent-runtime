@@ -300,6 +300,8 @@ def _resolve_nous_pricing_credentials() -> tuple[str, str]:
     Precedence mirrors runtime credential resolution: ``NOUS_INFERENCE_BASE_URL`` (staging /
     preview) → resolved credential ``base_url`` → production default. Without the override a
     staging profile's sale ``pricing.original`` would never reach the pickers."""
+    if os.getenv("MITHRIL_AGENT") == "1":
+        return "", ""
     try:
         from hermes_cli.auth import _nous_inference_env_override
 
@@ -330,6 +332,8 @@ _NOUS_CATALOG_TTL_SECONDS = 300.0
 
 def _fetch_nous_pricing(api_key: str, base_url: str, *, force_refresh: bool) -> dict[str, dict[str, Any]]:
     """Shared by pricing and policy lookups so both read one cache entry."""
+    if os.getenv("MITHRIL_AGENT") == "1":
+        return {}
     return fetch_models_with_pricing(
         api_key=api_key,
         base_url=base_url,
@@ -344,6 +348,8 @@ def nous_policy_allowed_ids(*, force_refresh: bool = False) -> Optional[set[str]
     which omits policy-blocked rows), or ``None`` to not filter: no policy (or a token too old to
     say), an anonymous read (unfiltered catalog), or an empty read (a fetch failure, not an org
     that may reach nothing)."""
+    if os.getenv("MITHRIL_AGENT") == "1":
+        return None
     try:
         from hermes_cli.nous_account import nous_policy_present
 
@@ -413,6 +419,8 @@ def _fetch_fireworks_pricing_for_provider(*, force_refresh: bool = False) -> dic
 
 
 def _fetch_nous_pricing_for_provider(*, force_refresh: bool = False) -> dict[str, dict[str, Any]]:
+    if os.getenv("MITHRIL_AGENT") == "1":
+        return {}
     api_key, base_url = _resolve_nous_pricing_credentials()
     if not base_url:
         return {}
@@ -506,6 +514,8 @@ def get_pricing_for_provider(
     prewarm fills the same caches for later opens."""
     from hermes_cli.models import normalize_provider
     normalized = normalize_provider(provider)
+    if normalized == "nous" and os.getenv("MITHRIL_AGENT") == "1":
+        return {}
     if cached_only:
         return _cached_only_pricing(normalized)
     fetcher = _PRICING_FETCHERS.get(normalized)

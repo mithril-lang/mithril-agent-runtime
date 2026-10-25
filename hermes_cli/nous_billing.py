@@ -137,7 +137,11 @@ def invalidate_cached_token() -> None:
 
 def _billing_not_logged_in(exc: Optional[BaseException] = None) -> "BillingAuthError":
     """Build the canonical 'not logged in' BillingAuthError (single source)."""
-    err = BillingAuthError("Not logged into Nous Portal — run `hermes portal` to log in.", status=401, error="invalid_token")
+    message = (
+        "Nous Portal billing is unavailable in Mithril Agent."
+        if os.environ.get("MITHRIL_AGENT") == "1"
+        else "Not logged into Nous Portal — run `hermes portal` to log in.")
+    err = BillingAuthError(message, status=401, error="invalid_token")
     if exc is not None:
         err.__cause__ = exc
     return err
@@ -145,6 +149,8 @@ def _billing_not_logged_in(exc: Optional[BaseException] = None) -> "BillingAuthE
 
 def _resolve_token_and_base(*, use_cache: bool = True) -> tuple[str, str]:
     """``(access_token, portal_base_url)``, cached for ``_TOKEN_CACHE_TTL_SECONDS`` unless ``use_cache=False``."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise _billing_not_logged_in()
     from hermes_constants import hermes_home_key
 
     cache_key = hermes_home_key()

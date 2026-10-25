@@ -254,20 +254,25 @@ def _prompt_unauthorized_access(platform_key: str) -> None:
 
 
 def _telegram_auto_setup(token_var: str) -> tuple[bool, object]:
-    """Offer the managed-bot QR flow. Returns (token_saved, owner_user_id)."""
+    """Offer managed setup where supported. Returns (token_saved, owner_user_id)."""
+    try:
+        from hermes_cli.telegram_managed_bot import (
+            auto_setup_telegram_bot_result,
+            is_valid_telegram_bot_token,
+            managed_bot_onboarding_available,
+        )
+    except ImportError:
+        _gw().print_warning("  Automatic setup is unavailable in this install.")
+        return False, None
+    if not managed_bot_onboarding_available():
+        _gw().print_info("  Mithril Agent uses a Telegram bot you manage through @BotFather.")
+        return False, None
     print()
     _gw()._print_info_lines(
         "  Telegram can be configured automatically with a managed bot:",
         "  [1] Automatic (scan QR → confirm in Telegram → done)", "  [2] Manual BotFather token",
     )
     if _gw().prompt("  Choice [1/2]", default="1").strip() != "1":
-        return False, None
-    try:
-        from hermes_cli.telegram_managed_bot import (
-            auto_setup_telegram_bot_result, is_valid_telegram_bot_token,
-        )
-    except ImportError:
-        _gw().print_warning("  Automatic setup is unavailable in this install.")
         return False, None
     result = auto_setup_telegram_bot_result()
     if result and is_valid_telegram_bot_token(result.token):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from tools.connectors.gateway.bridge import SIGN_IN_EXPIRED, UNREACHABLE
@@ -19,7 +20,10 @@ def connectors_unavailable(failure: str, *, verb: str,
     hint = (f"Hosted connector tools could not be {verb} right now. "
             "Do not conclude the app is missing.")
     if failure == SIGN_IN_EXPIRED:
-        hint += " The user must sign in to Nous again."
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            hint += " Hosted connector sign-in is unavailable in Mithril Agent."
+        else:
+            hint += " The user must sign in to Nous again."
     field: Dict[str, Any] = {"status": "unavailable", "reason": failure, "hint": hint}
     if names:
         field["names"] = names

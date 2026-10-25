@@ -14,6 +14,7 @@ Docs: https://openrouter.ai/docs/guides/overview/multimodal/video-generation
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -171,8 +172,13 @@ class OpenRouterVideoGenProvider(VideoGenProvider):
                 (str(runtime.get("base_url") or "").strip() or DEFAULT_BASE_URL).rstrip("/"))
 
     def _headers(self, api_key: str) -> Dict[str, str]:
-        return {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/NousResearch/hermes-agent", "X-Title": "Hermes Agent"}
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        if os.environ.get("MITHRIL_AGENT") != "1":
+            headers.update({
+                "HTTP-Referer": "https://github.com/NousResearch/hermes-agent",
+                "X-Title": "Hermes Agent",
+            })
+        return headers
 
     def _session(self) -> Any:
         import requests

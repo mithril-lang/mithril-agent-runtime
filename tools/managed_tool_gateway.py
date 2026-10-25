@@ -82,6 +82,8 @@ def _read_user_token_override() -> Optional[str]:
     when installed (a scoped miss must NOT borrow the process env under multiplex); ``os.environ`` only
     when unscoped. Any non-UnscopedSecretError failure propagates -- a failed scoped read must never
     silently borrow the ambient env."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     from agent.secret_scope import UnscopedSecretError, get_secret
 
     try:
@@ -94,6 +96,8 @@ def _read_user_token_override() -> Optional[str]:
 def peek_nous_access_token() -> Optional[str]:
     """Cheap token probe: env override or cached auth-store token, no expiry check and no network —
     availability scans must stay off the synchronous OAuth refresh path (:func:`read_nous_access_token`)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     return _read_user_token_override() or _clean((_read_nous_provider_state() or {}).get("access_token"))
 
 
@@ -105,6 +109,8 @@ def read_nous_access_token() -> Optional[str]:
     path (NS-845 Q1.2). A retired free-tier credential IS replaced here, once: that is the explicit
     dead-credential rule, shared with inference.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     if explicit := _read_user_token_override():
         return explicit
     nous_provider = _read_nous_provider_state() or {}
@@ -166,6 +172,8 @@ def resolve_managed_tool_gateway(
     vendor: str, gateway_builder: Optional[Callable[[str], str]] = None,
     token_reader: Optional[Callable[[], Optional[str]]] = None) -> Optional[ManagedToolGatewayConfig]:
     """Resolve shared managed-tool gateway config for a vendor."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     if not managed_nous_tools_enabled():
         return None
     gateway_origin = (gateway_builder or build_vendor_gateway_url)(vendor)

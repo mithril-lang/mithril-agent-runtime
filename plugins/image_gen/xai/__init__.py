@@ -74,9 +74,12 @@ def _fetch_live_models(creds: Optional[Dict[str, Any]] = None) -> Dict[str, Dict
     api_key = str(creds.get("api_key") or "").strip()
     if not api_key:
         raise RuntimeError("no xAI credentials")
+    headers = {"Authorization": f"Bearer {api_key}"}
+    if user_agent := hermes_xai_user_agent():
+        headers["User-Agent"] = user_agent
     response = requests.get(
         f"{_base_url(creds)}/image-generation-models",
-        headers={"Authorization": f"Bearer {api_key}", "User-Agent": hermes_xai_user_agent()},
+        headers=headers,
         timeout=_LIVE_TIMEOUT)
     response.raise_for_status()
     payload = response.json()
@@ -267,10 +270,9 @@ class XAIImageGenProvider(StaticImageGenProvider):
             return err
         is_edit = bool(source_images)
 
-        headers = {
-            "Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
-            "User-Agent": hermes_xai_user_agent(),
-        }
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        if user_agent := hermes_xai_user_agent():
+            headers["User-Agent"] = user_agent
         base_url = _base_url(creds)
         storage_options = build_xai_storage_options(
             "image_gen", filename_prefix="hermes-xai-image", extension="png")

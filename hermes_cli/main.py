@@ -1062,6 +1062,8 @@ def _auth_store_logged_in(auth_file: Path, registry, strict_profile_scope: bool)
     try:
         auth = json.loads(auth_file.read_text(encoding="utf-8-sig"))
         active = auth.get("active_provider")
+        if os.environ.get("MITHRIL_AGENT") == "1" and str(active or "").strip().lower() == "nous":
+            return False
         active_config = registry.get(str(active or "").strip().lower())
         if active and not (
             strict_profile_scope and active_config and active_config.auth_type == "api_key"
@@ -1094,9 +1096,13 @@ def _has_any_provider_configured(*, strict_profile_scope: bool = False) -> bool:
             from hermes_cli.config import split_model_config_default
             _model_name, _ = split_model_config_default(_model_name)
     _model_name = str(_model_name).strip()
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    selected_nous_model = _model_name.lower().startswith("nous/")
     # "Explicitly configured" = model differs from the hardcoded default; gates
     # Claude Code credentials so they don't skip setup on a fresh install.
     _has_hermes_config = _model_name and _model_name != DEFAULT_CONFIG.get("model", "")
+    if mithril_agent and selected_nous_model:
+        _has_hermes_config = False
 
     # Env vars (.env or shell). OPENAI_BASE_URL alone counts — local models
     # (vLLM, llama.cpp) often need no API key.
@@ -1129,9 +1135,11 @@ def _has_any_provider_configured(*, strict_profile_scope: bool = False) -> bool:
 
     # model as a dict with provider/base_url/api_key means setup ran (fresh
     # installs have a plain string); also covers custom endpoints kept in config.
-    if isinstance(model_cfg, dict) and any(
-        (model_cfg.get(k) or "").strip() for k in ("provider", "base_url", "api_key")
-    ):
+    configured_model_provider = str(model_cfg.get("provider") or "").strip().lower() \
+        if isinstance(model_cfg, dict) else ""
+    if isinstance(model_cfg, dict) and not (
+        mithril_agent and (configured_model_provider == "nous" or selected_nous_model)
+    ) and any((model_cfg.get(k) or "").strip() for k in ("provider", "base_url", "api_key")):
         return True
 
     # Provider-specific auth fallbacks (e.g. Copilot via gh auth).
@@ -1738,14 +1746,15 @@ def _start_chat_background_prefetch() -> None:
         ).start()
 
 
-def _first_run_setup_guard(args) -> None:
-    """No provider configured: offer `hermes setup` (TTY) or exit 1 with guidance."""
+def _first_run_setup_guard(args) -> bool:
+    """No provider configured: offer product-branded setup (TTY) or exit 1 with guidance."""
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    command = "mithril" if mithril_agent else "hermes"
+    product = "Mithril Agent" if mithril_agent else "Hermes"
     print()
-    print(
-        "It looks like Hermes isn't configured yet -- no API keys or providers found."
-    )
+    print(f"It looks like {product} isn't configured yet -- no API keys or providers found.")
     print()
-    print("  Run:  hermes setup")
+    print(f"  Run:  {command} setup")
     print()
 
     from hermes_cli.setup import (
@@ -1765,9 +1774,11 @@ def _first_run_setup_guard(args) -> None:
         reply = "n"
     if reply in {"", "y", "yes"}:
         cmd_setup(args)
-        return
+        # A successful Mithril account setup is sufficient to start this first chat. Keep Hermes'
+        # existing return-to-shell behavior after its setup wizard.
+        return mithril_agent and _has_any_provider_configured()
     print()
-    print("You can run 'hermes setup' at any time to configure.")
+    print(f"You can run '{command} setup' at any time to configure.")
     sys.exit(1)
 
 
@@ -1829,8 +1840,8 @@ def cmd_chat(args):
 
     run_bootstrap(announce=False)
     if not _has_any_provider_configured():
-        _first_run_setup_guard(args)
-        return
+        if not _first_run_setup_guard(args):
+            return
 
     _start_chat_background_prefetch()
 
@@ -1958,7 +1969,11 @@ cmd_dump = _forward_command("cmd_dump", "hermes_cli.dump", "run_dump", doc='Dump
 cmd_debug = _forward_command("cmd_debug", "hermes_cli.debug", "run_debug", doc='Debug tools (share report, etc.).')
 cmd_skin = _forward_command("cmd_skin", "hermes_cli.skin_cmd", "skin_command", doc='Skin management (list / use / set).')
 cmd_import = _forward_command("cmd_import", "hermes_cli.backup", "run_import", forward_return=True, doc='Restore a Hermes backup from a zip file.')
-cmd_dashboard_register = _forward_command("cmd_dashboard_register", "hermes_cli.dashboard_register", "cmd_dashboard_register", doc='Register a self-hosted dashboard OAuth client with Nous Portal.')
+cmd_dashboard_register = _forward_command(
+    "cmd_dashboard_register", "hermes_cli.dashboard_register", "cmd_dashboard_register",
+    doc=("Unavailable in Mithril Agent." if os.environ.get("MITHRIL_AGENT") == "1"
+         else "Register a self-hosted dashboard OAuth client with Nous Portal."),
+)
 cmd_gateway_enroll = _forward_command("cmd_gateway_enroll", "hermes_cli.gateway_enroll", "cmd_gateway_enroll", doc='Enroll a self-hosted gateway with a relay connector.')
 cmd_prompt_size = _forward_command("cmd_prompt_size", "hermes_cli.prompt_size", "cmd_prompt_size", doc='Show a byte/char breakdown of the system prompt + tool schemas.')
 cmd_pairing = _forward_command("cmd_pairing", "hermes_cli.pairing", "pairing_command")
@@ -2398,12 +2413,31 @@ def _finalize_update_receipt(code: int, reason: str) -> None:
 def _update_preflight_handled(args) -> bool:
     """Managed-install refusal, --plan, admission gate, --check. True = nothing more to do."""
     from hermes_cli.config import is_managed, managed_error
+
+    mithril_mode = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_mode:
+        if getattr(args, "set_channel", None) is not None:
+            print("✗ Mithril Agent update channels are not configured.")
+            print("  A Mithril-owned signed release manifest is required.")
+            sys.exit(2)
+        if getattr(args, "install_id", False):
+            from hermes_cli.update_channel import install_id
+
+            print(install_id(PROJECT_ROOT))
+            return True
+        if getattr(args, "plan", False):
+            print("Mithril Agent update plan:")
+            print("  Release service: unavailable (no signed Mithril manifest is configured).")
+            print("  Gateway OCI and Cloudflare Worker rollouts belong to their deployment owners.")
+            return True
+
     from hermes_cli.update_channel import handle_metadata_args
 
     if handle_metadata_args(args, PROJECT_ROOT):
         sys.exit(0)
     if is_managed():
-        managed_error("update Hermes Agent")
+        product_name = "Mithril Agent" if mithril_mode else "Hermes Agent"
+        managed_error(f"update {product_name}")
         return True
 
     # --plan is read-only and deployment-kind aware, so it runs BEFORE the
@@ -2432,6 +2466,13 @@ def _update_preflight_handled(args) -> bool:
         if holders:
             sys.exit(VENV_HOLDERS_EXIT)
         return True
+
+    # Mithril source/image distributions need their own qualified update owner.
+    # Never let the shared Hermes updater resolve or fetch an upstream source target.
+    if mithril_mode:
+        print("✗ Mithril Agent updates are not configured for this installation.")
+        print("  Use the update method provided by your Mithril distribution.")
+        sys.exit(1)
 
     # Image/package-managed admission gate: baked provenance marker first
     # (fail-closed on malformed), then docker/nix/apt heuristics. Records a

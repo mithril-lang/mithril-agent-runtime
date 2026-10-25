@@ -11,6 +11,7 @@ from __future__ import annotations
 from contextlib import nullcontext
 from dataclasses import dataclass
 import logging
+import os
 import time
 from typing import Any, Dict, Optional
 
@@ -19,8 +20,32 @@ from agent.agent_runtime_helpers import _INTERRUPTED_PLACEHOLDER
 from agent.message_metadata import append_message
 from agent.repetition_guard import REPETITION_LOOP_INTERRUPTED, is_runaway_repetition
 from agent.turn_failure_copy import site_copy, stamp_failure
+from utils import base_url_host_matches
 
 logger = logging.getLogger("agent.conversation_loop")
+_MITHRIL_UNAVAILABLE_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
+
+
+def _reject_mithril_nous_request(agent: Any) -> None:
+    """Stop an unsupported Nous route immediately before the Agent's provider transport call."""
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    provider = str(getattr(agent, "provider", "") or "").strip().lower()
+    client_kwargs = getattr(agent, "_client_kwargs", None)
+    client_kwargs = client_kwargs if isinstance(client_kwargs, dict) else {}
+    client = getattr(agent, "client", None)
+    base_url = str(getattr(client, "base_url", "") or client_kwargs.get("base_url")
+                   or getattr(agent, "base_url", "") or "")
+    api_key = (getattr(client, "api_key", None) or client_kwargs.get("api_key")
+               or getattr(agent, "api_key", ""))
+    if isinstance(api_key, str) and api_key.startswith("mf_"):
+        from hermes_cli.runtime_provider import _guard_mithril_account_token_origin
+        _guard_mithril_account_token_origin({"provider": provider, "api_key": api_key, "base_url": base_url})
+    if mithril_agent and (
+        provider in _MITHRIL_UNAVAILABLE_PROVIDER_IDS or base_url_host_matches(base_url, "nousresearch.com")
+    ):
+        raise ValueError(
+            "Nous provider routes are unavailable in Mithril Agent. Choose a supported provider or model."
+        )
 
 
 def stop_thinking_spinner(agent: Any, thinking_spinner: Any) -> None:
@@ -72,6 +97,7 @@ def perform_api_call(
     interrupted: Any,
 ) -> ApiCallVerdict:
     """Issue the request (see ``_should_stream`` for the streaming decision)."""
+    _reject_mithril_nous_request(agent)
     response = None
 
     def _verdict(action: str) -> ApiCallVerdict:

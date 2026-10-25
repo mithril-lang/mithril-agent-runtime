@@ -638,15 +638,19 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
     )
     print()
     print("  How do you want to authenticate the dashboard?")
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
     print("    [1] Username & password (quickest; for a trusted LAN / VPN)")
-    print("    [2] OAuth via Nous Portal (run `hermes dashboard register`)\n    [3] Cancel\n")
+    if mithril_agent:
+        print("    [2] Cancel\n")
+    else:
+        print("    [2] OAuth via Nous Portal (run `hermes dashboard register`)\n    [3] Cancel\n")
 
     try:
         choice = input("  Choice [1]: ").strip() or "1"
     except (EOFError, KeyboardInterrupt):
         _cancel("\n  Cancelled.")
 
-    if choice == "2":
+    if choice == "2" and not mithril_agent:
         print()
         print(
             "  Run this on the host where the dashboard lives, then start "

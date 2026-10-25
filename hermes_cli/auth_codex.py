@@ -309,13 +309,15 @@ def _ssl_interop_hint(exc: BaseException) -> str:
         for err in chain if err is not None
     ):
         return ""
-    return (
+    hint = (
         " This looks like a TLS handshake failure rather than a Codex outage: some networks reject"
         " the larger TLS 1.3 ClientHello that OpenSSL 3.5+ sends by default (post-quantum hybrid"
         " groups). Workaround: point OPENSSL_CONF at a config restricting Groups to classic curves"
-        " (x25519:secp256r1:secp384r1:x448), or test with TLS 1.2 — see the Codex note in"
-        " https://hermes-agent.nousresearch.com/docs/integrations/providers"
+        " (x25519:secp256r1:secp384r1:x448), or test with TLS 1.2"
     )
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return hint + "."
+    return hint + " — see the Codex note in https://hermes-agent.nousresearch.com/docs/integrations/providers"
 
 
 def _is_transient_transport_error(exc: BaseException) -> bool:

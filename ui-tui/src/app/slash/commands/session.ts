@@ -755,9 +755,16 @@ export const sessionCommands: SlashCommand[] = [
           ctx.transcript.panel(t('slashCmd.session.usage.balanceTitle'), sections)
           showedBalance = true
         } else {
+          const mithrilBalanceLines = r?.mithril_balance_lines ?? []
+
+          if (mithrilBalanceLines.length) {
+            ctx.transcript.panel(t('slashCmd.session.usage.balanceTitle'), [{ text: mithrilBalanceLines.join('\n') }])
+            showedBalance = true
+          }
+
           const creditsLines = r?.credits_lines ?? []
 
-          if (creditsLines.length) {
+          if (!showedBalance && creditsLines.length) {
             ctx.transcript.panel(t('slashCmd.session.usage.nousBalanceTitle'), [{ text: creditsLines.join('\n') }])
             showedBalance = true
           }
@@ -768,7 +775,7 @@ export const sessionCommands: SlashCommand[] = [
             sys(t('slashCmd.session.usage.noCalls'))
           }
 
-          sys(t('slashCmd.session.usage.cta'))
+          if (!r?.mithril_balance_lines?.length) sys(t('slashCmd.session.usage.cta'))
 
           return
         }
@@ -803,7 +810,7 @@ export const sessionCommands: SlashCommand[] = [
 
         ctx.transcript.panel(t('slashCmd.session.usage.usageTitle'), sections)
 
-        sys(t('slashCmd.session.usage.cta'))
+        if (!r?.mithril_balance_lines?.length) sys(t('slashCmd.session.usage.cta'))
       })
     }
   }

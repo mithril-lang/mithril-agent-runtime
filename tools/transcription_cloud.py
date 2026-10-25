@@ -285,7 +285,9 @@ def _transcribe_xai(
                      if is_truthy_value(xai_config.get(flag, default))})
 
         def _post_transcription(bearer: str, endpoint_base_url: str):
-            headers = {"Authorization": f"Bearer {bearer}", "User-Agent": hermes_xai_user_agent()}
+            headers = {"Authorization": f"Bearer {bearer}"}
+            if user_agent := hermes_xai_user_agent():
+                headers["User-Agent"] = user_agent
             return _post_audio_multipart(f"{endpoint_base_url}/stt", headers, file_path, data)
 
         response = _post_transcription(api_key, _resolve_base_url(creds))
@@ -409,8 +411,8 @@ def _resolve_openai_audio_client_config() -> tuple[str, str]:
     from tools.transcription_tools import _load_stt_config
     from tools.managed_tool_gateway import resolve_managed_tool_gateway
     from tools.tool_backend_helpers import (
-        NOUS_MANAGED_PROVIDER, managed_nous_tools_enabled, nous_tool_gateway_unavailable_message,
-        read_selection, selection_error)
+        NOUS_MANAGED_PROVIDER, managed_gateway_selection_failure, managed_nous_tools_enabled,
+        nous_tool_gateway_unavailable_message, read_selection, selection_error)
     openai_cfg = _load_stt_config().get("openai") or {}
     selected = read_selection("stt")
 
@@ -424,7 +426,8 @@ def _resolve_openai_audio_client_config() -> tuple[str, str]:
         managed = _managed()
         if managed is None:
             raise ValueError(selection_error("stt", NOUS_MANAGED_PROVIDER,
-                                             "the Nous Tool Gateway is not available (not entitled or unreachable)"))
+                                             managed_gateway_selection_failure(
+                                                 "managed OpenAI audio for transcription")))
         return managed
     direct = _direct_openai_credentials(openai_cfg.get("api_key", ""), openai_cfg.get("base_url", ""))
     if direct is not None:

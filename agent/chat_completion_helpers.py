@@ -502,6 +502,8 @@ def _merge_nous_portal_messages_extra_body(agent, anthropic_kwargs: dict) -> dic
     """Merge Portal ``tags`` / ``session_id`` onto an Anthropic Messages kwargs dict.
     The Nous profile is only consulted by the OpenAI-wire transport; ``session_id``
     only — never ``provider_preferences`` (an OpenAI-wire routing object)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return anthropic_kwargs
     if getattr(agent, "provider", None) not in {"nous", "nous-portal", "nousresearch"}:
         return anthropic_kwargs
     try:
@@ -1488,7 +1490,11 @@ def _build_chat_completions_kwargs(agent, api_messages, tools_for_api, reasoning
 
     _prefs = _provider_preferences_for_agent(agent)
 
-    _qwen_meta = {"sessionId": agent.session_id or "hermes", "promptId": str(uuid.uuid4())} if _is_qwen else None
+    _default_session_id = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    _qwen_meta = {
+        "sessionId": getattr(agent, "session_id", None) or _default_session_id,
+        "promptId": str(uuid.uuid4()),
+    } if _is_qwen else None
     _profile = None
     with contextlib.suppress(Exception):
         from providers import get_provider_profile
@@ -1787,8 +1793,10 @@ def _fallback_entry_key(fb: dict) -> tuple[str, str, str]:
 
 def _fallback_entry_unavailable_without_network(agent, fb: dict) -> Optional[str]:
     """Return a skip reason for fallback entries known to be unusable locally."""
-    if (fb.get("provider") or "").strip().lower() != "nous":
+    if (fb.get("provider") or "").strip().lower() not in {"nous", "nous-portal", "nousresearch"}:
         return None
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return "nous_provider_unavailable_in_mithril_agent"
     try:
         from hermes_cli.auth import get_provider_auth_state
         state = get_provider_auth_state("nous") or {}
@@ -1924,7 +1932,8 @@ def _log_fallback_activated(agent, reason, old_model, old_provider, fb_model, fb
         return
     from hermes_constants import get_hermes_home, profile_name_for_home
     profile = profile_name_for_home(get_hermes_home()) or "default"
-    remedy = "hermes model" if profile == "default" else f"hermes -p {profile} model"
+    cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    remedy = f"{cli} model" if profile == "default" else f"{cli} -p {profile} model"
     logger.warning(
         "Profile %s: %s via %s refused for billing/credits — using fallback %s via %s. "
         "Top up credits, or run `%s` to pick a model this account can use.",

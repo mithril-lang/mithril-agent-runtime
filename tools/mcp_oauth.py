@@ -757,9 +757,9 @@ _SSH_HINT_LOOPBACK = (
     "\n"
     "    2. Or forward the port first in a separate terminal:\n"
     "         ssh -N -L {port}:127.0.0.1:{port} <user>@<this-host>\n"
-    "       then open the URL above and let it redirect normally.\n"
-    "\n"
-    "  See: https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh\n")
+    "       then open the URL above and let it redirect normally.\n")
+_SSH_HINT_LOOPBACK_HERMES_DOCS = (
+    "\n  See: https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh\n")
 
 
 def _announce_authorization_url(
@@ -771,7 +771,10 @@ def _announce_authorization_url(
         if redirect_uri:
             print(_SSH_HINT_PROXY.format(redirect_uri=redirect_uri), file=sys.stderr)
         elif port:
-            print(_SSH_HINT_LOOPBACK.format(host=redirect_host or "127.0.0.1", port=port), file=sys.stderr)
+            hint = _SSH_HINT_LOOPBACK.format(host=redirect_host or "127.0.0.1", port=port)
+            if os.environ.get("MITHRIL_AGENT") != "1":
+                hint += _SSH_HINT_LOOPBACK_HERMES_DOCS
+            print(hint, file=sys.stderr)
     if not _can_open_browser():
         note = "Headless environment detected — open the URL manually."
     else:
@@ -985,7 +988,17 @@ def _maybe_use_cimd(cfg: dict, storage: "HermesTokenStorage | None" = None) -> "
     """``(client_id URL, pinned callback port)``, or None to use DCR. Each ineligibility case means the
     redirect URI is not one the document declares, the client identity is already settled, or the
     server is known not to want a document — a metadata URL would be rejected."""
-    url = cfg.get("client_metadata_url") or _CIMD_CLIENT_METADATA_URL
+    configured_url = cfg.get("client_metadata_url")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not configured_url:
+            return None  # use the MCP server's DCR flow until Mithril publishes client metadata
+        configured_host = (urlparse(str(configured_url)).hostname or "").lower()
+        nous_hosts = ("nousresearch.com", "nousresearch.github.io")
+        if any(configured_host == host or configured_host.endswith(f".{host}") for host in nous_hosts):
+            return None
+        url = str(configured_url)
+    else:
+        url = configured_url or _CIMD_CLIENT_METADATA_URL
     ineligible = (
         cfg.get("cimd") is False
         or not _is_valid_cimd_url(url)

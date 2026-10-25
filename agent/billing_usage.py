@@ -40,6 +40,8 @@ def _fmt_usd(value: Optional[float]) -> str:
 
 def nous_logged_in() -> bool:
     """Cheap local auth-state check: a Nous access token is present. Fail-closed."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         from hermes_cli.auth import get_provider_auth_state
         tok = (get_provider_auth_state("nous") or {}).get("access_token")
@@ -168,6 +170,8 @@ def usage_model_from_account(account_info: Any) -> UsageModel:
 
 def build_usage_model(*, timeout: float = 10.0) -> UsageModel:
     """Fetch account-info and build the usage model; fail-open. ``HERMES_DEV_CREDITS_FIXTURE`` short-circuits to a fixture."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return UsageModel(available=False)
     fixture = _dev_fixture_usage_model()
     if fixture is not None:
         return fixture

@@ -1213,6 +1213,9 @@ class GatewaySlashCommandsMixin(
     async def _handle_debug_command(self, event: MessageEvent) -> str:
         """Handle /debug — upload ONLY the summary (system info + log tails), never full logs, to
         protect privacy; ``hermes debug share`` from the CLI does full uploads."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            return ("Mithril Agent does not upload diagnostics to external paste services. "
+                    "No data was sent. Use `mithril debug share --local` for a local report.")
         from hermes_cli.debug import (_GATEWAY_PRIVACY_NOTICE, _best_effort_sweep_expired_pastes,
                                       _capture_dump, _is_dpaste_url, _schedule_auto_delete,
                                       collect_debug_report, upload_to_pastebin)
