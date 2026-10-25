@@ -3,17 +3,18 @@ require "digest"
 class MithrilAgent < Formula
   desc "Mithril terminal agent installer based on Hermes"
   homepage "https://console.mithril.fund/agent"
-  RUNTIME_REVISION = "1f490be1f0e996a7f7d5930864395428b4312ed4"
-
-  url "https://github.com/mithril-lang/mithril-agent-runtime/releases/download/v0.1.0-preview.8/mithril-cli-runtime.tar.gz"
-  sha256 "7bf818a24f4da65b3c4840f0772486504c81825858d265908e3a1e11995d0208"
-  version "0.1.0-preview.8"
+  url "https://github.com/mithril-lang/mithril-agent-runtime.git",
+      using: :git,
+      revision: "877871662866fec71a28867299825cf051f2a1a0"
+  version "0.1.0-preview.20261025.t0515"
   license "MIT"
 
   def install
     # The source archive predates this tap update; bind its bootstrap to this formula.
-    runtime_revision = RUNTIME_REVISION
+    runtime_revision = stable.specs.fetch(:revision)
     inreplace "scripts/install-mithril.sh", /^revision='[0-9a-f]{40}'$/, "revision='#{runtime_revision}'"
+    inreplace "scripts/install-mithril.sh", /^release_version='[^']+'$/, "release_version='#{version}'"
+    inreplace "scripts/mithril-brew-launcher", /^release_version='[^']+'$/, "release_version='#{version}'"
     bootstrap_sha256 = Digest::SHA256.file("scripts/install.sh").hexdigest
     inreplace "scripts/install-mithril.sh", /^installer_sha256='[0-9a-f]{64}'$/, "installer_sha256='#{bootstrap_sha256}'"
     (libexec/"hermes_cli").install "hermes_cli/mithril_updates.py"
@@ -38,7 +39,7 @@ class MithrilAgent < Formula
 
   test do
     assert_match "Mithril Agent installer", shell_output("#{bin}/mithril --installer-help")
-    assert_match "Revision: #{RUNTIME_REVISION}",
+    assert_match "Revision: #{stable.specs.fetch(:revision)}",
                  shell_output("sh #{libexec}/install-mithril.sh --dry-run")
     refute_path_exists testpath/".mithril"
   end

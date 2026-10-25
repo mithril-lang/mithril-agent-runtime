@@ -6,6 +6,9 @@ Hermes Agent by Nous Research. Configuration and conversations use `~/.mithril`.
 The Homebrew formula and shell installer select the same immutable runtime commit.
 See [releases](https://github.com/mithril-lang/mithril-agent-runtime/releases) for CLI distribution updates.
 The runtime provenance manifest binds each original file to its source revision.
+`mithril --version` reports the UTC-minute preview identity
+(`<base>-preview.YYYYMMDD.tHHmm`) so release recency is visible without comparing
+counter reservations.
 
 Upstream project: https://github.com/NousResearch/hermes-agent
 License: [MIT](LICENSE).

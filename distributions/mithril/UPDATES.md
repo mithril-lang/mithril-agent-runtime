@@ -37,6 +37,14 @@ which update and rollback compatibility were qualified; an unlisted current
 checkout cannot be updated implicitly. A signer entry has its raw 32-byte public key in base64 and
 `revoked: false`; an absent or revoked signer is refused.
 
+New preview versions use `<base>-preview.YYYYMMDD.tHHmm`, for example
+`0.1.0-preview.20261025.t0515`. The encoded calendar minute is UTC and must be
+no later than signed `issued_at`; delayed signing and retries keep the same
+immutable release ID. Counter-only preview versions are not admitted.
+`mithril --version` displays this canonical version and UTC minute.
+The monotonic sequence remains an internal anti-replay boundary rather than a
+user-visible recency label.
+
 Release discovery is bounded to the existing GitHub API and the exact
 repository's preview assets. Redirects may reach only GitHub's HTTPS release
 storage hosts. Inference credentials are never sent to the release service.

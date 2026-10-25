@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 installer="$(dirname "$0")/install-mithril.sh"
+release_version='0.1.0-preview.20261025.t0515'
 if [ "${1:-}" = '--installer-help' ]; then
     exec sh "$installer" --help
 fi
@@ -33,6 +34,7 @@ if [ "${1:-}" = 'session' ]; then
     exec python3 -I "$helper" "$@"
 fi
 case "${1:-}" in
+    -V|--version) update_module version --fallback-version "$release_version";;
     update) update_module "$@";;
     login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
     auth)
@@ -41,6 +43,7 @@ case "${1:-}" in
         esac;;
     -p|--profile)
         case "${3:-}" in
+            -V|--version) update_module -p "${2:-}" version --fallback-version "$release_version";;
             update) update_module "$@";;
             login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
             auth)

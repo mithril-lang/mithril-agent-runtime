@@ -179,6 +179,13 @@ def _discover_bundled_skills(bundled_dir: Path) -> List[Tuple[str, Path]]:
         if not is_excluded_skill_path(md.relative_to(bundled_dir), root=bundled_dir)]
 
 
+def prepare_bundled_skill_inventory(*, essential_only: bool = False) -> List[Tuple[str, Path, str]]:
+    """Read the shared bundled tree once for a multi-profile update."""
+    return [(name, source, _dir_hash(source))
+            for name, source in _discover_bundled_skills(_get_bundled_dir())
+            if not essential_only or name in ESSENTIAL_SKILLS]
+
+
 def _compute_relative_dest(skill_dir: Path, bundled_dir: Path) -> Path:
     """Destination preserving category structure (bundled/mlops/axolotl -> skills/mlops/axolotl)."""
     return _skills_dir() / skill_dir.relative_to(bundled_dir)
@@ -393,7 +400,8 @@ def _seed_category_descriptions(bundled_dir: Path, only_dirs: Optional[Set[Path]
             logger.debug("Could not copy %s: %s", desc_md, e)
 
 
-def sync_skills(quiet: bool = False) -> dict:
+def sync_skills(quiet: bool = False, *,
+                bundled_inventory: Optional[List[Tuple[str, Path, str]]] = None) -> dict:
     """Sync bundled skills into ~/.hermes/skills/ using the manifest; returns the per-category
     result dict. Opted-out profiles seed ONLY ESSENTIAL_SKILLS (the system prompt always
     points at ``hermes-agent``)."""
@@ -405,20 +413,21 @@ def sync_skills(quiet: bool = False) -> dict:
         return {"copied": [], "updated": [], "skipped": 0, "user_modified": [], "cleaned": [],
                 "suppressed": [], "total_bundled": 0, "optional_provenance_backfilled": []}
     _skills_dir().mkdir(parents=True, exist_ok=True)
-    bundled_skills = _discover_bundled_skills(bundled_dir)
+    bundled_skills = (bundled_inventory if bundled_inventory is not None
+                      else prepare_bundled_skill_inventory(essential_only=essential_only))
     if essential_only:
-        bundled_skills = [(name, src) for name, src in bundled_skills if name in ESSENTIAL_SKILLS]
+        bundled_skills = [(name, src, hash_value) for name, src, hash_value in bundled_skills
+                          if name in ESSENTIAL_SKILLS]
     suppressed = _read_suppressed_names()
     external_index = _build_external_skill_index()
     st = _SyncState(manifest=_read_manifest(), quiet=quiet)
 
-    for skill_name, skill_src in bundled_skills:
+    for skill_name, skill_src, bundled_hash in bundled_skills:
         # Curator-pruned built-ins must not resurrect on every update; essentials are exempt.
         if skill_name in suppressed and skill_name not in ESSENTIAL_SKILLS:
             st.suppressed.append(skill_name)
             continue
         dest = _compute_relative_dest(skill_src, bundled_dir)
-        bundled_hash = _dir_hash(skill_src)
         # Recoveries run BEFORE classification so a missing dest isn't misread as user-deleted.
         _recover_orphan_backup(dest)
         if not dest.exists() and skill_name in st.manifest and _recover_renamed_skill(st, skill_name, dest):
@@ -435,7 +444,7 @@ def sync_skills(quiet: bool = False) -> dict:
     # on disk (active or archived) keeps its entry: it is the only provenance record, and without it the
     # copy reads as agent-authored ("Learned", editable) (#95415). Skipped when opted out: bundled_skills
     # is only the essential set there, so cleaning would drop tracking for everything else.
-    removed = [] if essential_only else sorted(set(st.manifest) - {name for name, _ in bundled_skills})
+    removed = [] if essential_only else sorted(set(st.manifest) - {name for name, _, _ in bundled_skills})
     present = set()
     if removed:  # curator archive is flat: directory name == skill name
         archive = _skills_dir() / ".archive"
@@ -446,7 +455,7 @@ def sync_skills(quiet: bool = False) -> dict:
         del st.manifest[name]
     _seed_category_descriptions(
         bundled_dir,
-        {_compute_relative_dest(src, bundled_dir).parent for _, src in bundled_skills} if essential_only else None)
+        {_compute_relative_dest(src, bundled_dir).parent for _, src, _ in bundled_skills} if essential_only else None)
     _write_manifest(st.manifest)
     return {
         "copied": st.copied, "updated": st.updated, "skipped": st.skipped, "user_modified": st.user_modified,

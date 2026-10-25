@@ -819,34 +819,48 @@ def _sweep_bytecode_after_update(branch: str) -> None:
     _m()._refresh_bootstrap_cache_scripts(branch)
 
 
-def _profile_skill_sync_status(r) -> str:
-    if r and r.get("skipped_opt_out"):
-        return "opted out (--no-skills)"
-    if not r:
-        return "sync failed"
-    parts = []
-    for key, fmt in (("copied", "+{} new"), ("updated", "↑{} updated"), ("user_modified", "~{} user-modified")):
-        count = len(r.get(key, []))
-        if count:
-            parts.append(fmt.format(count))
-    return ", ".join(parts) if parts else "up to date"
-
-
 def _sync_profiles_after_update() -> None:
     """Best-effort per-profile syncs: bundled skills, ``.env`` backfill, Honcho profiles."""
-    # All profiles incl. the active one: seed_profile_skills() subprocesses with an explicit
-    # HERMES_HOME, so sync_skills()'s module-level HERMES_HOME cache can't skew it.
-    with suppress(Exception):
-        from hermes_cli.profiles import list_profiles, seed_profile_skills
-        all_profiles = list_profiles()
-        if all_profiles:
-            print()
-            print("→ Syncing bundled skills to all profiles...")
-            for p in all_profiles:
+    # The bundled tree is shared by every profile. Reading and hashing it once avoids
+    # doing the same work (and starting a new Python interpreter) for each profile.
+    # sync_skills() resolves its home at call time, so a context-local override keeps
+    # each profile's manifest, opt-out marker, and user edits isolated.
+    try:
+        from hermes_constants import reset_hermes_home_override, set_hermes_home_override
+        from hermes_cli.profiles import _get_default_hermes_home, _iter_named_profile_dirs
+        from tools.skills_sync import prepare_bundled_skill_inventory, sync_skills
+
+        default_home = _get_default_hermes_home()
+        profiles = ([("default", default_home)] if default_home.is_dir() else [])
+        profiles.extend((path.name, path) for path in _iter_named_profile_dirs())
+        if profiles:
+            inventory = prepare_bundled_skill_inventory()
+            totals = {"copied": 0, "updated": 0, "user_modified": 0,
+                      "opted_out": 0, "failed": 0}
+            print(f"\n→ Syncing bundled skills to {len(profiles)} profiles...")
+            for index, (name, path) in enumerate(profiles, 1):
+                token = set_hermes_home_override(path)
                 try:
-                    print(f"  {p.name}: {_profile_skill_sync_status(seed_profile_skills(p.path, quiet=True))}")
-                except Exception as pe:
-                    print(f"  {p.name}: error ({pe})")
+                    result = sync_skills(quiet=True, bundled_inventory=inventory)
+                    if not result:
+                        totals["failed"] += 1
+                        print(f"  {name}: sync failed")
+                    else:
+                        for key in ("copied", "updated", "user_modified"):
+                            totals[key] += len(result.get(key, []))
+                        totals["opted_out"] += bool(result.get("skipped_opt_out"))
+                except Exception as exc:
+                    totals["failed"] += 1
+                    print(f"  {name}: error ({exc})")
+                finally:
+                    reset_hermes_home_override(token)
+                if index % 100 == 0:
+                    print(f"  {index}/{len(profiles)} checked", flush=True)
+            print(f"  {len(profiles)} checked: {totals['copied']} new, "
+                  f"{totals['updated']} updated, {totals['user_modified']} user-modified kept, "
+                  f"{totals['opted_out']} opted out, {totals['failed']} failed")
+    except Exception as exc:
+        print(f"  ⚠ Profile skill sync failed: {exc}")
 
     # Backfill .env for profiles created before .env seeding (copy the default's) so they
     # keep the credentials they were effectively using.

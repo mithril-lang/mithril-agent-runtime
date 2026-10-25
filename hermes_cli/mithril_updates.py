@@ -28,7 +28,7 @@ CONTROL_ROOT = Path(__file__).resolve().parents[1]
 SOURCE = Path(os.environ.get("MITHRIL_RUNTIME_ROOT", str(CONTROL_ROOT))).resolve()
 TRUST_FILE = CONTROL_ROOT / "distributions/mithril/update-trust.json"
 SHA = re.compile(r"[0-9a-f]{40}")
-VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+-preview\.[1-9][0-9]*")
+VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+-preview\.(\d{8})\.t(\d{4})")
 MAX_METADATA = 128 * 1024
 MAX_INSTALLER = 1024 * 1024
 
@@ -84,6 +84,21 @@ def _time(value):
         raise UpdateError("Invalid release timestamp") from exc
 
 
+def release_minute(version):
+    """Return the real UTC minute encoded by a canonical preview version."""
+    match = VERSION.fullmatch(str(version))
+    if not match:
+        raise UpdateError("Expected a UTC-minute Mithril preview version")
+    date, clock = match.groups()
+    try:
+        parsed = datetime.strptime(date + clock, "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
+    except ValueError as exc:
+        raise UpdateError("Invalid UTC minute in Mithril preview version") from exc
+    if parsed.year < 2020:
+        raise UpdateError("Mithril preview version predates the supported release calendar")
+    return parsed
+
+
 def verify(envelope, trust, *, now=None, state=None):
     """Authenticate before admitting any artifact URL, timestamp or revision."""
     from cryptography.exceptions import InvalidSignature
@@ -116,6 +131,8 @@ def verify(envelope, trust, *, now=None, state=None):
         raise UpdateError("Release has no explicit compatible upgrade sources")
     now = datetime.now(timezone.utc).timestamp() if now is None else now
     issued, expires = _time(payload.get("issued_at")), _time(payload.get("expires_at"))
+    if release_minute(payload["version"]).timestamp() > issued:
+        raise UpdateError("Release version minute is later than its signed issue time")
     if issued > now + 300 or expires <= now or not 0 < expires - issued <= 31 * 86400:
         raise UpdateError("Release metadata is expired or has an invalid validity period")
     installer = payload.get("installer", {})
@@ -172,10 +189,18 @@ def latest(trust, state):
     releases = json.loads(download(RELEASES, 1024 * 1024))
     if not isinstance(releases, list):
         raise UpdateError("Release discovery returned no release list")
+    candidates = []
     for release in releases:
         tag = release.get("tag_name", "")
         if release.get("draft") is not False or release.get("prerelease") is not True or not VERSION.fullmatch(tag.removeprefix("v")):
             continue
+        try:
+            minute = release_minute(tag.removeprefix("v"))
+        except UpdateError:
+            continue
+        candidates.append((minute, release))
+    for _, release in sorted(candidates, key=lambda candidate: candidate[0], reverse=True):
+        tag = release["tag_name"]
         expected = f"https://github.com/{REPOSITORY}/releases/download/{tag}/mithril-update.json"
         assets = [a for a in release.get("assets", []) if a.get("name") == "mithril-update.json"]
         if not assets:
@@ -329,7 +354,8 @@ def apply(target, home, state, *, prepare_runtime=prepare):
         raise UpdateError("The recorded CLI version store is invalid; preserve it for recovery")
     prepared = prepare_runtime(target, home, store)
     prepared = inspect_runtime(prepared["path"], target["runtime_revision"])
-    journal = dict(state, pending=True, previous=current, current=prepared, store_path=str(store))
+    journal = dict(state, pending=True, previous=current, previous_version=state.get("current_version"),
+                   current=prepared, current_version=target["version"], store_path=str(store))
     _write(receipt, journal)
     _select(pointer, prepared["path"])
     _write(receipt, dict(journal, pending=False))
@@ -348,8 +374,27 @@ def rollback(home, state):
         raise UpdateError("The CLI selection path is not an updater-owned symlink")
     _select(pointer, checked["path"])
     # Retain the high-water mark, including on an operator-requested rollback.
-    _write(home / "mithril-update.json", dict(state, pending=False, current=checked, previous=None))
+    restored_version = state.get("previous_version")
+    update = dict(state, pending=False, current=checked, previous=None, previous_version=None)
+    if VERSION.fullmatch(str(restored_version)):
+        update["current_version"] = restored_version
+    else:
+        update.pop("current_version", None)
+    _write(home / "mithril-update.json", update)
     return checked
+
+
+def installed_version(home, fallback):
+    """Resolve the selected signed release, with the wrapper version for first install."""
+    candidate = fallback
+    receipt = Path(home) / "mithril-update.json"
+    if receipt.exists():
+        state = decode(receipt.read_bytes())
+        if state.get("pending"):
+            raise IncompleteUpdateError("An interrupted update requires mithril update --rollback")
+        candidate = state.get("current_version") or fallback
+    minute = release_minute(candidate)
+    return candidate, minute.strftime("%Y-%m-%d %H:%M UTC")
 
 
 def run(home, *, check=False, undo=False):
@@ -397,14 +442,22 @@ def before_chat(argv, *, restart_argv=None):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="mithril update", description="Verify and install signed Mithril CLI releases.")
-    parser.add_argument("command", choices=["update"])
+    parser = argparse.ArgumentParser(prog="mithril", description="Verify and install signed Mithril CLI releases.")
+    parser.add_argument("command", choices=["update", "version"])
     parser.add_argument("-p", "--profile")
+    parser.add_argument("--fallback-version", help=argparse.SUPPRESS)
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--check", action="store_true")
     group.add_argument("--rollback", action="store_true")
     args = parser.parse_args(argv)
     try:
+        if args.command == "version" and not args.profile:
+            home = os.environ.get("MITHRIL_INSTALL_HOME")
+            if not home:
+                raise UpdateError("Run this command through the Mithril distribution launcher")
+            version, minute = installed_version(home, args.fallback_version)
+            print(f"Mithril CLI v{version} ({minute})")
+            return 0
         from hermes_cli.mithril_auth import select_home
         select_home(args.profile)
         from hermes_cli.config import is_managed
@@ -413,6 +466,10 @@ def main(argv=None):
         home = os.environ.get("MITHRIL_INSTALL_HOME")
         if not home:
             raise UpdateError("Run this command through the Mithril distribution launcher")
+        if args.command == "version":
+            version, minute = installed_version(home, args.fallback_version)
+            print(f"Mithril CLI v{version} ({minute})")
+            return 0
         result = run(home, check=args.check, undo=args.rollback)
         print(json.dumps(result, sort_keys=True))
         return 0
