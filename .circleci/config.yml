@@ -51,6 +51,18 @@ jobs:
       - run:
           name: Verify Homebrew formula and shell installer
           command: python -m unittest discover -s tests -p test_mithril_distribution.py -v
+  mithril-fresh-install:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Install this exact source in a fresh HOME and run the real CLI
+          command: python scripts/verify-mithril-install.py
+          no_output_timeout: 20m
+      - store_artifacts:
+          path: /tmp/mithril-install-check
+          destination: mithril-install-check
   sign-mithril-release:
     docker:
       - image: cimg/python:3.14.7
@@ -78,6 +90,9 @@ workflows:
       - validate-source
       - mithril-account-auth
       - mithril-distribution
+      - mithril-fresh-install:
+          requires:
+            - validate-source
   mithril-cli-release:
     when:
       and:
@@ -88,8 +103,12 @@ workflows:
       - validate-source
       - mithril-account-auth
       - mithril-distribution
+      - mithril-fresh-install:
+          requires:
+            - validate-source
       - sign-mithril-release:
           requires:
             - validate-source
             - mithril-account-auth
             - mithril-distribution
+            - mithril-fresh-install
