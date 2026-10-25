@@ -2,7 +2,7 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='f8ff45e9852284d9d58e133c7fc73031a6938123'
+revision='1f490be1f0e996a7f7d5930864395428b4312ed4'
 branch='main'
 installer_sha256='eb542ee6e9d35055223fc2b2fa84ae69a787f2e78b2fde0d3d50de699ff21c25'
 repository='https://github.com/mithril-lang/mithril-agent-runtime.git'
