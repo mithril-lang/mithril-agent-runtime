@@ -644,6 +644,7 @@ def _apply_profile_override() -> None:
         sys.argv = sys.argv[:start] + sys.argv[start + consume :]
 
 
+_MITHRIL_ORIGINAL_ARGV = tuple(sys.argv[1:])
 _apply_profile_override()
 # ``-p``/active_profile re-homed the process after hermes_bootstrap ran: re-point the temp vars
 # at THIS home's scratch dir (a user-set TMPDIR is still left alone).
@@ -2472,6 +2473,9 @@ from hermes_cli.update_receipt import update_receipt_scope
 @update_receipt_scope()
 def cmd_update(args):
     """Update Hermes Agent: hangup protection + update lock around ``_cmd_update_impl``."""
+    if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
+        from hermes_cli.mithril_updates import main as mithril_update
+        raise SystemExit(mithril_update(list(_MITHRIL_ORIGINAL_ARGV)))
     from hermes_cli.update_owning_install import retarget_to_owning_install
 
     retarget_to_owning_install(PROJECT_ROOT)
@@ -3641,7 +3645,7 @@ def main():
         logging.getLogger(__name__).debug("pm startup check failed", exc_info=True)
 
     from hermes_cli.mithril_startup import before_chat
-    before_chat()
+    before_chat(restart_argv=_MITHRIL_ORIGINAL_ARGV)
 
     if _try_termux_fast_tui_launch():
         return

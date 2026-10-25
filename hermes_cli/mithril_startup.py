@@ -4,7 +4,7 @@ import os
 import sys
 
 
-def before_chat(argv=None):
+def before_chat(argv=None, *, restart_argv=None):
     """Run after the CLI has resolved and removed its Profile selector."""
     if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") != "1":
         return
@@ -29,7 +29,12 @@ def before_chat(argv=None):
     # main._apply_profile_override already selected the home. Resolving it again
     # would undo an explicit `-p default` when active_profile names another home.
     try:
-        if is_managed() or load_env().get(mithril_auth.TOKEN_ENV, "").strip():
+        if is_managed():
+            return
+        from hermes_cli import mithril_updates
+
+        mithril_updates.before_chat(argv, restart_argv=restart_argv)
+        if load_env().get(mithril_auth.TOKEN_ENV, "").strip():
             return
     except (OSError, RuntimeError, ValueError):
         print("Mithril Agent: cannot read this Profile's sign-in settings. Run `mithril login` to check them.",

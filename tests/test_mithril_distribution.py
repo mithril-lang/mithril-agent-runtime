@@ -27,7 +27,11 @@ class MithrilDistributionTests(unittest.TestCase):
         installer = (ROOT / "scripts/install-mithril.sh").read_text(encoding="utf-8")
         digest = re.search(r"^installer_sha256='([0-9a-f]{64})'$", installer, re.MULTILINE)
         self.assertIsNotNone(digest)
-        actual = hashlib.sha256((ROOT / "scripts/install.sh").read_bytes()).hexdigest()
+        revision = installer_revision_from_shell(ROOT / "scripts/install-mithril.sh")
+        # A distribution wrapper can pin an earlier qualified runtime commit.
+        # Verify that immutable child's bytes, not the current working tree.
+        bootstrap = subprocess.check_output(["git", "show", f"{revision}:scripts/install.sh"], cwd=ROOT)
+        actual = hashlib.sha256(bootstrap).hexdigest()
         self.assertEqual(digest.group(1), actual)
 
     def test_shell_installer_syntax_and_dry_run(self):
