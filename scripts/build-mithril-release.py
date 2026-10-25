@@ -25,14 +25,19 @@ def git(*args):
     return subprocess.check_output(["git", "-C", str(ROOT), *args], stderr=subprocess.PIPE)
 
 
-def render_installer(revision):
+def render_installer(revision, *, branch="main"):
     """Exact installer bytes shared by isolated qualification and release signing."""
     if not updates.SHA.fullmatch(revision):
         raise ValueError("Installer source must be immutable")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,199}", branch) or ".." in branch:
+        raise ValueError("Installer branch is invalid")
     installer = (ROOT / "scripts/install-mithril.sh").read_text()
     installer, count = re.subn(r"(?m)^revision='[0-9a-f]{40}'$", f"revision='{revision}'", installer)
     if count != 1:
         raise ValueError("Installer runtime pin is ambiguous")
+    installer, count = re.subn(r"(?m)^branch='main'$", f"branch='{branch}'", installer)
+    if count != 1:
+        raise ValueError("Installer branch pin is ambiguous")
     bootstrap_sha = hashlib.sha256((ROOT / "scripts/install.sh").read_bytes()).hexdigest()
     installer, count = re.subn(r"(?m)^installer_sha256='[0-9a-f]{64}'$", f"installer_sha256='{bootstrap_sha}'", installer)
     if count != 1:

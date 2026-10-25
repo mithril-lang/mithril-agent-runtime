@@ -14,6 +14,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = Path("/tmp/mithril-install-check")
+EVIDENCE = OUT / "evidence"
 
 
 def git(root, *args):
@@ -29,8 +30,9 @@ def main():
     if revision != os.environ.get("CIRCLE_SHA1") or git(ROOT, "status", "--porcelain"):
         raise RuntimeError("Installation qualification requires the exact clean CI source")
     render = runpy.run_path(str(ROOT / "scripts/build-mithril-release.py"))["render_installer"]
-    data, bootstrap_sha = render(revision)
+    data, bootstrap_sha = render(revision, branch=os.environ["CIRCLE_BRANCH"])
     OUT.mkdir(exist_ok=False)
+    EVIDENCE.mkdir()
     home, runtime, bindir = OUT / "home", OUT / "runtime", OUT / "bin"
     home.mkdir(mode=0o700)
     installer = OUT / "install-mithril.sh"
@@ -38,7 +40,7 @@ def main():
     env = {k: os.environ[k] for k in ("PATH", "LANG", "LC_ALL", "SSL_CERT_FILE", "SSL_CERT_DIR") if k in os.environ}
     env.update(HOME=str(home), HERMES_HOME=str(home / ".mithril"), MITHRIL_AGENT="1", CI="true")
     try:
-        with (OUT / "install.log").open("w") as log:
+        with (EVIDENCE / "install.log").open("w") as log:
             subprocess.run(["sh", str(installer), "--home", str(home / ".mithril"),
                             "--dir", str(runtime), "--bin-dir", str(bindir)],
                            env=env, check=True, stdout=log, stderr=subprocess.STDOUT, timeout=1200)
@@ -47,7 +49,7 @@ def main():
         expected = hashlib.sha256((ROOT / ".mithril-runtime-provenance.json").read_bytes()).hexdigest()
         if hashlib.sha256((runtime / ".mithril-runtime-provenance.json").read_bytes()).hexdigest() != expected:
             raise RuntimeError("Installed provenance differs from the qualified checkout")
-        with (OUT / "help.log").open("w") as log:
+        with (EVIDENCE / "help.log").open("w") as log:
             subprocess.run([str(bindir / "mithril"), "--help"], env=env, check=True,
                            stdout=log, stderr=subprocess.STDOUT, timeout=120)
         receipt = {"provider": "circleci", "source_revision": revision,
@@ -57,10 +59,10 @@ def main():
                    "installer_sha256": hashlib.sha256(data).hexdigest(),
                    "bootstrap_sha256": bootstrap_sha, "provenance_sha256": expected,
                    "fresh_home_install": True, "actual_help": True, "credentials_forwarded": False}
-        (OUT / "receipt.json").write_text(json.dumps(receipt, sort_keys=True) + "\n")
+        (EVIDENCE / "receipt.json").write_text(json.dumps(receipt, sort_keys=True) + "\n")
         print(json.dumps(receipt, sort_keys=True))
     except Exception:
-        log = OUT / "install.log"
+        log = EVIDENCE / "install.log"
         if log.exists():
             print("\n".join(log.read_text(errors="replace").splitlines()[-60:]))
         raise

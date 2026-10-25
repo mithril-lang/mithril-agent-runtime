@@ -61,7 +61,7 @@ jobs:
           command: python scripts/verify-mithril-install.py
           no_output_timeout: 20m
       - store_artifacts:
-          path: /tmp/mithril-install-check
+          path: /tmp/mithril-install-check/evidence
           destination: mithril-install-check
   sign-mithril-release:
     docker:
