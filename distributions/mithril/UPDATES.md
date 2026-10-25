@@ -53,6 +53,12 @@ their existing behavior. `mithril update --check` is explicit readback;
 `mithril update` requests installation and `mithril update --rollback` selects
 the previously recorded runtime. Ordinary Hermes retains its updater.
 
+The Homebrew wrapper carries the same verifier and public root for the one-time
+transition from preview.6, which predates the updater. After upgrading the
+wrapper, run `mithril update` to adopt the signed runtime. Its registered PM
+interpreter and normal bootstrap are used; no old checkout is rewritten. Later
+interactive launches use the installed runtime's updater automatically.
+
 The signed installer runs with a fresh HOME and Profile, sharing only PM tools
 and dependency stores. It prepares a new immutable checkout on the existing
 runtime's Work volume. No live token, configuration, DB or session is supplied

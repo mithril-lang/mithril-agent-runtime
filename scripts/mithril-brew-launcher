@@ -17,6 +17,15 @@ if [ ! -x "$runtime" ]; then
     [ ! -L "$HERMES_HOME/agent-current" ] || { printf '%s\n' 'Mithril CLI selection is incomplete; use the retained runtime to roll back' >&2; exit 1; }
     sh "$installer"
 fi
+export MITHRIL_RUNTIME_ROOT="$runtime_root"
+# preview.6 predates the updater. The qualified wrapper carries the bootstrap
+# verifier; its public root comes from this formula, never an environment path.
+update_module() {
+    if [ -f "$runtime_root/hermes_cli/mithril_updates.py" ]; then
+        exec "$runtime" --run-module hermes_cli.mithril_updates "$@"
+    fi
+    exec python3 -I "$(dirname "$0")/mithril-update-bootstrap.py" "$@"
+}
 if [ "${1:-}" = 'session' ]; then
     shift
     helper="$runtime_root/scripts/mithril-runtime/session.py"
@@ -24,7 +33,7 @@ if [ "${1:-}" = 'session' ]; then
     exec python3 -I "$helper" "$@"
 fi
 case "${1:-}" in
-    update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;
+    update) update_module "$@";;
     login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
     auth)
         case "${2:-}" in
@@ -32,7 +41,7 @@ case "${1:-}" in
         esac;;
     -p|--profile)
         case "${3:-}" in
-            update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;
+            update) update_module "$@";;
             login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
             auth)
                 case "${4:-}" in

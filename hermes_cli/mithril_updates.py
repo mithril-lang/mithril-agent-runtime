@@ -24,8 +24,9 @@ import uuid
 
 REPOSITORY = "mithril-lang/mithril-agent-runtime"
 RELEASES = f"https://api.github.com/repos/{REPOSITORY}/releases?per_page=10"
-SOURCE = Path(__file__).resolve().parents[1]
-TRUST_FILE = SOURCE / "distributions/mithril/update-trust.json"
+CONTROL_ROOT = Path(__file__).resolve().parents[1]
+SOURCE = Path(os.environ.get("MITHRIL_RUNTIME_ROOT", str(CONTROL_ROOT))).resolve()
+TRUST_FILE = CONTROL_ROOT / "distributions/mithril/update-trust.json"
 SHA = re.compile(r"[0-9a-f]{40}")
 VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+-preview\.[1-9][0-9]*")
 MAX_METADATA = 128 * 1024

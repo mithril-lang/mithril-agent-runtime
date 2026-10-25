@@ -94,7 +94,7 @@ staged="$bin_dir/.mithril-install.$$"
     printf 'runtime_root=%s\n' "$(quote "$install_dir")"
     printf '%s\n' 'if [ -L "$HERMES_HOME/agent-current" ]; then' \
         '    runtime_root="$HERMES_HOME/agent-current"' 'fi' \
-        'runtime="$runtime_root/.hermes/bin/hermes"'
+        'runtime="$runtime_root/.hermes/bin/hermes"' 'export MITHRIL_RUNTIME_ROOT="$runtime_root"'
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
     printf '%s\n' '    exec python3 -I "$runtime_root/scripts/mithril-runtime/session.py" "$@"'
     printf '%s\n' 'fi'
