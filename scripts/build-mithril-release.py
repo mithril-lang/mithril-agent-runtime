@@ -28,9 +28,15 @@ def git(*args):
 def build(version, sequence, previous, out):
     if os.environ.get("CIRCLECI") != "true" or os.environ.get("CIRCLE_BRANCH") != "main":
         raise ValueError("Release signing requires the CircleCI main workflow")
+    if (os.environ.get("CIRCLE_PROJECT_USERNAME") != "mithril-lang"
+            or os.environ.get("CIRCLE_PROJECT_REPONAME") != "mithril-agent-runtime"):
+        raise ValueError("Release signing requires the owned runtime project")
     revision = git("rev-parse", "HEAD").decode().strip()
     if revision != os.environ.get("CIRCLE_SHA1") or git("status", "--porcelain").strip():
         raise ValueError("Release source must be the exact clean CircleCI checkout")
+    remote_main = git("ls-remote", "origin", "refs/heads/main").decode().split()
+    if not remote_main or remote_main[0] != revision:
+        raise ValueError("Runtime main advanced; qualify the current source before signing")
     if not updates.VERSION.fullmatch(version) or sequence < 1:
         raise ValueError("Invalid preview release identity")
     if not previous or any(not updates.SHA.fullmatch(p) for p in previous) or revision in previous:
