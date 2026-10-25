@@ -4,6 +4,8 @@ Rebound onto server.py's globals at install time (``method_ctx.bind_module``), s
 bodies reference server globals bare (``_ok``, ``_err``, ``_sessions``, ...).
 """
 
+import os
+
 from .method_ctx import HandlerRegistry, bind_module
 
 _registry = HandlerRegistry()
@@ -363,7 +365,9 @@ def _(rid, params: dict) -> dict:
     if not (pconfig := PROVIDER_REGISTRY.get(slug)):
         return _err(rid, 4002, f"unknown provider: {slug}")
     if pconfig.auth_type != "api_key":
-        return _err(rid, 4003, f"{pconfig.name} uses {pconfig.auth_type} auth — run `hermes model` to configure")
+        cli_name = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+        return _err(rid, 4003,
+                    f"{pconfig.name} uses {pconfig.auth_type} auth — run `{cli_name} model` to configure")
     if not pconfig.api_key_env_vars:
         return _err(rid, 4004, f"no env var defined for {pconfig.name}")
     # Save the key to ~/.hermes/.env via the unified credential lifecycle so any stale config.yaml mirror of

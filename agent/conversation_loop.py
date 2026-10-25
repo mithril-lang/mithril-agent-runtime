@@ -10,6 +10,7 @@ from __future__ import annotations
 import inspect
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass, field, fields
@@ -484,6 +485,11 @@ def _ra():
 
 
 def _nous_entitlement_message(capability: str) -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return (
+            "Nous-managed authentication, entitlement, and billing are unavailable in Mithril Agent. "
+            "Choose a supported provider or model with `/model`."
+        )
     try:
         from hermes_cli.nous_account import (
             format_nous_portal_entitlement_message,

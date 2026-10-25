@@ -1123,13 +1123,17 @@ def _perform_uninstall(
             print(f"  {path}/")
         print()
         print("To reinstall later with your existing settings:")
-        print(color(_REINSTALL_HINT[windows], Colors.DIM))
+        reinstall_hint = (
+            "  Follow the installation instructions for your Mithril distribution."
+            if os.environ.get("MITHRIL_AGENT") == "1" else _REINSTALL_HINT[windows])
+        print(color(reinstall_hint, Colors.DIM))
         print()
 
     for line, col in _RELOAD_HINT[windows]:
         print(color(line, col) if col else line)
     print()
-    print("Thank you for using Hermes Agent! ☤")
+    print("Thank you for using Mithril Agent." if os.environ.get("MITHRIL_AGENT") == "1"
+          else "Thank you for using Hermes Agent! ☤")
     print()
 
 

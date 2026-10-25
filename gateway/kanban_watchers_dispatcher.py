@@ -190,13 +190,14 @@ class _KanbanDispatcher:
         except Exception as exc:
             if self.is_corrupt_board_db_error(exc):
                 self.disabled_corrupt_boards[slug] = (fingerprint, time.monotonic())
+                cli_name = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
                 logger.error(
                     "kanban dispatcher: board %s database %s is not a valid "
                     "SQLite database; pausing dispatch for this board until "
                     "the file changes, the gateway restarts, or the "
                     "quarantine timer expires. Move or restore the file, "
-                    "then run `hermes kanban init` if you need a fresh board.",
-                    slug, fingerprint[0],
+                    "then run `%s kanban init` if you need a fresh board.",
+                    slug, fingerprint[0], cli_name,
                 )
                 return None
             logger.exception("kanban dispatcher: tick failed on board %s", slug)

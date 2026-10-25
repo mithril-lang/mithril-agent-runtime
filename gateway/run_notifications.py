@@ -12,6 +12,7 @@ import contextlib
 import dataclasses
 import json
 import logging
+import os
 import time
 from contextlib import suppress
 from datetime import datetime
@@ -925,6 +926,10 @@ class GatewayNotificationsMixin:
         """Extra startup line when the gateway's inference is carried by the Nous free tier; None otherwise.
 
         Best-effort: a resolution failure (no provider, auth error) must not block the online notice."""
+        # Mithril Gateway account state is Profile-scoped and owned by the Mithril API. Do not
+        # inspect legacy Nous auth state or resolve its provider just to decorate the startup notice.
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            return None
         try:
             # Persisted state only. The free-tier check reads auth.json; it runs FIRST so the resolver
             # is only consulted when a free-tier identity already exists and its own free-tier rung

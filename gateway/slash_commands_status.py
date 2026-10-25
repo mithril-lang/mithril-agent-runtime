@@ -70,13 +70,19 @@ async def _quiet(call, default=None):
 
 # English source for the transcript-read-failure reply; callers render ``history_unreadable()``
 # (``gateway.shared.history_unreadable``) so the active language applies.
+_DOCTOR_COMMAND = (
+    "mithril doctor --fix" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes doctor --fix"
+)
 HISTORY_UNREADABLE = ("⚠️ I can't read this conversation's history right now (your earlier messages "
-                      "exist but cannot be loaded). Run `hermes doctor --fix` on the host, or use /new "
+                      f"exist but cannot be loaded). Run `{_DOCTOR_COMMAND}` on the host, or use /new "
                       "to start fresh.")
 
 
 def history_unreadable() -> str:
-    return t("gateway.shared.history_unreadable")
+    message = t("gateway.shared.history_unreadable")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        message = re.sub(r"hermes doctor --fix", _DOCTOR_COMMAND, message, flags=re.IGNORECASE)
+    return message
 
 
 def _configured_provider() -> str:
@@ -287,17 +293,18 @@ class GatewayStatusCommandsMixin:
             lines.append(t("gateway.status.model_provider", model=fields["model"], provider=fields["provider"]))
         elif fields["model"]:
             lines.append(t("gateway.status.model", model=fields["model"]))
-        try:
-            from hermes_cli.auth import resolve_provider
-            from hermes_cli.anon_auth import guest_carries_inference
+        if os.environ.get("MITHRIL_AGENT") != "1":
+            try:
+                from hermes_cli.auth import resolve_provider
+                from hermes_cli.anon_auth import guest_carries_inference
 
-            free_tier_active = await self._run_in_executor_with_context(
-                lambda: resolve_provider("auto") == "nous" and guest_carries_inference()
-            )
-            if free_tier_active:
-                lines.append(t("gateway.status.free_tier"))
-        except Exception:
-            pass
+                free_tier_active = await self._run_in_executor_with_context(
+                    lambda: resolve_provider("auto") == "nous" and guest_carries_inference()
+                )
+                if free_tier_active:
+                    lines.append(t("gateway.status.free_tier"))
+            except Exception:
+                pass
         from agent.context_breakdown import context_display_source
         mark = "~" if context_display_source(getattr(status_agent, "context_compressor", None)) != "provider_usage" else ""
         if context_total:
@@ -494,8 +501,15 @@ class GatewayStatusCommandsMixin:
         return "\n".join(lines)
 
     async def _handle_topup_command(self, event: MessageEvent) -> str:
-        """Handle /topup -- show the Nous balance and hand off to the portal. Does NOT charge, confirm,
-        or track payment (that happens in the browser; the next /topup shows the new balance)."""
+        """Show the active account balance. Hermes mode may link to Nous Portal; Mithril mode is read-only.
+        This command does not charge or track payment."""
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            from agent.account_usage import mithril_account_balance_lines
+            lines = await _quiet(
+                lambda: asyncio.to_thread(mithril_account_balance_lines),
+                default=["Mithril balance is unavailable. Try again later."],
+            )
+            return "\n".join(lines)
         from agent.account_usage import build_credits_view
         view = await _quiet(lambda: asyncio.to_thread(build_credits_view, markdown=True))
         if view is None or not view.logged_in:
@@ -609,11 +623,10 @@ class GatewayStatusCommandsMixin:
             render_account_usage_lines(account_snapshot, markdown=True) if account_snapshot else []
         )
 
-        # Nous credits + monthly-grant gauge (shared with CLI/TUI). Gates on "a Nous account is
-        # logged in" — NOT the inference provider — so a Nous user inferring elsewhere still sees
-        # a balance. Fail-open: never break /usage.
-        from agent.account_usage import nous_credits_lines
-        credits_lines = await _quiet(lambda: asyncio.to_thread(nous_credits_lines, markdown=True), [])
+        # The account balance is selected by the active distribution: Mithril reads its Profile
+        # ledger; Hermes retains Nous Portal credits. Keep this separate from provider usage above.
+        from agent.account_usage import account_credit_lines
+        credits_lines = await _quiet(lambda: asyncio.to_thread(account_credit_lines, markdown=True), [])
 
         def _with_account_blocks(lines: list[str]) -> str:
             # Each block is preceded by a blank divider only when something precedes it.

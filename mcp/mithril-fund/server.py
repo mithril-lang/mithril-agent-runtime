@@ -47,7 +47,6 @@ def _records():
         candidates.append(Path(override))
     here = Path(__file__).resolve()
     candidates.append(here.parents[2] / "skills" / "security" / "security-records" / "scripts" / "records.py")
-    candidates.append(Path.home() / ".hermes" / "skills" / "security" / "security-records" / "scripts" / "records.py")
     for path in candidates:
         if path.is_file():
             spec = importlib.util.spec_from_file_location("mithril_security_records", path)

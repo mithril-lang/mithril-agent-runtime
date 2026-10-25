@@ -1384,13 +1384,14 @@ export const api = {
   runDump: () => fetchJSON<ActionResponse>("/api/ops/dump", { method: "POST" }),
   runConfigMigrate: () =>
     fetchJSON<ActionResponse>("/api/ops/config-migrate", { method: "POST" }),
-  runDebugShare: (opts?: { redact?: boolean; lines?: number }) =>
+  runDebugShare: (opts?: { redact?: boolean; lines?: number; local_export?: boolean }) =>
     fetchJSON<DebugShareResponse>("/api/ops/debug-share", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         redact: opts?.redact ?? true,
         lines: opts?.lines ?? 200,
+        local_export: opts?.local_export ?? false,
       }),
     }),
 
@@ -1476,8 +1477,9 @@ export interface ActionResponse {
   update_command?: string;
 }
 
-export interface DebugShareResponse {
+export interface DebugShareUploadResponse {
   ok: boolean;
+  mode?: "upload";
   // label -> paste URL, e.g. { Report: "https://paste.rs/abc", "agent.log": "..." }
   urls: Record<string, string>;
   // "label: error" strings for optional full-log uploads that failed.
@@ -1485,6 +1487,18 @@ export interface DebugShareResponse {
   redacted: boolean;
   auto_delete_seconds: number;
 }
+
+export interface DebugLocalExportResponse {
+  ok: true;
+  mode: "local";
+  format: "mithril-agent-diagnostics/1";
+  filename: string;
+  created_at: string;
+  redacted: true;
+  files: Record<string, string>;
+}
+
+export type DebugShareResponse = DebugShareUploadResponse | DebugLocalExportResponse;
 
 export interface SessionStoreStats {
   total: number;
@@ -1699,6 +1713,8 @@ export interface MessagingPlatform {
 export interface MessagingPlatformsResponse {
   env_path: string;
   gateway_start_command: string;
+  /** False in Mithril mode: QR onboarding depends on the Hermes-hosted setup service. */
+  telegram_managed_onboarding_available?: boolean;
   platforms: MessagingPlatform[];
 }
 
@@ -1938,7 +1954,7 @@ export interface PortalStatus {
   portal_url: string | null;
   inference_url: string | null;
   provider: string;
-  subscription_url: string;
+  subscription_url: string | null;
   features: PortalFeature[];
 }
 
@@ -1979,6 +1995,8 @@ export interface PlatformStatus {
 
 export interface StatusResponse {
   active_sessions: number;
+  /** Owned runtime distribution used to select product-specific diagnostics behavior. */
+  distribution?: string;
   /** Phase 7: ``true`` when the dashboard's OAuth gate is engaged
    * (public bind, no ``--insecure``). Read alongside ``auth_providers``
    * to render a "gated / loopback" badge. */

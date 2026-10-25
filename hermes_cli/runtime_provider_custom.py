@@ -533,6 +533,8 @@ def _resolve_direct_alias_runtime(requested_provider: str, explicit_api_key: Opt
     explicit_key = (explicit_api_key or "").strip()
     pool_result = rp._try_resolve_from_custom_pool(base_url, "custom", None)
     if pool_result:
+        if mithril_token:
+            pool_result["api_key"] = mithril_token
         pool_result["source"] = "direct-alias"
         _apply_mithril_pool_api_key(
             pool_result, explicit_key=explicit_key, mithril_token=mithril_token, rp=rp,

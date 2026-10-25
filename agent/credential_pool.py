@@ -3038,6 +3038,11 @@ def _seed_custom_pool(pool_key: str, entries: List[PooledCredential]) -> Tuple[b
 
 def load_pool(provider: str) -> CredentialPool:
     provider = (provider or "").strip().lower()
+    if os.environ.get("MITHRIL_AGENT") == "1" and provider.replace("_", "-") in {
+        "nous", "nous-portal", "nousresearch",
+    }:
+        # Do not read legacy Hermes provider pools or auth-store state in Mithril mode.
+        return CredentialPool(provider, [])
     if provider in SINGLE_USE_REFRESH_POOL_PROVIDERS:
         # One-time heal for installs that forked this grant across profiles
         # before the clone-strip / root write-through existed (#100339).

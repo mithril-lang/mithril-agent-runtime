@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from .method_ctx import bind_module
 
 
@@ -20,8 +22,14 @@ def _handle_admitted_request(req: dict) -> dict | None:
         return normalized
     rid, method, params = normalized
     if not (fn := _methods.get(method)):
-        return _err(rid, -32601, f"unknown method: {method} — the client and the Hermes backend are out of sync "
-                    "(different versions); run `hermes update` and restart both")
+        version_hint = (
+            "the client and the Mithril Agent backend are out of sync (different versions); install the "
+            "matching Mithril release and restart both"
+            if os.environ.get("MITHRIL_AGENT") == "1"
+            else "the client and the Hermes backend are out of sync (different versions); "
+                 "run `hermes update` and restart both"
+        )
+        return _err(rid, -32601, f"unknown method: {method} — {version_hint}")
     # Test doubles register straight into ``_methods`` without a contract; every production
     # handler comes through ``register_method`` and therefore has one.
     contract = _contracts.METHODS.get(method)

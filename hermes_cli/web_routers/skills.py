@@ -8,6 +8,7 @@ seam so ``monkeypatch.setattr(<owning module>, ...)`` keeps working.
 """
 
 import asyncio
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -156,7 +157,10 @@ async def list_skills_hub_sources(profile: Optional[str] = None):
         featured = []
         for src in sources:
             sid = src.source_id()
-            entry = {"id": sid, "label": _SKILL_HUB_SOURCE_LABELS.get(sid, sid)}
+            label = _SKILL_HUB_SOURCE_LABELS.get(sid, sid)
+            if sid == "official" and os.environ.get("MITHRIL_AGENT") == "1":
+                label = "Bundled from Nous Research"
+            entry = {"id": sid, "label": label}
             # GitHub exposes a rate-limit flag; the index an availability flag.
             if sid == "github":
                 entry["rate_limited"] = _flag(src, "is_rate_limited")

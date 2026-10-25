@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Optional
@@ -180,6 +181,8 @@ def build_nous_credits_snapshot(account_info) -> Optional[AccountUsageSnapshot]:
 
 def _nous_logged_in() -> bool:
     """Cheap local auth-state check: a Nous access token is present. Fail-open False."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         from hermes_cli.auth import get_provider_auth_state
         tok = (get_provider_auth_state("nous") or {}).get("access_token")
@@ -197,6 +200,8 @@ def _fetch_portal_account(timeout: float):
     ``timeout``. The abandoned daemon worker runs on to its own network timeout
     and never blocks the caller or process exit; its eventual exception is
     drained so GC never logs "exception was never retrieved"."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise RuntimeError("Nous Portal account data is unavailable in Mithril Agent.")
     import contextvars
     from hermes_cli.nous_account import get_nous_portal_account_info
     from tools.daemon_pool import DaemonThreadPoolExecutor
@@ -214,9 +219,14 @@ def _fetch_portal_account(timeout: float):
 
 
 def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list[str]:
-    """Rendered Nous-credits /usage lines, or [] when there's nothing to show. Independent of any live agent
-    (logged-in gate, then a bounded portal fetch); shared by CLI ``_show_usage`` and the TUI ``session.usage`` RPC.
-    Fail-open: any hiccup or timeout → []. HERMES_DEV_CREDITS_FIXTURE renders from the fixture instead of the portal."""
+    """Render Hermes/Nous Portal credits, or [] when there's nothing to show.
+
+    Independent of any live agent (logged-in gate, then a bounded portal fetch); used by
+    ``account_credit_lines`` in Hermes mode and by the TUI's legacy credits field. Mithril mode
+    returns before reading fixtures/auth or contacting Nous. Fail-open: any hiccup or timeout → [].
+    """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from agent.credits_tracker import dev_fixture_credits_state
         fixture = dev_fixture_credits_state()
@@ -233,6 +243,53 @@ def nous_credits_lines(*, markdown: bool = False, timeout: float = 10.0) -> list
         # Fail-open; breadcrumb so a dead /usage credits block is diagnosable.
         logger.debug("credits ▸ /usage portal fetch/render failed (fail-open)", exc_info=True)
         return []
+
+
+def _read_mithril_account_balance_lines() -> list[str]:
+    try:
+        from hermes_cli.config import load_env
+        from hermes_cli.mithril_auth import TOKEN_ENV, mithril_balance_lines, request, verified_identity
+        token = load_env().get(TOKEN_ENV)
+        if not token:
+            return ["Mithril balance unavailable. Run `mithril login` to sign in."]
+        identity = request("/v1/me", token=token)
+        if not verified_identity(identity):
+            return ["Mithril balance unavailable. Run `mithril account status` to check this Profile."]
+        return mithril_balance_lines(token, identity)
+    except Exception:
+        logger.debug("Mithril balance read failed (fail-open)", exc_info=True)
+        return ["Mithril balance unavailable. Check your connection and try again."]
+
+
+def mithril_account_balance_lines(*, timeout: float = 10.0) -> list[str]:
+    """Read the Mithril ledger in the active Profile, bounded like the Nous usage fetch."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return []
+    import contextvars
+    from tools.daemon_pool import DaemonThreadPoolExecutor
+
+    context = contextvars.copy_context()
+    pool = DaemonThreadPoolExecutor(max_workers=1)
+    future = pool.submit(context.run, _read_mithril_account_balance_lines)
+    try:
+        return future.result(timeout=timeout)
+    except BaseException:
+        future.add_done_callback(lambda f: f.exception())
+        logger.debug("Mithril balance read timed out or failed (fail-open)", exc_info=True)
+        return ["Mithril balance unavailable. Check your connection and try again."]
+    finally:
+        pool.shutdown(wait=False)
+
+
+def account_credit_lines(*, markdown: bool = False, timeout: float = 10.0) -> list[str]:
+    """Render the active product's read-only account balance for usage surfaces."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        lines = mithril_account_balance_lines(timeout=timeout)
+        if markdown:
+            return [line.replace("Mithril balance:", "**Mithril balance:**", 1)
+                    if line.startswith("Mithril balance:") else line for line in lines]
+        return lines
+    return nous_credits_lines(markdown=markdown, timeout=timeout)
 
 
 def _snapshot_from_credits_state(state) -> Optional[AccountUsageSnapshot]:

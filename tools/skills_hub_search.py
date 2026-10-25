@@ -9,6 +9,7 @@ cache reads) is still read from there at call time.
 from __future__ import annotations
 
 import logging
+import os
 import httpx
 import json
 import time
@@ -43,6 +44,8 @@ def _load_hermes_index() -> Optional[dict]:
     Skills Hub. gzip/deflate first; the identity retry covers proxies that
     ignore the header and return Brotli anyway.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     from tools.skills_hub import _read_json_if_fresh
     cache_file = _hermes_index_cache_file()
     cached = _read_json_if_fresh(cache_file, HERMES_INDEX_TTL)
@@ -101,9 +104,12 @@ def create_source_router(auth: Optional[GitHubAuth] = None) -> List[SkillSource]
     from tools.skills_hub import TapsManager
     if auth is None:
         auth = GitHubAuth()
-    return [
-        OptionalSkillSource(auth=auth),   # official optional skills (highest priority)
-        HermesIndexSource(auth=auth),     # centralized index (search + resolved install paths)
+    sources: List[SkillSource] = [
+        OptionalSkillSource(auth=auth),   # shipped optional skills (highest priority)
+    ]
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        sources.append(HermesIndexSource(auth=auth))  # Hermes-owned index, generic Hermes mode only
+    sources.extend([
         SkillsShSource(auth=auth),
         WellKnownSkillSource(),
         UrlSource(),                      # direct HTTP(S) URL to a SKILL.md
@@ -111,7 +117,8 @@ def create_source_router(auth: Optional[GitHubAuth] = None) -> List[SkillSource]
         ClawHubSource(),
         LobeHubSource(),
         BrowseShSource(),                 # browse.sh site-specific browser skills
-    ]
+    ])
+    return sources
 
 
 def _search_one_source(

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import time
 import urllib.request
@@ -235,13 +236,14 @@ def recommended_entry(budget: HardwareBudget,
     return None
 
 
-# ── catalog data: packaged JSON, refreshed from GitHub in memory ─
+# ── catalog data: packaged JSON, optionally refreshed in Hermes mode ─
 #
 # catalog.json ships as package data and is loaded at import (no network on the import path). A
 # TTL-gated background refresh fetches the same file from the repo's main branch and swaps it in
 # MEMORY only: nothing on disk changes, so a git checkout never sees a dirty tracked file and the
 # packaged copy remains the offline truth. A reverted commit on main heals every install on its
-# next fetch, and day-0 entries reach users without an app release.
+# next fetch, and day-0 entries reach Hermes users without an app release. Mithril mode keeps the
+# release-pinned package snapshot so Gateway and local deployments use the same qualified catalog.
 
 _CATALOG_URL = ("https://raw.githubusercontent.com/NousResearch/hermes-agent"
                 "/main/hermes_cli/local_runtime/catalog.json")
@@ -305,6 +307,9 @@ def refresh_catalog(force: bool = False) -> bool:
     after the TTL. Returns True when a fetched document replaced the catalog."""
     global CATALOG, _last_refresh_attempt
 
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
+
     now = time.monotonic()
     with _refresh_lock:
         if not force and now - _last_refresh_attempt < _REFRESH_TTL_S:
@@ -326,6 +331,8 @@ def refresh_catalog(force: bool = False) -> bool:
 def refresh_catalog_soon() -> None:
     """TTL-gated background refresh; returns immediately. The current request serves the catalog
     it already has — the refresh lands for the next one."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return
     if time.monotonic() - _last_refresh_attempt < _REFRESH_TTL_S:
         return
     threading.Thread(target=refresh_catalog, daemon=True, name="catalog-refresh").start()

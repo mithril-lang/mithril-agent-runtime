@@ -144,7 +144,9 @@ def anon_failure_copy(code: str, *, retry_after: Any = None) -> str:
 
 def guest_enabled() -> bool:
     """The free tier is on for this process: the launch gate is set AND ``nous.guest`` (default
-    True) has not switched it off. The only place either is read."""
+    True) has not switched it off. Mithril Agent never enables the Hermes Nous free tier."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     if (os.environ.get(GUEST_ONBOARDING_ENV) or "").strip() != "1":
         return False
     try:
@@ -179,6 +181,8 @@ def is_anonymous_agent(agent: Any) -> bool:
 
 def current_nous_state() -> Optional[Dict[str, Any]]:
     """The profile's ``providers.nous`` state without locking or network (status/picker reads)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     from hermes_cli.auth import _load_auth_store, _load_provider_state
     try:
         return _load_provider_state(_load_auth_store(), "nous")
@@ -560,6 +564,8 @@ def ensure_portal_identity(
     """
     if not explicit:
         raise ValueError("ensure_portal_identity: only explicit creators may call this (explicit=True)")
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     if not guest_enabled():
         return None
     failure = _mint_failure_for_profile()
@@ -588,6 +594,10 @@ def refresh_guest_state(state: Dict[str, Any], client: httpx.Client) -> None:
     Raises :class:`AnonCredentialDead` when NAS no longer knows the credential; the caller owns
     re-minting (:func:`ensure_portal_identity` after :func:`clear_dead_guest`).
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise AuthError(
+            "Guest authentication is unavailable in Mithril Agent.",
+            provider="nous", code="mithril_nous_auth_disabled", retryable=False)
     anon_token = state.get("anon_token")
     if not isinstance(anon_token, str) or not anon_token:
         raise AnonCredentialDead(ANON_FAILURE_COPY[ANON_CREDENTIAL_DEAD], code=ANON_CREDENTIAL_DEAD)
@@ -695,6 +705,11 @@ def welcome_refusal_copy(refusal: Dict[str, Any], *, model: str = "", in_chat: b
     Never guest / anonymous / claim; ``in_chat`` picks ``/login`` over the terminal verb.
     ``door=False`` leaves the "To sign in: …" tail off, for a surface that renders the sign-in as
     a button beside the sentence (the desktop's error card)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not door:
+            return "Guest-model access is unavailable in Mithril Agent."
+        action = "sign in with `/login`" if in_chat else "run `mithril login` to sign in"
+        return f"Mithril Agent requires a supported account or provider; {action}, or run `mithril model` to choose one."
     signin = (_SIGNIN_CHAT if in_chat else _SIGNIN_TERMINAL) if door else ""
     reason = str(refusal.get("reason") or "")
     alternates = refusal.get("alternates") or []
@@ -740,6 +755,11 @@ def welcome_route_refusal(status: Any, message: Any, base_url: Any = None) -> Op
 
 
 def welcome_route_refusal_copy(kind: str, *, in_chat: bool = True, door: bool = True) -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        if not door:
+            return "Guest-model access is unavailable in Mithril Agent."
+        action = "sign in with `/login`" if in_chat else "run `mithril login` to sign in"
+        return f"Mithril Agent requires a supported account or provider; {action}, or run `mithril model` to choose one."
     template = _WELCOME_ROUTE_COPY.get(kind) or "Hermes couldn't reach the free model on this route."
     return template.format(
         host=DEFAULT_NOUS_WELCOME_URL, signin=(_SIGNIN_CHAT if in_chat else _SIGNIN_TERMINAL) if door else "",

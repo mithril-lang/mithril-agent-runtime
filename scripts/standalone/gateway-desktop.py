@@ -92,6 +92,10 @@ async def run(location):
     api_key = os.environ['API_SERVER_KEY']
     token = os.environ['HERMES_DASHBOARD_SESSION_TOKEN']
     native_config = os.environ.get('MITHRIL_NATIVE_TENANT')
+    native_mode = native_config is not None
+    agent_cli = '/opt/hermes/scripts/mithril' if native_mode else '/opt/hermes/.venv/bin/hermes'
+    product_name = 'Mithril Agent' if native_mode else 'Hermes'
+    gateway_name = 'Mithril Gateway' if native_mode else 'Hermes Desktop gateway'
     store = EncryptedStore(persistence.Store(location, os.environ.get('CHECKPOINT_STORE_KEY', api_key)), os.environ['CHECKPOINT_ENCRYPTION_KEY'], require_encrypted=native_config is not None)
     data, digest = await asyncio.to_thread(store.load)
     if data is not None:
@@ -110,9 +114,13 @@ async def run(location):
         provider_env.chmod(0o600)
     children = []
     env = {**os.environ, 'API_SERVER_HOST': '127.0.0.1', 'API_SERVER_PORT': '7861'}
+    if native_config is not None:
+        # This wrapper only enables the Mithril-native tenant after restoring its Profile state.
+        # Keep the product marker scoped to these native child processes, never the shared image.
+        env['MITHRIL_AGENT'] = '1'
     for argv in [
         ['/opt/hermes/.venv/bin/python', '/opt/hermes/gateway-trial-start.py'],
-        ['/opt/hermes/.venv/bin/hermes', 'serve', '--host', '127.0.0.1', '--port', '7862', '--no-open', '--isolated'],
+        [agent_cli, 'serve', '--host', '127.0.0.1', '--port', '7862', '--no-open', '--isolated'],
     ]:
         children.append(await asyncio.create_subprocess_exec(*argv, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
 
@@ -139,7 +147,7 @@ async def run(location):
         for port, path in [(7861, '/health'), (7862, '/api/profiles')]:
             for _ in range(180):
                 if any(child.returncode is not None for child in children):
-                    raise RuntimeError('Hosted Hermes process exited')
+                    raise RuntimeError(f'Hosted {product_name} process exited')
                 try:
                     async with client.get(f'http://127.0.0.1:{port}{path}', headers={'Authorization': 'Bearer ' + token}) as response:
                         if response.status == 200:
@@ -148,7 +156,7 @@ async def run(location):
                     pass
                 await asyncio.sleep(1)
             else:
-                raise RuntimeError('Hosted Hermes readiness timed out')
+                raise RuntimeError(f'Hosted {product_name} readiness timed out')
         await checkpoint()
 
         async def periodic():
@@ -159,7 +167,7 @@ async def run(location):
         async def handler(request):
             nonlocal draining, active_connections
             if request.path == '/' and request.method in {'GET', 'HEAD'}:
-                return web.Response(text='Hermes Desktop gateway is running. Connect with the dedicated session token.', content_type='text/plain')
+                return web.Response(text=f'{gateway_name} is running. Connect with the dedicated session token.', content_type='text/plain')
             if request.path == '/health':
                 ready = not draining and all(child.returncode is None for child in children)
                 return web.json_response({'ready': ready}, status=200 if ready else 503)
@@ -218,7 +226,7 @@ async def run(location):
                     remote = await client.ws_connect(target, headers=headers, timeout=180)
                 except Exception:
                     active_connections -= 1
-                    return web.Response(status=503, text='Hermes socket unavailable')
+                    return web.Response(status=503, text=f'{product_name} socket unavailable')
                 local = web.WebSocketResponse()
                 await local.prepare(request)
                 handoffs = HandoffCheckpointBarrier()
@@ -264,7 +272,7 @@ async def run(location):
             done, _ = await asyncio.wait([periodic_task, *wait_tasks], return_when=asyncio.FIRST_COMPLETED)
             for task in done:
                 task.result()
-            raise RuntimeError('Hosted Hermes supervisor stopped')
+            raise RuntimeError(f'Hosted {product_name} supervisor stopped')
         finally:
             await runner.cleanup()
             periodic_task.cancel()

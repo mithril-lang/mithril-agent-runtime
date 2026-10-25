@@ -14,6 +14,7 @@ never reaches the portal; a dead credential is replaced by the explicit re-mint 
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from dataclasses import asdict, dataclass, field, replace
@@ -166,6 +167,17 @@ def _resolve_inference() -> str:
 def _build_record(*, other: bool, force: bool) -> SetupRecord:
     """One inventory-then-mint pass into a record. ``force`` is the user's own retry: it makes one
     attempt even inside the mint memo's cooldown (``anon_auth.ensure_portal_identity``)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        # Mithril owns account identity and guest access. Do not probe or mint a Nous identity on
+        # this product path; its account provider is included in the ordinary provider inventory.
+        return SetupRecord(
+            provider_configured=other,
+            inference_provider=_resolve_inference() if other else "",
+            free_tier=False,
+            has_identity=False,
+            other_providers=other,
+        )
+
     from hermes_cli import anon_auth
 
     error = ""

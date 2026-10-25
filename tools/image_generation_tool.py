@@ -40,7 +40,8 @@ from tools.image_generation_catalog import (
 )
 from tools.managed_tool_gateway import resolve_managed_tool_gateway
 from tools.tool_backend_helpers import (
-    NOUS_MANAGED_PROVIDER, fal_key_is_configured, managed_nous_tools_enabled,
+    NOUS_MANAGED_PROVIDER, fal_key_is_configured, managed_gateway_selection_failure,
+    managed_nous_tools_enabled,
     nous_tool_gateway_unavailable_message, read_selection, selection_error)
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def _resolve_managed_fal_gateway():
         if gateway is None:
             raise ValueError(selection_error(
                 "image_gen", NOUS_MANAGED_PROVIDER,
-                "the Nous Tool Gateway is not available (not entitled or unreachable)"))
+                managed_gateway_selection_failure("managed FAL image generation")))
         return gateway
     if selected is not None:
         if fal_key_is_configured():

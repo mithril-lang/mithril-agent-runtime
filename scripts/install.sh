@@ -101,6 +101,11 @@ log_warn() { printf '%s⚠%s %s\n' "$C_YELLOW" "$C_NC" "$1"; }
 log_error() { printf '%s✗%s %s\n' "$C_RED" "$C_NC" "$1" >&2; }
 fail() { STAGE_REASON="$1"; log_error "$1"; exit 1; }
 
+if [ "${MITHRIL_AGENT:-}" = "1" ] \
+    && [ "$REPO_URL" != "https://github.com/mithril-lang/mithril-agent-runtime.git" ]; then
+    fail "Mithril Agent installer requires the Mithril-owned runtime repository; no Hermes fallback is permitted"
+fi
+
 print_banner() {
     printf '\n%s%s' "$C_MAGENTA" "$C_BOLD"
     printf '%s\n' "┌─────────────────────────────────────────────────────────┐"
@@ -275,6 +280,9 @@ ensure_uv() {
     fi
     if ! uv_bootstrap_pin "$_target"; then
         fail "no pinned uv artifact for $_target; Hermes does not support this host"
+    fi
+    if [ "${MITHRIL_AGENT:-}" = "1" ]; then
+        UV_PIN_MIRROR=""
     fi
     local _store="${HERMES_RUNTIME_DIR:-$HERMES_HOME/tools}"
     local _entry="$_store/uv-$UV_PIN_VERSION-$_target"

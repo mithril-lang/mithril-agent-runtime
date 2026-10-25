@@ -1,5 +1,7 @@
 """GMI Cloud provider profile."""
 
+import os
+
 from hermes_cli.version_info import get_version_info
 from providers import register_provider
 from providers.base import ProviderProfile
@@ -9,8 +11,11 @@ gmi = ProviderProfile(
     description="GMI Cloud — multi-model direct API (slash-form model IDs)",
     signup_url="https://www.gmicloud.ai/", env_vars=("GMI_API_KEY", "GMI_BASE_URL"),
     base_url="https://api.gmi-serving.com/v1", auth_type="api_key",
-    # Attribution so GMI can identify Hermes Agent traffic.
-    default_headers={"User-Agent": f"HermesAgent/{get_version_info().base_version}"},
+    # Provider attribution is optional; Mithril mode has no user opt-in.
+    default_headers=(
+        {} if os.environ.get("MITHRIL_AGENT") == "1"
+        else {"User-Agent": f"HermesAgent/{get_version_info().base_version}"}
+    ),
     default_aux_model="google/gemini-3.1-flash-lite-preview",
     fallback_models=(
         "zai-org/GLM-5.1-FP8", "deepseek-ai/DeepSeek-V3.2", "moonshotai/Kimi-K2.5",

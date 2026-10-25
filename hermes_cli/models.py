@@ -28,6 +28,11 @@ if TYPE_CHECKING:
     from typing import TypeGuard
 
 from hermes_cli.route_identity import normalize_route_base_url
+from hermes_cli.request_identity import (
+    agent_client_identifier,
+    cli_user_agent,
+    copilot_user_agent,
+)
 from hermes_cli.urllib_security import open_credentialed_url
 from hermes_cli.version_info import get_version_info
 from hermes_cli.models_catalog_static import (
@@ -64,10 +69,11 @@ from hermes_cli.models_local import (
     fetch_ollama_cloud_models)
 
 logger = logging.getLogger(__name__)
+_NOUS_PROVIDER_IDS = frozenset({"nous", "nous-portal", "nousresearch"})
 
-# Identify ourselves so endpoints fronted by Cloudflare's Browser Integrity
-# Check (error 1010) don't reject the default ``Python-urllib/*`` signature.
-_HERMES_USER_AGENT = f"hermes-cli/{get_version_info().base_version}"
+# Identify the active distribution so endpoints fronted by Cloudflare's Browser
+# Integrity Check (error 1010) don't reject the default ``Python-urllib/*`` signature.
+_CLI_USER_AGENT = cli_user_agent()
 
 COPILOT_BASE_URL = "https://api.githubcopilot.com"
 COPILOT_MODELS_URL = f"{COPILOT_BASE_URL}/models"
@@ -374,6 +380,8 @@ def fetch_nous_recommended_models(
     process restarts. ``force_refresh`` bypasses both caches. Stale disk data remains a fallback
     on live failure; reading it never renews its freshness.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {}
     base = (portal_base_url or "https://portal.nousresearch.com").rstrip("/")
     now = time.monotonic()
     cache_key = (_pricing_profile_key(), base)
@@ -404,6 +412,8 @@ def fetch_nous_recommended_models(
 
 def _resolve_nous_portal_url() -> str:
     """Best-effort lookup of the Portal base URL the user is authed against."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return ""
     try:
         from hermes_cli.auth import DEFAULT_NOUS_PORTAL_URL, get_provider_auth_state
 
@@ -425,6 +435,8 @@ def get_nous_recommended_aux_model(
     force_refresh: bool = False) -> Optional[str]:
     """The Portal's recommended model for an auxiliary task: free tier → free pick only; paid tier →
     paid pick, falling back to the free one when the Portal returned ``null`` (staged rollouts)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     base = portal_base_url or _resolve_nous_portal_url()
     payload = fetch_nous_recommended_models(base, force_refresh=force_refresh)
     if not payload:
@@ -469,6 +481,8 @@ def recommended_nous_default_model() -> dict[str, Any]:
     is selectable (callers degrade). Shared by ``GET /api/model/recommended-default`` and the
     sign-in completion in ``hermes_cli.anon_auth`` so both land on the same model.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {"provider": "nous", "model": "", "free_tier": None}
     from hermes_cli import models_pricing as mp
     from hermes_cli.auth import get_provider_auth_state
 
@@ -651,6 +665,8 @@ def model_ids(*, force_refresh: bool = False) -> list[str]:
 def get_curated_nous_model_ids() -> list[str]:
     """Curated Nous Portal model ids: the remote catalog manifest, else the in-repo
     ``_PROVIDER_MODELS["nous"]`` snapshot. Always a list."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from hermes_cli.model_catalog import get_curated_nous_models
         remote = get_curated_nous_models()
@@ -876,6 +892,8 @@ def curated_models_for_provider(
     is unreachable.
     """
     normalized = normalize_provider(provider)
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     if normalized == "openrouter":
         return fetch_openrouter_models(force_refresh=force_refresh)
 
@@ -1369,6 +1387,8 @@ def _copilot_catalog(normalized: str, force_refresh: bool) -> Optional[list[str]
 
 
 def _nous_catalog(normalized: str, force_refresh: bool) -> Optional[list[str]]:
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     try:
         from hermes_cli.auth import fetch_nous_models, resolve_nous_runtime_credentials
 
@@ -1717,6 +1737,8 @@ def provider_model_ids(provider: Optional[str], *, force_refresh: bool = False) 
         return _ollama_local_catalog(force_refresh)
 
     normalized = normalize_provider(provider)
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
+        return []
     # A configured `model.base_url` relay is TERMINAL for live catalog egress: the picker must
     # list what the configured endpoint serves and must never touch the vendor host (#121387).
     # A failed or empty probe degrades to the local curated list — falling through to the
@@ -1968,7 +1990,10 @@ def update_provider_cache_entry(provider: str, models: list[str]) -> None:
     so concurrent fetches don't clobber each other's rows. Best-effort, silent on any error."""
     try:
         normalized = normalize_provider(provider) or (provider or "")
-        if not normalized or not models:
+        if (
+            not normalized or not models
+            or (normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1")
+        ):
             return
         fp = _credential_fingerprint(normalized)
         with _cache_write_lock:
@@ -2000,6 +2025,8 @@ def cached_provider_model_ids(
     (hanging or timing-out ``/v1/models``) therefore delays nothing but itself (#114215)."""
     normalized = _normalized_cache_slug(provider)
     if not normalized:
+        return []
+    if normalized in _NOUS_PROVIDER_IDS and os.environ.get("MITHRIL_AGENT") == "1":
         return []
     is_ollama = normalized == "ollama"
 
@@ -2177,7 +2204,7 @@ def copilot_default_headers(*, is_agent_turn: bool = True) -> dict[str, str]:
     except ImportError:
         return {
             "Editor-Version": COPILOT_EDITOR_VERSION,
-            "User-Agent": "HermesAgent/1.0",
+            "User-Agent": copilot_user_agent(),
             "Openai-Intent": "conversation-edits",
             "x-initiator": "agent" if is_agent_turn else "user"}
 
@@ -2572,9 +2599,9 @@ def probe_api_models(
             return _probe_result(
                 None, normalized.rstrip("/") + "/models", normalized,
                 alternate_base if alternate_base != normalized else None)
-    headers: dict[str, str] = {"User-Agent": _HERMES_USER_AGENT}
+    headers: dict[str, str] = {"User-Agent": _CLI_USER_AGENT}
     if urllib.parse.urlparse(normalized).hostname == "generativelanguage.googleapis.com":
-        headers["X-Goog-Api-Client"] = f"hermes-agent/{get_version_info().base_version}"
+        headers["X-Goog-Api-Client"] = agent_client_identifier()
     if api_key and api_mode == "anthropic_messages":
         headers["x-api-key"] = api_key
         headers["anthropic-version"] = "2023-06-01"
@@ -2676,7 +2703,7 @@ def _fetch_deepinfra_catalog(
         if last_fail is not None and (time.monotonic() - last_fail) < _DEEPINFRA_CATALOG_NEG_TTL:
             return None
 
-    headers: dict[str, str] = {"User-Agent": _HERMES_USER_AGENT}
+    headers: dict[str, str] = {"User-Agent": _CLI_USER_AGENT}
     api_key = _deepinfra_env("DEEPINFRA_API_KEY")
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -2751,7 +2778,7 @@ def _fetch_ai_gateway_models(timeout: float = 5.0) -> Optional[list[str]]:
         from hermes_constants import AI_GATEWAY_BASE_URL
         base_url = AI_GATEWAY_BASE_URL
 
-    headers = {"Authorization": f"Bearer {api_key}", "User-Agent": _HERMES_USER_AGENT}
+    headers = {"Authorization": f"Bearer {api_key}", "User-Agent": _CLI_USER_AGENT}
     try:
         url = base_url.rstrip("/") + "/models"
         data = _get_json(url, timeout=timeout, headers=headers)

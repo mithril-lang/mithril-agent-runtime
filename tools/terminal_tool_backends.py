@@ -107,10 +107,25 @@ def _modal_unavailable_reason(modal_state: Dict[str, Any]) -> tuple[str, str]:
     """(log message, ValueError message) for a modal_state with no selected backend.
     Single decision shared by the requirements checker and the env builder."""
     gateway = nous_tool_gateway_unavailable_message("managed Modal execution")
-    if modal_state["managed_mode_blocked"] or modal_state["mode"] == "managed":
-        tail = (("Nous Tool Gateway access is not currently available and no direct Modal credentials/config "
-                 f"were found. {gateway} Choose TERMINAL_MODAL_MODE=direct/auto to use direct Modal credentials.")
-                if modal_state["managed_mode_blocked"] else f"the managed tool gateway is unavailable. {gateway}")
+    if modal_state["managed_mode_blocked"]:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            if modal_state["has_direct"]:
+                tail = (f"{gateway} Direct Modal credentials are configured but remain unused because "
+                        "managed mode was explicitly selected. Choose TERMINAL_MODAL_MODE=direct.")
+            else:
+                tail = (f"{gateway} Configure direct Modal credentials and choose "
+                        "TERMINAL_MODAL_MODE=direct, or select a supported local environment.")
+        elif modal_state["has_direct"]:
+            tail = ("Nous Tool Gateway access is not currently available. Direct Modal credentials/config "
+                    "are present but will not be used while managed mode is selected. "
+                    "Choose TERMINAL_MODAL_MODE=direct/auto to use direct Modal credentials.")
+        else:
+            tail = ("Nous Tool Gateway access is not currently available and no direct Modal credentials/config "
+                    f"were found. {gateway} Choose TERMINAL_MODAL_MODE=direct/auto to use direct Modal credentials.")
+        return (f"Modal backend selected with TERMINAL_MODAL_MODE=managed, but {tail}",
+                f"Modal backend is configured for managed mode, but {tail}")
+    if modal_state["mode"] == "managed":
+        tail = f"the managed tool gateway is unavailable. {gateway}"
         return (f"Modal backend selected with TERMINAL_MODAL_MODE=managed, but {tail}",
                 f"Modal backend is configured for managed mode, but {tail}")
     managed = managed_nous_tools_enabled()

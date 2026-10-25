@@ -125,7 +125,9 @@ class XAIWebSearchProvider(BaseWebSearchProvider):
         XAI_API_KEY creds can't be refreshed, so they skip the retry rather than burn quota.
         """
         import httpx
-        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json", "User-Agent": hermes_xai_user_agent()}
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        if user_agent := hermes_xai_user_agent():
+            headers["User-Agent"] = user_agent
         def _refreshed_key() -> str:
             """New bearer after a 401, or "" when refresh fails / returns the same token (retry would be pointless)."""
             try:

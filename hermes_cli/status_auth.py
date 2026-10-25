@@ -3,6 +3,7 @@ Origin helpers (``_row``, ``_first_env_value``, ...) are resolved through the ``
 module object so tests that monkeypatch that module keep working."""
 
 from datetime import datetime, timezone
+import os
 
 from hermes_cli.auth import AuthError
 from hermes_cli.nous_account import (
@@ -100,10 +101,11 @@ def _render_api_keys(ctx):
 def _render_auth_providers(ctx):
     _status._section("Auth Providers")
     import hermes_cli.auth as auth
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
     try:
         # Read-only display: the refresh-free snapshot, so `hermes status` never performs an OAuth
         # refresh or burns a single-use refresh token.
-        nous_status = auth.get_nous_auth_status_local()
+        nous_status = {} if mithril_agent else auth.get_nous_auth_status_local()
         statuses = {getter: getattr(auth, getter)() for _, getter, _, _ in _OAUTH_BLOCKS[:3]}
     except Exception:
         nous_status, statuses = {}, {}
@@ -114,8 +116,8 @@ def _render_auth_providers(ctx):
         statuses["get_xai_oauth_auth_status"] = {}
 
     info = None
-    if any(nous_status.get(k) for k in ("logged_in", "access_token", "portal_base_url",
-                                        "inference_credential_present", "error_code")):
+    if not mithril_agent and any(nous_status.get(k) for k in ("logged_in", "access_token", "portal_base_url",
+                                                               "inference_credential_present", "error_code")):
         try:
             info = get_nous_portal_account_info()
         except Exception:
@@ -125,7 +127,9 @@ def _render_auth_providers(ctx):
     ctx.nous_inference_present = inference = bool(
         nous_status.get("inference_credential_present") or (info and info.inference_credential_present)
     )
-    if nous_status.get("free_tier"):
+    if mithril_agent:
+        _status._row("Mithril Account", False, "check with mithril account status")
+    elif nous_status.get("free_tier"):
         # Free tier: never rendered as an account login (no account ids, no refresh row).
         from hermes_cli.anon_auth import FREE_TIER_LABEL, GUEST_MODEL, UPGRADE_HINT
         _status._row("Nous Portal", True, f"{FREE_TIER_LABEL} · {GUEST_MODEL}")
@@ -159,6 +163,8 @@ def _render_auth_providers(ctx):
 
 
 def _render_nous_gateway(ctx):
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return
     if managed_nous_tools_enabled():
         features = get_nous_subscription_features(ctx.config)
         _status._section("Nous Tool Gateway")

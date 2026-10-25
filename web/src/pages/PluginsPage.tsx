@@ -3,6 +3,7 @@ import { ExternalLink, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react";
 import type { Translations } from "@/i18n/types";
 import { Link } from "react-router";
 import { api } from "@/lib/api";
+import { agentDocsUrlForDistribution, isMithrilDistribution } from "@/lib/agent-docs";
 import { setupHasDetails, setupHasInstallableSteps } from "@/lib/memory-provider-setup";
 import type {
   CatalogEntry,
@@ -270,6 +271,7 @@ export default function PluginsPage() {
   const [loading, setLoading] = useState(true);
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
+  const [distribution, setDistribution] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogConfirm, setCatalogConfirm] = useState<CatalogEntry | null>(null);
   const [catalogBusy, setCatalogBusy] = useState<string | null>(null);
@@ -293,6 +295,7 @@ export default function PluginsPage() {
   const { toast, showToast } = useToast();
   const { t } = useI18n();
   const { setAfterTitle } = usePageHeader();
+  const isMithril = isMithrilDistribution(distribution);
 
   const loadHub = useCallback((memorySelection?: string) => {
     return api
@@ -313,6 +316,20 @@ export default function PluginsPage() {
       .getPluginsCatalog()
       .then(setCatalog)
       .catch(() => setCatalog(null));
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    void api.getStatus()
+      .then((status) => {
+        if (mounted) setDistribution(status.distribution ?? null);
+      })
+      .catch(() => {
+        if (mounted) setDistribution(null);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -881,10 +898,12 @@ export default function PluginsPage() {
             {t.pluginsPage.catalogHeading ?? "Plugin catalog"}
           </h3>
 
-          <p className="text-xs tracking-[0.06em] text-text-tertiary">
-            {t.pluginsPage.catalogHint ??
-              "Curated, Nous-reviewed plugins pinned to exact commits."}
-          </p>
+          {!isMithril && (
+            <p className="text-xs tracking-[0.06em] text-text-tertiary">
+              {t.pluginsPage.catalogHint ??
+                "Curated, Nous-reviewed plugins pinned to exact commits."}
+            </p>
+          )}
 
           <Input
             className="max-w-md"
@@ -904,11 +923,13 @@ export default function PluginsPage() {
               {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{" "}
               <a
                 className="underline"
-                href="https://hermes-agent.nousresearch.com/docs/plugins"
+                href={agentDocsUrlForDistribution(distribution)}
                 target="_blank"
                 rel="noreferrer"
               >
-                {t.pluginsPage.catalogEmptyDocsLink ?? "Learn about Hermes plugins"}
+                {isMithril
+                  ? t.app.nav.documentation
+                  : t.pluginsPage.catalogEmptyDocsLink ?? "Learn about Hermes plugins"}
               </a>
             </p>
           ) : (

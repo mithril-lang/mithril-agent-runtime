@@ -100,9 +100,18 @@ def _runner_scratch_root() -> str:
     back that does not need root. Keying by uid means no run is blocked by another's leftovers.
     """
     name = "hermes-pytest" + (f"-{os.getuid()}" if hasattr(os, "getuid") else "")
-    configured_tmp = os.environ.get("TMPDIR")
-    if configured_tmp and os.path.isabs(configured_tmp):
-        root = os.path.join(configured_tmp, name)
+    work_volume = os.environ.get("MITHRIL_WORK_VOLUME")
+    if work_volume:
+        # The Fund storage wrapper has already verified the mounted volumes.
+        # Keep its selected SSD scratch across the runner's environment scrub.
+        selected = os.environ.get("TMPDIR", "")
+        allowed = [Path(work_volume).resolve()]
+        if overflow := os.environ.get("MITHRIL_OVERFLOW"):
+            allowed.append(Path(overflow).resolve())
+        base = Path(selected).resolve()
+        if not selected or not Path(selected).is_absolute() or not any(base.is_relative_to(volume) for volume in allowed) or not base.is_dir():
+            raise ValueError("Mithril tests require the storage wrapper's existing SSD TMPDIR")
+        root = str(base / name)
     elif os.name == "nt" or not os.path.isdir("/var/tmp"):  # no-tmp: ok — probing the disk-backed FHS root
         root = os.path.join(tempfile.gettempdir(), name)
     else:

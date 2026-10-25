@@ -1,11 +1,10 @@
-"""Default SOUL.md template seeded into HERMES_HOME on first run."""
+"""Default SOUL.md templates seeded into the active profile on first run."""
 
-# Kept identical to agent/prompt_builder.py's DEFAULT_AGENT_IDENTITY: _ensure_default_soul_md()
-# seeds this into SOUL.md on first run, so it is the text virtually every real user gets. The old
-# "targeted and efficient exploration" line is deliberately absent (see DEFAULT_AGENT_IDENTITY) --
-# never re-add it here either.
-# DEFAULT_AGENT_IDENTITY only serves sessions with no SOUL.md at all (e.g. skip_context_files), which is not
-# the common case. See #95681.
+import os
+
+# The Hermes seed remains byte-for-byte compatible with existing installations; Mithril derives a
+# separately branded seed below. prompt_builder uses get_default_soul_md() for the no-SOUL fallback.
+# Keep the old "targeted and efficient exploration" line absent from both defaults. See #95681.
 DEFAULT_SOUL_MD = (
     "You are Hermes Agent, built by Nous Research. Be direct: match the length of your reply to the weight of "
     "the ask — a one-line question gets a one-line answer, and finished work gets a short report of what "
@@ -15,6 +14,16 @@ DEFAULT_SOUL_MD = (
     "right, not because the user said it. Depth is earned — give it when the user asks for detail, teaches, or "
     "the stakes demand it, not by default."
 )
+
+MITHRIL_DEFAULT_SOUL_MD = DEFAULT_SOUL_MD.replace(
+    "You are Hermes Agent, built by Nous Research.",
+    "You are Mithril Agent, maintained by Mithril.",
+)
+
+
+def get_default_soul_md() -> str:
+    """Return the profile seed matching the distribution marker set by its launcher."""
+    return MITHRIL_DEFAULT_SOUL_MD if os.environ.get("MITHRIL_AGENT") == "1" else DEFAULT_SOUL_MD
 
 _SCAFFOLD_HEAD = (
     "# Hermes Agent Persona\n\n<!--\nThis file defines the agent's personality and tone.\n"
@@ -51,6 +60,10 @@ _LEGACY_TEMPLATE_SOULS = (
     # ASCII-dashed variant seeded by scripts/install.ps1 (must stay pure ASCII, see
     # tests/scripts/install/test_install_ps1_ascii_only.py); upgrading converges Windows installs on the em-dash text.
     DEFAULT_SOUL_MD.replace("\u2014", "--"),
+    # The Mithril-owned seed is also generated content and can be switched safely when a profile is
+    # opened by the other distribution. Any user edit makes the normalized content differ.
+    MITHRIL_DEFAULT_SOUL_MD,
+    MITHRIL_DEFAULT_SOUL_MD.replace("\u2014", "--"),
 )
 
 

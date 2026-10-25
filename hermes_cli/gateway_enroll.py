@@ -24,7 +24,8 @@ def _default_gateway_id() -> str:
         host = socket.gethostname().strip()
     except Exception:
         host = ""
-    return f"gw-{host or 'hermes'}"
+    fallback = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
+    return f"gw-{host or fallback}"
 
 
 def _resolve_connector_url(override: Optional[str]) -> Optional[str]:
@@ -48,6 +49,16 @@ def _resolve_connector_url(override: Optional[str]) -> Optional[str]:
     return raw.rstrip("/").removesuffix("/relay")
 
 
+def _ensure_mithril_relay_endpoint(connector_base_url: str) -> None:
+    """Do not send Mithril relay credentials to a Nous-operated connector."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return
+    from gateway.relay import _is_nous_research_endpoint
+
+    if _is_nous_research_endpoint(connector_base_url):
+        raise RuntimeError("Nous-hosted Gateway Relay endpoints are unavailable in Mithril Agent.")
+
+
 def _post_enroll(
     *,
     connector_base_url: str,
@@ -58,6 +69,7 @@ def _post_enroll(
 ) -> dict:
     """POST to the connector's ``/relay/enroll``; return ``{secret, deliveryKey, tenant, gatewayId}``.
     Raises RuntimeError with a user-facing message on any non-2xx / transport failure."""
+    _ensure_mithril_relay_endpoint(connector_base_url)
     url = f"{connector_base_url.rstrip('/')}/relay/enroll"
     data = json.dumps({"enrollmentToken": enrollment_token, "gatewayId": gateway_id}).encode("utf-8")
     req = urllib.request.Request(
@@ -71,7 +83,9 @@ def _post_enroll(
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        from gateway.relay import _open_url
+
+        with _open_url(req, timeout=timeout) as resp:
             payload = json.loads(resp.read().decode())
     except urllib.error.HTTPError as exc:
         detail = ""
@@ -80,10 +94,16 @@ def _post_enroll(
         except Exception:
             pass
         if exc.code == 401:
-            message = (
-                "Connector rejected the caller identity (401). Your Nous Portal "
-                "token could not be verified — try `hermes auth add nous` and retry."
-            )
+            if os.environ.get("MITHRIL_AGENT") == "1":
+                message = (
+                    "Connector rejected the caller identity (401). Verify the configured "
+                    "relay identity provider and tenant binding, then retry."
+                )
+            else:
+                message = (
+                    "Connector rejected the caller identity (401). Your Nous Portal "
+                    "token could not be verified — try `hermes auth add nous` and retry."
+                )
         elif exc.code == 403:
             message = detail or "Enrollment token invalid, expired, already used, or tenant mismatch (403)."
         else:
@@ -113,8 +133,9 @@ def cmd_gateway_enroll(args) -> None:
     # Managed installs get GATEWAY_RELAY_* stamped in by the orchestrator; save_env_value refuses
     # to write there anyway.
     if is_managed():
+        cli = "mithril" if os.environ.get("MITHRIL_AGENT") == "1" else "hermes"
         _fail(
-            "✗ `hermes gateway enroll` is not available in a managed/hosted install.\n"
+            f"✗ `{cli} gateway enroll` is not available in a managed/hosted install.\n"
             "  The relay gateway secret is provisioned by the hosting platform."
         )
 
@@ -133,23 +154,40 @@ def cmd_gateway_enroll(args) -> None:
             "✗ No connector URL. Pass --connector-url <url> (or set GATEWAY_RELAY_URL "
             "/ gateway.relay_url in config.yaml)."
         )
+    try:
+        # Check before resolving any caller token, so an invalid Mithril destination cannot
+        # trigger credential lookup or receive the bearer through this enrollment flow.
+        _ensure_mithril_relay_endpoint(connector_base_url)
+    except RuntimeError as exc:
+        _fail(f"✗ Enrollment blocked: {exc}")
 
     gateway_id = (getattr(args, "gateway_id", None) or _default_gateway_id()).strip()
 
     # Caller-identity token (proves the tenant). ``gateway.relay`` owns the ONE resolver shared with
     # the runtime self-provision path: generic OIDC client-credentials when ``gateway.idp.token_url``
-    # is set (air-gapped / self-hosted IdP), otherwise Nous Portal.
+    # is set (air-gapped / self-hosted IdP); only Hermes mode may fall back to Nous Portal.
     try:
         from gateway.relay import _resolve_relay_identity_token
 
         access_token = _resolve_relay_identity_token()
     except AuthError as exc:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            if getattr(exc, "relogin_required", False):
+                _fail(
+                    "✗ The configured relay identity provider requires fresh credentials.",
+                    "  Refresh its configured token source and retry.",
+                )
+            _fail(f"✗ Could not resolve the configured relay identity: {exc}")
         if getattr(exc, "relogin_required", False):
             _fail(
                 "✗ You're not logged into Nous Portal.",
                 "  Run `hermes setup` (or `hermes auth add nous`) first, then retry.",
             )
         _fail(f"✗ Could not resolve a Nous Portal access token: {exc}")
+    except RuntimeError as exc:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            _fail(f"✗ Could not resolve the configured relay identity: {exc}")
+        raise
     except Exception as exc:
         _fail(f"✗ Could not resolve a caller-identity token: {exc}")
 

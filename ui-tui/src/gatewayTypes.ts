@@ -261,6 +261,7 @@ export interface SessionUsageResponse {
   cost_status?: 'estimated' | 'exact'
   cost_usd?: number
   credits_lines?: string[]
+  mithril_balance_lines?: string[]
   input?: number
   model?: string
   output?: number

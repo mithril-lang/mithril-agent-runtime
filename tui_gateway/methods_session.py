@@ -5,6 +5,7 @@ helpers (``_sessions``, ``_ok``, ``_err``, ...) bare; module-level helpers are p
 server.py the same way (tests monkeypatching ``server.X`` still intercept)."""
 
 import contextlib
+import os
 
 from .method_ctx import HandlerRegistry, bind_module
 
@@ -222,6 +223,20 @@ def _billing_call(rid, fn, extra: dict | None = None) -> dict:
 
 def _billing_invalid(rid, message: str, error: str = "invalid_request") -> dict:
     return _ok(rid, {"ok": False, "error": error, "message": message})
+
+
+def _mithril_agent_mode() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
+
+
+def _mithril_billing_unavailable(rid, **fields) -> dict:
+    result = {
+        "ok": False,
+        "error": "billing_unavailable_in_mithril_agent",
+        "message": "Mithril billing is not available through this Agent session.",
+    }
+    result.update(fields)
+    return _ok(rid, result)
 
 
 def _billing_pick(result: dict, **fields) -> dict:
@@ -1367,6 +1382,12 @@ def _(rid, params: dict, session: dict) -> dict:
     usage: dict = _session_usage_snapshot(session)
     if session.get("agent") is None and not usage:
         usage = {"calls": 0, "input": 0, "output": 0, "total": 0}
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        with _session_profile_runtime_scope(session):
+            with contextlib.suppress(Exception):
+                from agent.account_usage import mithril_account_balance_lines
+                if lines := mithril_account_balance_lines():
+                    usage["mithril_balance_lines"] = lines
     # Nous credits are agent-independent (portal fetch); fail-open when absent.
     with contextlib.suppress(Exception):
         from agent.account_usage import nous_credits_lines
@@ -1756,6 +1777,8 @@ def _billing_view(name: str, module: str, builder: str, serializer: str, fallbac
     The view module stays a lazy import (startup budget); the serializer is a server global."""
     @method(name)
     def _(rid, params: dict) -> dict:
+        if _mithril_agent_mode():
+            return _ok(rid, dict(fallback))
         try:
             from importlib import import_module
             return _ok(rid, globals()[serializer](getattr(import_module(module), builder)()))
@@ -1765,9 +1788,14 @@ def _billing_view(name: str, module: str, builder: str, serializer: str, fallbac
 
 @method("billing.state")
 def _(rid, params: dict) -> dict:
-    """Read-only billing view (no scope required); fail-open. The Nous free tier has no account to
-    bill, so its state is answered locally (``free_tier`` set, ``logged_in`` false) without a portal
-    round-trip that could only fail."""
+    """Read-only legacy billing view. Mithril mode must not fall through to Nous billing."""
+    if _mithril_agent_mode():
+        return _ok(rid, {
+            "ok": True,
+            "logged_in": False,
+            "free_tier": False,
+            "error": "Mithril billing is not available through this Agent session.",
+        })
     try:
         from agent.billing_view import BillingState, build_billing_state
         from hermes_cli.anon_auth import guest_carries_inference
@@ -1788,6 +1816,8 @@ _billing_view("subscription.state", "agent.subscription_view", "build_subscripti
 @method("subscription.preview")
 def _(rid, params: dict) -> dict:
     """POST /api/billing/subscription/preview → chargeless effect quote. billing:manage."""
+    if _mithril_agent_mode():
+        return _mithril_billing_unavailable(rid)
     from agent.subscription_view import subscription_change_preview_from_payload
     from hermes_cli.nous_billing import post_subscription_preview
     if not (tier_id := params.get("subscription_type_id")):
@@ -1803,6 +1833,8 @@ def _billing_route(name: str, call, *, invalid=None, message: str = "", error: s
     mints ``idempotency_key`` if absent and echoes it (also on error) so the TUI retries the SAME operation."""
     @method(name)
     def _(rid, params: dict) -> dict:
+        if _mithril_agent_mode():
+            return _mithril_billing_unavailable(rid)
         import hermes_cli.nous_billing as nb
         if invalid is not None and invalid(params):
             return _billing_invalid(rid, message, error=error)
@@ -1855,6 +1887,8 @@ def _(rid, params: dict) -> dict:
     """billing:manage step-up device flow → {ok, granted} (false when the server downscopes). Pooled (blocks
     for minutes); URL/code reach the TUI via ``billing.step_up.verification`` (stdout is the RPC pipe) and the
     browser opens TUI-side, never via the gateway's headless webbrowser.open."""
+    if _mithril_agent_mode():
+        return _mithril_billing_unavailable(rid, granted=False)
     sid = params.get("session_id") or ""
 
     def call():

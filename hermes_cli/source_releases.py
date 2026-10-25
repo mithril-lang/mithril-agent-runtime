@@ -73,6 +73,15 @@ def _resolve_channel(name: str, repository: str):
     return ChannelReader(_PUBLIC_BASE, repository=repository).resolve(name)
 
 
+def _ensure_update_channel_available() -> None:
+    """Fail closed until Mithril owns a signed release channel and artifact origin."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise ValueError(
+            "Mithril Agent updates are unavailable until a Mithril-owned signed release channel is configured; "
+            "Hermes/Nous update origins are disabled."
+        )
+
+
 def resolve_source_target(channel: str, git_cmd=None, cwd=None, *, repository=None) -> SourceTarget:
     """Resolve every subscription, including default labels, through R2."""
     if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
@@ -80,6 +89,7 @@ def resolve_source_target(channel: str, git_cmd=None, cwd=None, *, repository=No
     from hermes_cli.release_channels import ChannelNotFound, validate_name
 
     validate_name(channel)
+    _ensure_update_channel_available()
     repository = repository or source_repository(git_cmd, cwd)
     try:
         resolved = _resolve_channel(channel, repository)
@@ -254,6 +264,7 @@ def resolve_source_release(channel: str, git_cmd=None, cwd=None, *, repository=N
     """
     if channel not in ("stable", "canary"):
         raise ValueError(f"Not a release channel: {channel}")
+    _ensure_update_channel_available()
     try:
         repository = repository or source_repository(git_cmd, cwd)
         base = f"https://api.github.com/repos/{repository}"

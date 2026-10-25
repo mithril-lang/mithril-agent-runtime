@@ -1244,8 +1244,12 @@ def _prepare_git_command() -> tuple[bool, list, bool]:
     git_dir = _m().PROJECT_ROOT / ".git"
     use_zip_update = not git_dir.exists()
     if use_zip_update and sys.platform != "win32":
-        print("✗ Not a git repository. Please reinstall:")
-        print("  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash")
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            print("✗ This Mithril install is not a source checkout and has no configured Mithril update source.")
+            print("  Follow the update instructions for your Mithril distribution.")
+        else:
+            print("✗ Not a git repository. Please reinstall:")
+            print("  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash")
         sys.exit(1)
 
     from hermes_cli._subprocess_compat import expose_pm_git

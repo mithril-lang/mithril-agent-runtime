@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass, fields
 from datetime import datetime, timezone
@@ -392,6 +393,10 @@ def resolve_billing_route(
     if provider_name == "openrouter" or host("openrouter.ai"):
         return BillingRoute(provider="openrouter", model=model, base_url=url, billing_mode="official_models_api")
     if provider_name == "nous" or host("inference-api.nousresearch.com"):
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            # No Nous models catalog or inferred subscription pricing in Mithril sessions.
+            # Keep a caller-supplied non-Nous endpoint intact for explicit custom routing.
+            return BillingRoute(provider="nous", model=model, base_url=url, billing_mode="unknown")
         return BillingRoute(provider="nous", model=model, base_url=base_url or _NOUS_DEFAULT_BASE_URL, billing_mode="official_models_api")
     snapshot_provider = _SNAPSHOT_PROVIDER_ALIASES.get(provider_name)
     if snapshot_provider is None:

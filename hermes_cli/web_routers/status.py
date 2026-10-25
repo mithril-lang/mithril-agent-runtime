@@ -738,6 +738,15 @@ def _feature_state(feat) -> str:
 
 
 def _get_portal_status_sync():
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        # The Portal panel is Nous-owned. Do not inspect cached Nous auth or
+        # subscription state in Mithril mode; Mithril account status belongs to
+        # the Mithril API control plane once that surface is available.
+        return {
+            "logged_in": False, "portal_url": None, "inference_url": None,
+            "provider": "", "free_tier": False, "account_tier": None,
+            "subscription_url": None, "features": []}
+
     cfg = load_config() or {}
     auth: Dict[str, Any] = {}
     try:
@@ -765,7 +774,9 @@ def _get_portal_status_sync():
         # Free tier: a token exists, so logged_in stays true for callers that only ask "is there a
         # credential"; surfaces that render an account must branch on free_tier first.
         "free_tier": bool(auth.get("free_tier")), "account_tier": auth.get("account_tier"),
-        "subscription_url": "https://portal.nousresearch.com/manage-subscription",
+        "subscription_url": (
+            None if os.environ.get("MITHRIL_AGENT") == "1"
+            else "https://portal.nousresearch.com/manage-subscription"),
         "features": features}
 
 
@@ -788,16 +799,26 @@ async def run_config_migrate(profile: Optional[str] = None):
 
 
 @router.post("/api/ops/debug-share")
-async def run_debug_share_endpoint(body: DebugShareRequest | None = None,
+async def run_debug_share_endpoint(request: Request, body: DebugShareRequest | None = None,
                                    profile: Optional[str] = None):
-    """Upload a redacted debug report + full logs and return the paste URLs. Synchronous,
-    unlike the other diagnostics actions: the point is the shareable URLs, returned as a
-    structured payload the dashboard renders as copyable links."""
-    from hermes_cli.debug import build_debug_share
+    """Return a local Mithril export or, for legacy Hermes mode, public paste URLs."""
+    _require_token(request)
     req = body or DebugShareRequest()
+    log_lines = max(1, min(int(req.lines), 5000))
+    mithril_mode = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_mode and not req.local_export:
+        raise HTTPException(
+            status_code=400,
+            detail="Explicit local diagnostic export is required; no data was sent.")
+    if req.local_export:
+        from hermes_cli.debug import build_local_debug_export
+        return await config_scoped_to_thread(
+            profile, lambda: build_local_debug_export(log_lines=log_lines))
+
+    from hermes_cli.debug import build_debug_share
     try:
         result = await config_scoped_to_thread(profile, lambda: build_debug_share(
-            log_lines=max(1, min(int(req.lines), 5000)), redact=bool(req.redact)))
+            log_lines=log_lines, redact=bool(req.redact)))
     except HTTPException:
         raise  # an unknown ?profile= is the scope's 404, not a failed share
     except RuntimeError as exc:

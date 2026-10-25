@@ -1,5 +1,3 @@
-version: 2.1
-
 parameters:
   release_version:
     type: string
@@ -89,6 +87,40 @@ jobs:
           path: /tmp/mithril-release
           destination: mithril-release
 
+  validate-runtime-distribution:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install the locked test toolchain
+          command: python -m pip install --disable-pip-version-check 'uv==0.12.3'
+      - run:
+          name: Sync locked project and test dependencies
+          command: uv sync --locked --no-default-groups --group dev --group test
+      - run:
+          name: Run device login and update qualification
+          command: >-
+            HERMES_PYTHON="$PWD/.venv/bin/python" scripts/run_tests.sh -j 2
+            .circleci/tests/test_mithril_auth.py
+            .circleci/tests/test_mithril_account.py
+            .circleci/tests/test_mithril_startup.py
+            .circleci/tests/test_mithril_runtime_export.py
+      - run:
+          name: Validate launchers and Homebrew formula
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ruby
+            sh -n scripts/install-mithril.sh scripts/mithril-brew-launcher
+            bash -n scripts/install.sh
+            ruby -c Formula/mithril-agent.rb
+            grep -q "export MITHRIL_AGENT_CLI_LAUNCHER=1" scripts/mithril-brew-launcher
+            grep -q "export MITHRIL_AGENT_CLI_LAUNCHER=1" scripts/install-mithril.sh
+      - run:
+          name: Verify runtime snapshot and override provenance
+          command: python3 .circleci/validate-runtime-snapshot.py
+
 workflows:
   mithril-agent-runtime:
     when:
@@ -100,6 +132,7 @@ workflows:
       - mithril-fresh-install:
           requires:
             - validate-source
+      - validate-runtime-distribution
   mithril-cli-release:
     when:
       and:

@@ -5,6 +5,7 @@ from pm import install_hint
 from hermes_cli.cli_output import line_input
 
 import math
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ _OAUTH_CAPABLE_PROVIDERS = {"anthropic", "nous", "openai-codex", "xai-oauth", "q
 _OAUTH_DEFAULT_PROVIDERS = _OAUTH_CAPABLE_PROVIDERS - {"openrouter"}
 # Providers whose sibling CLI login Hermes may borrow (``auth.adopt_external_logins``).
 EXTERNAL_LOGIN_PROVIDERS = {"anthropic", "openai-codex"}
+_MITHRIL_DISABLED_AUTH_PROVIDERS = frozenset({"nous", "nous-portal", "nousresearch"})
 
 
 def _get_custom_provider_entries() -> list[dict]:
@@ -88,6 +90,30 @@ def _normalize_provider(provider: str) -> str:
     normalized = (provider or "").strip().lower()
     return (_PROVIDER_ALIASES.get(normalized) or _resolve_custom_provider_input(normalized)
             or auth_mod._plugin_aliases().get(normalized) or normalized)
+
+
+def _is_mithril_nous_provider(provider: str, custom_entries: list[dict] | None = None) -> bool:
+    normalized = _normalize_provider(provider)
+    if not normalized:
+        return False
+    if normalized in _MITHRIL_DISABLED_AUTH_PROVIDERS:
+        return True
+    entries = custom_entries if custom_entries is not None else _get_custom_provider_entries()
+    custom = next((entry for entry in entries
+                   if entry["pool_key"] == normalized), None)
+    if custom is None:
+        return False
+    return _normalize_provider(str(custom.get("provider_key") or "")) in _MITHRIL_DISABLED_AUTH_PROVIDERS
+
+
+def _reject_mithril_nous_auth(provider: str = "", *, action: str = "") -> None:
+    """Keep Nous account and inference authentication out of Mithril-mode auth commands."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return
+    if action == "upgrade" or _is_mithril_nous_provider(provider):
+        raise SystemExit(
+            "Nous authentication is unavailable in Mithril Agent. Use `mithril login` for a Mithril "
+            "account or configure a supported provider credential.")
 
 
 def _migrate_legacy_custom_pool_key(provider: str, legacy_key: str) -> None:
@@ -377,9 +403,12 @@ def _add_api_key_credential(args, provider: str, pool) -> PooledCredential:
 
 def auth_add_command(args) -> None:
     provider = _normalize_provider(getattr(args, "provider", ""))
+    _reject_mithril_nous_auth(provider, action="add")
     if dispatch_plugin_auth("add", args, provider):
         return
     configured_provider = _configured_provider_entry(provider)
+    if configured_provider is not None:
+        _reject_mithril_nous_auth(str(configured_provider.get("provider_key") or ""), action="add")
     if not _is_known_provider(provider, configured_provider):
         raise _unknown_provider_exit(provider)
     if (error := plugin_missing_auth_handler_error(provider, "add")) is not None:
@@ -508,14 +537,25 @@ def _is_free_tier_entry(entry) -> bool:
 
 def auth_list_command(args) -> None:
     provider_filter = _normalize_provider(getattr(args, "provider", "") or "")
+    _reject_mithril_nous_auth(provider_filter, action="list")
     if provider_filter:
         providers = [provider_filter]
     else:
         credential_pool = auth_mod._load_auth_store().get("credential_pool")
+        custom_entries = _get_custom_provider_entries()
+        excluded = set(_MITHRIL_DISABLED_AUTH_PROVIDERS)
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            excluded.update(
+                entry["pool_key"] for entry in custom_entries
+                if _normalize_provider(str(entry.get("provider_key") or ""))
+                in _MITHRIL_DISABLED_AUTH_PROVIDERS)
         providers = sorted({
             *PROVIDER_REGISTRY.keys(), "openrouter", *list_custom_pool_providers(),
-            *(e["provider_key"] for e in _get_custom_provider_entries() if e["provider_key"]),
+            *(e["provider_key"] for e in custom_entries if e["provider_key"]),
             *(credential_pool.keys() if isinstance(credential_pool, dict) else ())})
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            providers = [p for p in providers
+                         if p not in excluded and not _is_mithril_nous_provider(p, custom_entries)]
     for provider in providers:
         pool = load_pool(provider)
         entries = pool.entries()
@@ -795,7 +835,14 @@ def _interactive_auth() -> None:
 def _pick_provider(prompt: str = "Provider") -> str:
     """Prompt for a provider name with auto-complete hints."""
     known = sorted(set(list(PROVIDER_REGISTRY.keys()) + ["openrouter"]))
-    custom_display = [entry["name"] for entry in _get_custom_provider_entries()]
+    custom_entries = _get_custom_provider_entries()
+    custom_display = [entry["name"] for entry in custom_entries]
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        known = [provider for provider in known if not _is_mithril_nous_provider(provider, custom_entries)]
+        custom_display = [
+            entry["name"] for entry in custom_entries
+            if _normalize_provider(str(entry.get("provider_key") or ""))
+            not in _MITHRIL_DISABLED_AUTH_PROVIDERS]
     print(f"\nKnown providers: {', '.join(known)}")
     if custom_display:
         print(f"Custom endpoints: {', '.join(custom_display)}")
@@ -888,6 +935,7 @@ def _interactive_strategy() -> None:
 
 def auth_upgrade_command(args) -> None:
     """``hermes auth upgrade``: sign the free tier into a Nous account, keeping its connectors."""
+    _reject_mithril_nous_auth(action="upgrade")
     from hermes_cli.anon_auth import upgrade_guest
     code = upgrade_guest(args)
     if code:
@@ -902,7 +950,9 @@ _AUTH_ACTIONS = {
 
 
 def auth_command(args) -> None:
-    handler = _AUTH_ACTIONS.get(getattr(args, "auth_action", ""))
+    action = str(getattr(args, "auth_action", "") or "").strip().lower()
+    _reject_mithril_nous_auth(str(getattr(args, "provider", "") or ""), action=action)
+    handler = _AUTH_ACTIONS.get(action)
     if handler is not None:
         handler(args)
     else:

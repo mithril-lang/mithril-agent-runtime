@@ -1126,6 +1126,12 @@ def unsuppress_credential_source(provider_id: str, source: str) -> bool:
 
 def get_provider_auth_state(provider_id: str) -> Optional[Dict[str, Any]]:
     """Persisted auth state for a provider (profile first, global-root fallback), or None."""
+    normalized_provider = provider_id.strip().lower().replace("_", "-")
+    if os.environ.get("MITHRIL_AGENT") == "1" and normalized_provider in {
+        "nous", "nous-portal", "nousresearch",
+    }:
+        # Keep any legacy Hermes credential on disk, but never surface it through Mithril auth reads.
+        return None
     return _load_provider_state(_load_auth_store(), provider_id)
 
 
@@ -1137,6 +1143,8 @@ def nous_token_has_billing_scope() -> bool:
     the lazy step-up: if False, the first billing call will 403 ``insufficient_scope``
     anyway, but checking up front lets a surface skip a doomed round-trip.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         state = get_provider_auth_state("nous") or {}
     except Exception:
@@ -1370,7 +1378,7 @@ def _refuse_env_adoption_if_config_corrupt() -> None:
     raise AuthError(
         f"config.yaml at {path} is corrupt ({err}) — refusing to auto-select "
         f"an inference provider from environment keys. Fix the YAML (a backup "
-        f"was saved next to it) or run hermes setup.",
+        f"was saved next to it) or use {('mithril model' if os.environ.get('MITHRIL_AGENT') == '1' else 'hermes setup')}.",
         code="corrupt_config")
 
 
@@ -1479,6 +1487,8 @@ def _logged_in_oauth_active_provider(*, skip_free_tier: bool = False) -> Optiona
     """auth.json ``active_provider`` when it is a registry provider that reports logged in."""
     try:
         _maybe = _load_auth_store().get("active_provider")
+        if os.environ.get("MITHRIL_AGENT") == "1" and _maybe in {"nous", "nous-portal", "nousresearch"}:
+            return None
         if _maybe == "nous":
             from hermes_cli.anon_auth import guest_enabled, has_guest
             if has_guest() and (skip_free_tier or not guest_enabled()):
@@ -1585,13 +1595,21 @@ def resolve_provider(
     """
     normalized = (requested or "auto").strip().lower()
     normalized = _plugin_aliases().get(normalized, normalized)
+    mithril_agent = os.environ.get("MITHRIL_AGENT") == "1"
+    if mithril_agent and normalized in {"nous", "nous-portal", "nousresearch"}:
+        raise ValueError(
+            "The Nous provider is unavailable in Mithril Agent. Choose a Mithril model or another supported provider."
+        )
 
     if normalized in ("openrouter", "custom") or _registry_lookup(normalized) is not None:
         return normalized
     if normalized != "auto":
-        hint = _get_config_hint_for_unknown_provider(normalized)
-        tail = (f"\n\n{hint}" if hint else " Check 'hermes model' for available providers, "
-                "or run 'hermes doctor' to diagnose config issues.")
+        hint = "" if mithril_agent else _get_config_hint_for_unknown_provider(normalized)
+        if mithril_agent:
+            tail = f"\n\n{hint}" if hint else " Use `mithril model` to choose a supported provider."
+        else:
+            tail = (f"\n\n{hint}" if hint else " Check 'hermes model' for available providers, "
+                    "or run 'hermes doctor' to diagnose config issues.")
         raise AuthError(f"Unknown provider '{normalized}'." + tail, code="invalid_provider")
 
     if explicit_api_key or explicit_base_url:  # one-off CLI creds always mean openrouter/custom
@@ -1599,6 +1617,10 @@ def resolve_provider(
 
     _model_cfg, cfg_provider = _config_model_provider()
     if cfg_provider:
+        if mithril_agent and cfg_provider in {"nous", "nous-portal", "nousresearch"}:
+            raise ValueError(
+                "The saved Nous provider is unavailable in Mithril Agent. Choose a Mithril model or another supported provider."
+            )
         return cfg_provider
 
     _scoped_key_env = _scoped_key_env_reader()
@@ -1632,7 +1654,7 @@ def resolve_provider(
     # used to win the first turn of a fresh install (NS-829). The rung never CREATES the identity:
     # that is the boot bootstrap's job (free_tier_bootstrap), so provider resolution stays free of
     # network and a fresh install without the bootstrap resolves exactly as upstream does.
-    if not skip_free_tier:
+    if not skip_free_tier and not mithril_agent:
         try:
             from hermes_cli.anon_auth import guest_enabled, has_guest
             if guest_enabled() and has_guest():
@@ -1647,6 +1669,11 @@ def resolve_provider(
             return "bedrock"
     except ImportError:
         pass  # boto3 not installed
+    if mithril_agent:
+        raise AuthError(
+            "Mithril Agent has no active inference provider. Run `mithril model` to choose a supported provider, "
+            "or `mithril login` to sign in to your Mithril account.",
+            code="no_provider_configured")
     from hermes_constants import display_hermes_home
     raise AuthError(
         "Hermes is not connected to any AI provider yet. Run `hermes model` to pick one (the free "
@@ -1763,6 +1790,10 @@ def resolve_nous_access_token(
     ca_bundle: Optional[str] = None,
     refresh_skew_seconds: int = ACCESS_TOKEN_REFRESH_SKEW_SECONDS) -> str:
     """Resolve a refresh-aware Nous Portal access token for managed tool gateways."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise _nous_err(
+            "Nous Portal access tokens are unavailable in Mithril Agent; use a Mithril-owned or direct provider route.",
+            "mithril_nous_auth_disabled")
     # Only a default-TLS resolution is memoised; error paths never populate the memo.
     memoable = not insecure and ca_bundle is None
     cache_key = hermes_home_key()
@@ -1873,6 +1904,11 @@ def get_nous_auth_status() -> Dict[str, Any]:
 
     Prefers the auth-store provider state (the live source of truth for refresh) and validates it by
     resolving runtime credentials so revoked refresh sessions do not show up as a healthy login."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return {
+            "logged_in": False, "inference_credential_present": False, "free_tier": False,
+            "source": "disabled_in_mithril",
+        }
     global _nous_auth_status_cache
     now = time.monotonic()
     auth_file_key, mtime = _auth_file_cache_key()

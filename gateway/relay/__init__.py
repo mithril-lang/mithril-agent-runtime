@@ -39,6 +39,20 @@ _HTTP_TIMEOUT_S = 15.0
 _IDP_KEYS = ("token_url", "client_id", "client_secret", "scope")
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Do not forward Mithril relay credentials through an HTTP redirect."""
+
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+def _open_url(req, *, timeout: float):
+    """Open a relay request, preserving Hermes redirects and rejecting them in Mithril mode."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return urllib.request.build_opener(_NoRedirectHandler).open(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
 # ─────────────────────────── config access ───────────────────────────
 
 
@@ -103,7 +117,22 @@ def relay_url() -> Optional[str]:
     """Effective connector URL; an explicit platform disable vetoes even an env URL."""
     if relay_explicitly_disabled():
         return None
-    return _env_or_cfg_url("GATEWAY_RELAY_URL", "relay_url")
+    url = _env_or_cfg_url("GATEWAY_RELAY_URL", "relay_url")
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_research_endpoint(url):
+        logger.warning("Nous-hosted Gateway Relay endpoints are unavailable in Mithril Agent; skipping relay")
+        return None
+    return url
+
+
+def _is_nous_research_endpoint(url: Optional[str]) -> bool:
+    """Match Nous-owned hosts without treating lookalike suffixes as Nous domains."""
+    try:
+        host = urllib.parse.urlsplit(str(url or "")).hostname
+    except ValueError:
+        return False
+    host = (host or "").lower().rstrip(".")
+    nous_hosts = ("nousresearch.com", "nousresearch.github.io")
+    return any(host == domain or host.endswith(f".{domain}") for domain in nous_hosts)
 
 
 def relay_platform_identities() -> list[tuple[str, str]]:
@@ -166,7 +195,11 @@ def relay_endpoint() -> Optional[str]:
     (``GATEWAY_RELAY_ENDPOINT`` / ``gateway.relay_endpoint``). Stored on the tenant's
     route rows; gateway-asserted but tenant-scoped, so a dishonest gateway can only
     misdirect its OWN inbound. Absent -> outbound-only (no inbound routes written)."""
-    return _env_or_cfg_url("GATEWAY_RELAY_ENDPOINT", "relay_endpoint")
+    url = _env_or_cfg_url("GATEWAY_RELAY_ENDPOINT", "relay_endpoint")
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_research_endpoint(url):
+        logger.warning("Nous-hosted Gateway Relay callback endpoints are unavailable in Mithril Agent")
+        return None
+    return url
 
 
 def relay_route_keys() -> list[str]:
@@ -196,7 +229,11 @@ def relay_wake_url() -> Optional[str]:
     ``gateway.relay_wake_url``): a payload-free poke the connector GETs when a
     going-idle destination receives its first buffered event, so a suspended gateway
     wakes, reconnects and drains. Absent -> no wake (buffering still works)."""
-    return _env_or_cfg_url("GATEWAY_RELAY_WAKE_URL", "relay_wake_url")
+    url = _env_or_cfg_url("GATEWAY_RELAY_WAKE_URL", "relay_wake_url")
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_research_endpoint(url):
+        logger.warning("Nous-hosted Gateway Relay wake endpoints are unavailable in Mithril Agent")
+        return None
+    return url
 
 
 def relay_display_name() -> Optional[str]:
@@ -220,11 +257,14 @@ def relay_display_name() -> Optional[str]:
             value = str(get_active_skin().get_branding("agent_name", "") or "").strip()
         except Exception:  # noqa: BLE001 - branding absence must never crash boot
             value = ""
-        # The stock brand is identical on every default install: forwarding it would
-        # prefix every reply "**Hermes Agent:**" and shadow the connector's
-        # linked-owner fallback, which actually disambiguates. Only a customized
-        # name is forwarded.
-        if value == "Hermes Agent":
+        # Forwarding the stock brand on every reply would shadow the connector's
+        # linked-owner fallback, which actually disambiguates. The shared default
+        # skin still says Hermes Agent in Mithril mode, so suppress both stock names
+        # there while continuing to forward customized skin names.
+        stock_names = {"Hermes Agent"}
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            stock_names.add("Mithril Agent")
+        if value in stock_names:
             value = ""
     # Mirror the connector's ingest sanitization (trim + 64-char cap).
     return value[:64] or None
@@ -256,7 +296,7 @@ def _json_post(url: str, token: str, body: dict, timeout: float):
             "Accept": "application/json",
         },
     )
-    return urllib.request.urlopen(req, timeout=timeout)
+    return _open_url(req, timeout=timeout)
 
 
 def relay_relevance_policy(platform: Optional[str] = None) -> Optional[dict]:
@@ -409,7 +449,11 @@ def _resolve_relay_identity_token() -> str:
           ``$DOMINO_API_PROXY/access-token``): a plain GET whose body IS the token,
           raw JWT or a JSON envelope with ``access_token``. Possession of the
           (typically loopback) endpoint is the credential.
-      2.  Nous Portal (default): ``resolve_nous_access_token()``.
+      2.  Hermes mode only: Nous Portal default via ``resolve_nous_access_token()``.
+
+    Mithril mode has no implicit identity-provider fallback. It requires an explicit
+    ``gateway.idp.token_url`` so a Mithril credential cannot be silently substituted
+    with a Nous Portal identity.
 
     Raises on failure; callers decide whether that's fatal (enroll CLI) or a graceful
     boot no-op (self-provision).
@@ -424,7 +468,15 @@ def _resolve_relay_identity_token() -> str:
             env[k] = env[k] or str(idp.get(k, "") or "").strip()
     token_url, client_id, client_secret, scope = (env[k] for k in _IDP_KEYS)
 
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_research_endpoint(token_url):
+        raise RuntimeError("Nous-hosted relay identity endpoints are unavailable in Mithril Agent.")
+
     if not token_url:
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            raise RuntimeError(
+                "Mithril Agent relay identity requires an explicit gateway.idp.token_url; "
+                "Nous Portal sign-in is not available in Mithril mode."
+            )
         from hermes_cli.auth import resolve_nous_access_token
 
         return resolve_nous_access_token()
@@ -434,7 +486,7 @@ def _resolve_relay_identity_token() -> str:
         req = urllib.request.Request(
             token_url, method="GET", headers={"Accept": "application/json, text/plain"}
         )
-        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT_S) as resp:
+        with _open_url(req, timeout=_HTTP_TIMEOUT_S) as resp:
             body = resp.read().decode().strip()
         token = ""
         if body.startswith("{"):
@@ -476,7 +528,7 @@ def _resolve_relay_identity_token() -> str:
         token_url, data=urllib.parse.urlencode(form).encode("utf-8"), method="POST",
         headers={"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT_S) as resp:
+    with _open_url(req, timeout=_HTTP_TIMEOUT_S) as resp:
         payload = json.loads(resp.read().decode())
     access_token = (payload or {}).get("access_token")
     if not isinstance(access_token, str) or not access_token.strip():
@@ -682,6 +734,9 @@ def register_relay_adapter(force: bool = False, url: Optional[str] = None) -> bo
     if relay_explicitly_disabled():
         return False
     resolved_url = url if url is not None else relay_url()
+    if os.environ.get("MITHRIL_AGENT") == "1" and _is_nous_research_endpoint(resolved_url):
+        logger.warning("Nous-hosted Gateway Relay endpoints are unavailable in Mithril Agent; skipping relay")
+        return False
     if not (force or resolved_url):
         return False
 

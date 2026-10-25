@@ -17,6 +17,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -38,6 +39,10 @@ LIVE_CATALOG_MAX_STALE_SECONDS = 24 * 60 * 60
 LIVE_CATALOG_FAILURE_TTL_SECONDS = 60.0
 _REQUEST_TIMEOUT = 5.0
 _MAX_LIVE_BYTES = 2 * 1024 * 1024
+
+
+def _mithril_agent_mode() -> bool:
+    return os.environ.get("MITHRIL_AGENT") == "1"
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 _VERSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,31}$")
@@ -285,6 +290,8 @@ def resolved_removed_entries() -> List[RemovedEntry]:
 def cached_removed_entries() -> List[RemovedEntry]:
     """In-tree list UNION the last fetched live copy, with NO network round-trip — for the load-time and
     ``enable`` checks that run in every process and must never block on a dead catalog host."""
+    if _mithril_agent_mode():
+        return load_removed_list()
     cached = _stale_live_cache(_live_cache_path()) or {}
     return load_removed_list() + _removed_from_list(cached.get("removed"))
 
@@ -357,6 +364,10 @@ def fetch_live_catalog(*, force: bool = False) -> Optional[Dict[str, Any]]:
     :data:`LIVE_CATALOG_FAILURE_TTL_SECONDS` so a dead host costs one timeout per TTL window, not one
     per call (``force`` bypasses both caches)."""
     global _live_fetch_failed_until
+    if _mithril_agent_mode():
+        # The release-pinned in-tree catalog is the Mithril snapshot until a Mithril-owned,
+        # provenance-verified catalog service is available. Do not read a Hermes profile cache.
+        return None
     cache = _live_cache_path()
     try:
         if not force and cache.is_file() and time.time() - cache.stat().st_mtime < LIVE_CATALOG_TTL_SECONDS:

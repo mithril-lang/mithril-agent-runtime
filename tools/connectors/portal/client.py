@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import os
 import re
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol
 from urllib.parse import quote
 
@@ -69,6 +70,15 @@ def _default_header_provider(_url: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"} if isinstance(token, str) and token.strip() else {}
 
 
+def ensure_portal_connector_enabled() -> None:
+    """Reject the Nous-hosted connector service before origin, auth, or cache access in Mithril."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        raise PortalConnectorUnavailable(
+            "Hosted connector metadata is unavailable in Mithril Agent",
+            code="MITHRIL_ROUTE_UNAVAILABLE", status=404,
+        )
+
+
 class PortalConnectorClient:
 
     def __init__(
@@ -83,6 +93,7 @@ class PortalConnectorClient:
         self._header_provider = header_provider or _default_header_provider
 
     def origin(self) -> str:
+        ensure_portal_connector_enabled()
         return self._endpoint_resolver().rstrip("/")
 
     def require_authentication(self) -> None:
@@ -154,6 +165,7 @@ class PortalConnectorClient:
         *,
         headers: dict[str, str] | None = None,
     ) -> tuple[Any, int]:
+        ensure_portal_connector_enabled()
         url = f"{self.origin()}{path}"
         headers = self._authorized_headers(url, headers)
         try:

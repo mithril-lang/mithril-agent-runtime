@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -266,6 +267,11 @@ def run_managed_action(
         )
     except Exception as exc:
         logger.debug("manage_connections %s failed: %s", action, exc)
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            return tool_error(
+                "Hosted connector actions are unavailable in Mithril Agent. "
+                "Local MCP server actions remain available through manage_connections."
+            )
         return tool_error(
             f"The connector gateway request failed: {exc}. "
             "If this persists, the user can manage connections in the Nous Portal."

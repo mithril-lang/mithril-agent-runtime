@@ -27,7 +27,8 @@ _run_store_lock = threading.Lock()
 _bound_server = None
 _service = None
 
-_WORKER_UNAVAILABLE = "Group Chat worker is unavailable. Restart the Hermes gateway and try again."
+_gateway_name = "Mithril Gateway" if os.environ.get("MITHRIL_AGENT") == "1" else "Hermes gateway"
+_WORKER_UNAVAILABLE = f"Group Chat worker is unavailable. Restart the {_gateway_name} and try again."
 _DRIVER_UNAVAILABLE = "hosted room driver is unavailable"
 
 

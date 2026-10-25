@@ -7,6 +7,7 @@ so every surface renders one structured signal instead of re-parsing error text.
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, dataclass
 from typing import Optional
 
@@ -91,6 +92,14 @@ def build_billing_block(*, provider: str, base_url: str, model: str, message: st
     slug = (provider or "").strip().lower()
     model = (model or "").strip()
     if is_nous_inference_route(slug, base_url):
+        if os.environ.get("MITHRIL_AGENT") == "1":
+            unavailable = (
+                "Nous-managed inference and billing are unavailable in Mithril Agent. "
+                "Choose a supported provider or model."
+            )
+            return BillingBlock(
+                slug or "nous", "Nous (unavailable in Mithril Agent)", model, None, False, unavailable
+            )
         return BillingBlock(slug or "nous", "Nous Portal", model, _nous_billing_url(), True, message or "")
     label, url = _resolve_provider_link(slug, base_url)
     return BillingBlock(slug, label, model, url, False, message or "")

@@ -161,7 +161,11 @@ def _public_url_from_redirect(redirect_uri: Optional[str]) -> str:
 
 
 def cmd_dashboard_register(args) -> None:
-    """Register a self-hosted dashboard OAuth client with Nous Portal."""
+    """Register a self-hosted dashboard OAuth client."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        print("✗ Dashboard OAuth client registration is unavailable in Mithril Agent.")
+        sys.exit(1)
+
     from hermes_cli.auth import AuthError, resolve_nous_access_token
     from hermes_cli.config import is_managed, save_env_value
     # Managed installs get the client id stamped in by the orchestrator (save_env_value refuses).

@@ -1607,12 +1607,19 @@ def cmd_gui(args: argparse.Namespace):
             sys.exit(0)
         print(f"Desktop GUI source not found at: {desktop_dir}")
         if install_kind == "homebrew":
-            print(
-                "  This Hermes came from Homebrew, which does not ship the desktop app's\n"
-                "  source tree, so it cannot be built from this install.\n"
-                "  Install the desktop app from https://hermes-agent.nousresearch.com,\n"
-                "  or run `hermes desktop` from a source checkout."
-            )
+            if os.environ.get("MITHRIL_AGENT") == "1":
+                print(
+                    "  This Mithril Agent install does not include the Desktop app source,\n"
+                    "  so it cannot be built from this install. Follow the Desktop installation\n"
+                    "  instructions for your Mithril distribution."
+                )
+            else:
+                print(
+                    "  This Hermes came from Homebrew, which does not ship the desktop app's\n"
+                    "  source tree, so it cannot be built from this install.\n"
+                    "  Install the desktop app from https://hermes-agent.nousresearch.com,\n"
+                    "  or run `hermes desktop` from a source checkout."
+                )
         sys.exit(1)
 
     with contextlib.suppress(Exception):

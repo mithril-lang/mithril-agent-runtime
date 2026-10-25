@@ -10,6 +10,7 @@ on (``Session busy``) are part of the wire contract — keep them.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 # Provider-layer failure codes → (title, hint). Codes are ``agent.error_classifier.FailoverReason``
@@ -50,6 +51,14 @@ _TURN_ERROR_DEFAULT = ("The request failed", "Send /retry, or switch with /model
 _DETAIL_LIMIT = 400
 
 
+def _distribution_copy(text: str) -> str:
+    """Render shared gateway copy with the active product's public identity."""
+    if os.environ.get("MITHRIL_AGENT") != "1":
+        return text
+    return (text.replace("Hermes Desktop", "Mithril").replace("Hermes Agent", "Mithril Agent")
+            .replace("Hermes", "Mithril Agent").replace("hermes ", "mithril "))
+
+
 def _identity(surface: dict | None) -> str:
     provider = str((surface or {}).get("provider") or "").strip()
     return f" ({provider})" if provider else ""
@@ -60,14 +69,15 @@ def turn_error_title(surface: dict | None) -> str:
     surface = surface if isinstance(surface, dict) else {}
     title, _ = _TURN_ERROR_CODE_COPY.get(str(surface.get("code") or "")) \
         or _TURN_ERROR_LAYER_COPY.get(str(surface.get("layer") or "")) or _TURN_ERROR_DEFAULT
-    return f"{title}{_identity(surface)}"
+    return _distribution_copy(f"{title}{_identity(surface)}")
 
 
 def turn_error_hint(surface: dict | None, recoverable: bool = True) -> str:
     surface = surface if isinstance(surface, dict) else {}
     _, hint = _TURN_ERROR_CODE_COPY.get(str(surface.get("code") or "")) \
         or _TURN_ERROR_LAYER_COPY.get(str(surface.get("layer") or "")) or _TURN_ERROR_DEFAULT
-    return hint if recoverable else hint.replace("Send /retry", "Pick another model with /model")
+    hint = hint if recoverable else hint.replace("Send /retry", "Pick another model with /model")
+    return _distribution_copy(hint)
 
 
 def turn_error_text(error: Any, surface: dict | None = None, *, recoverable: bool = True) -> str:
@@ -87,16 +97,18 @@ def busy_message(command: str) -> str:
     """4009 refusal for a history-mutating command while a reply is streaming. There is no
     ``/interrupt`` slash command on any client: Desktop has a Stop button, the terminal TUI uses
     Ctrl+C — name both without assuming which one the reader has."""
-    return (f"session busy — Hermes is still replying. Stop the current reply first (Stop button, "
-            f"or Ctrl+C in a terminal), then run /{command.lstrip('/')}.")
+    return _distribution_copy(
+        f"session busy — Hermes is still replying. Stop the current reply first (Stop button, "
+        f"or Ctrl+C in a terminal), then run /{command.lstrip('/')}.")
 
 
 def agent_init_failed_message(exc: Any) -> str:
-    return (f"Hermes could not start the assistant for this session. Details: {exc}. "
-            "Check the model and provider with /model, or run `hermes setup` in a terminal to reconfigure.")
+    return _distribution_copy(
+        f"Hermes could not start the assistant for this session. Details: {exc}. "
+        "Check the model and provider with /model, or run `hermes setup` in a terminal to reconfigure.")
 
 
-AGENT_STILL_STARTING = (
+AGENT_STILL_STARTING = _distribution_copy(
     "Hermes is still starting this session (loading tools), so this command could not run yet. "
     "Wait for the status bar to show ready and try again.")
 
@@ -104,7 +116,7 @@ AGENT_STILL_STARTING = (
 # closed while it ran) leaves ``agent_ready`` set and ``agent`` None; this is the recorded cause.
 AGENT_BUILD_ABANDONED = "agent build aborted: the session record was replaced before the build finished"
 # Turn refusal when the record still has no agent at admission time (reason unknown).
-AGENT_MISSING_FOR_TURN = (
+AGENT_MISSING_FOR_TURN = _distribution_copy(
     "Hermes could not start the assistant for this session, so your message was not run. "
     "Reopen the session (or start a new one with /new) and send it again.")
 

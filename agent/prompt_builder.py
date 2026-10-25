@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional
 from hermes_constants import (
     get_hermes_home, get_scratch_dir, get_skills_dir, is_wsl, reset_hermes_home_override, set_hermes_home_override,
 )
+from hermes_cli.default_soul import get_default_soul_md, is_legacy_template_soul
 
 from agent.model_metadata import CHARS_PER_TOKEN
 from agent.runtime_cwd import resolve_agent_cwd
@@ -157,16 +158,7 @@ def _strip_yaml_frontmatter(content: str) -> str:
     return (content[end + 4:].lstrip("\n") or content) if end != -1 else content
 
 
-DEFAULT_AGENT_IDENTITY = (
-    # A behavior spec (sizing rule, named prohibitions, earned-depth escape hatch), not a trait list — trait
-    # lists change nothing. Maintainer rule: models UNDER-explore by default; never re-add an exploration-thrift line.
-    "You are Hermes Agent, built by Nous Research. Be direct: match the length of your reply to the weight of the ask "
-    "— a one-line question gets a one-line answer, and finished work gets a short report of what changed, what's "
-    "verified, and what's left, never a replay of the process. No filler (\"Great question,\" \"I'd be happy to\"), no "
-    "restating the request back, no re-summarizing what you already said, no narrating tool calls the user can see. "
-    "Plain claims over adjectives; when unsure, say so plainly. Agree because it's right, not because the user said "
-    "it. Depth is earned — give it when the user asks for detail, teaches, or the stakes demand it, not by default."
-)
+DEFAULT_AGENT_IDENTITY = get_default_soul_md()
 
 HERMES_AGENT_HELP_GUIDANCE = (
     # Injected only when skill_view exists AND the hermes-agent skill is installed (system_prompt.py slot
@@ -186,6 +178,13 @@ HERMES_AGENT_HELP_GUIDANCE_NO_SKILLS = (
     "tools, or capabilities, the documentation at https://hermes-agent.nousresearch.com/docs is the "
     "authoritative reference and always holds the latest, most up-to-date information. Point the user there "
     "(or read it yourself if you have a way to fetch web content)."
+)
+
+MITHRIL_AGENT_HELP_GUIDANCE = (
+    "You run on Mithril Agent, maintained by Mithril. For Mithril-specific setup, configuration, tools, or "
+    "troubleshooting, use only verified Mithril documentation and commands available in this installation. "
+    "Do not present Hermes or Nous documentation as authoritative for Mithril behavior. If Mithril-specific "
+    "guidance is unavailable, state that instead of guessing or substituting upstream instructions."
 )
 
 
@@ -1573,6 +1572,10 @@ def load_soul_md(context_length: Optional[int] = None, home_override: "Path | No
             # now injects the live section in Bot Chat only, so the copy is dead weight everywhere.
             from tools.bot_mode_probe import strip_legacy_protocol
             content = strip_legacy_protocol(content).strip()
+            # Existing named profiles can still contain an unedited stock Hermes SOUL.md. Adapt only
+            # recognized generated templates in memory; user-authored identity text remains untouched.
+            if os.environ.get("MITHRIL_AGENT") == "1" and is_legacy_template_soul(content):
+                content = get_default_soul_md()
         if not content:
             return None
         # `hermes profile install <git-url>` / `profile update` plant a third-party SOUL.md into a

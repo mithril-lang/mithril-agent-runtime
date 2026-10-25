@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 import time
 import urllib.request
@@ -295,6 +296,8 @@ def get_nous_portal_account_info(*, force_fresh: bool = False, min_jwt_ttl_secon
     A valid unexpired OAuth JWT serves as a local snapshot (UX gating only; the server stays
     authoritative). ``force_fresh=True`` always calls ``/api/oauth/account`` and bypasses the cache.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return NousPortalAccountInfo(logged_in=False, source="none", fresh=False)
     try:
         from hermes_cli.auth import get_provider_auth_state
 
@@ -322,6 +325,8 @@ def nous_policy_present() -> Optional[bool]:
 
     ``None`` is unknown (older mint / unreadable claim) and must not be reported as "no policy".
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     try:
         from hermes_cli.auth import get_provider_auth_state, _decode_jwt_claims
 
@@ -585,6 +590,8 @@ def _dict_or_empty(value: Any) -> dict[str, Any]:
 
 
 def resolve_nous_portal_base_url() -> str:
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return ""
     from hermes_cli.auth import _nous_portal_base_url, get_provider_auth_state
 
     return _nous_portal_base_url(get_provider_auth_state("nous") or {})

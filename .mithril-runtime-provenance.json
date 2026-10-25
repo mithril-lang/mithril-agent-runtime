@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "product": "Mithril Agent",
-  "sourceRevision": "38909f1e4a7fb079277820f214d3638b472f1c52",
-  "sourceTree": "842a6dc35c4b3ed1918371844114386629bffa36",
+  "sourceRevision": "c591bdf33ee6fc2a078745ce8e141f6f4432c116",
+  "sourceTree": "795dcc47aba7593bdd0438e36688c7137f570693",
   "publicationState": "candidate",
   "license": "MIT",
   "runtimeFiles": [
@@ -74,8 +74,8 @@
     },
     {
       "path": "Dockerfile",
-      "sourceBlob": "a245d55f391ec42d65bf9e2c38fd09c41bc0b051",
-      "sha256": "1aa1d2ab18688b340ec1290b684982e4e6eddf0b8686fa317bbc072f2ac23068",
+      "sourceBlob": "9ce73963686462df9919b9cac7ef8066adfa45ca",
+      "sha256": "ca9d340b5364632d7521ce77590f8b205b08f90e8da4d8df9f0a8d8ca4780cc8",
       "mode": "100644"
     },
     {
@@ -200,8 +200,8 @@
     },
     {
       "path": "agent/account_usage.py",
-      "sourceBlob": "477c99d3a1f6f2609899a100787cddd71676ce0c",
-      "sha256": "ee8e0c618df20293c4ee292f8c4260d2c7ce6bedadd876c24fa5c6cd4b2f7591",
+      "sourceBlob": "0a696e30ba4bae3de42d17306b1ca39323b88a28",
+      "sha256": "ad50ea5e2914fa6c8c774c2375d9311e2fc27bf6c7fccfa42b48657e67bfd810",
       "mode": "100644"
     },
     {
@@ -218,8 +218,8 @@
     },
     {
       "path": "agent/agent_init.py",
-      "sourceBlob": "3800d927ff6545286d47b389f5e978cd988b490a",
-      "sha256": "227bfc3127e60e292456777db2388a683a00d8c8a45a6e55c8fa82a9d1102e82",
+      "sourceBlob": "b8a6bbd7bd52c99aaa219be74adda3f9e87e7166",
+      "sha256": "f1992b7a04e8133dc66c4ad74c53a740f9bfd3f3fafa9fe5b6ffdc78985fa05b",
       "mode": "100644"
     },
     {
@@ -230,8 +230,8 @@
     },
     {
       "path": "agent/anthropic_adapter.py",
-      "sourceBlob": "bad91015b34ddfd4261b03e49e75c9ebb588e26c",
-      "sha256": "5def27c410cf4b2b0a29edbd4465af4f3a5a3115ebaf2e86850290e51dd733cf",
+      "sourceBlob": "daa8062ee293b2a71efa483bf8eab913420f25df",
+      "sha256": "c76497fb7035a66dbc6b15dc18fcdb764f107696a939958165f2c94295a8684d",
       "mode": "100644"
     },
     {
@@ -284,8 +284,8 @@
     },
     {
       "path": "agent/auxiliary_client.py",
-      "sourceBlob": "2de9e47b44eda9c39a7ca70c4b8a6f5277160c7d",
-      "sha256": "9ba2534c1f0b812a28e682d2e919ee6d5dd449ce1c2cb0b5b424985154dd84b9",
+      "sourceBlob": "6c77ce63373c943e69df9f3a9e13bec985c5bb37",
+      "sha256": "0aee202eb40831aef87f9be56c10819adde471f0b949175a482ec49f8f4c8f0a",
       "mode": "100644"
     },
     {
@@ -320,8 +320,8 @@
     },
     {
       "path": "agent/auxiliary_unavailable.py",
-      "sourceBlob": "9eac20412de7c5f26ed0028678ea8924d8956146",
-      "sha256": "edd6368c243d6d934d8cf6cf7ef124bb88849bb7a9319c7089dc30ccc26ec187",
+      "sourceBlob": "2245575d5980a41aaa5a750c5d19bcef56e228dd",
+      "sha256": "3357a5994a1b474f72ca94a46d5aea2f1dfc9eb351fe4a353f53e96e86283b78",
       "mode": "100644"
     },
     {
@@ -362,20 +362,20 @@
     },
     {
       "path": "agent/billing_links.py",
-      "sourceBlob": "3e98efd376fdfb3b8de9228be56468dc969aa8a7",
-      "sha256": "4693c79ad2c4a692ec8b95632b54c0c3efe5d12ba2304f8a8af7fcfd39e1b37c",
+      "sourceBlob": "03e61e9c8fab1b49bb45886bc617dfa3d41fa07c",
+      "sha256": "a06f005141c2c476332ab503d047f52d6348740a651157fd3788086288fab735",
       "mode": "100644"
     },
     {
       "path": "agent/billing_usage.py",
-      "sourceBlob": "e3fc1ba7af077bd842ea81761d24ffbfc04b36d7",
-      "sha256": "682bb258466966c4afd159edb17c829312fccc24c0c37bb5a811f40d26d359d1",
+      "sourceBlob": "94c4c3addbfb026c98ab0c5194d703d1816277cf",
+      "sha256": "bbdaabe17f435aa6ab8d471eb73f7adeaa96b00f2c1e27e26c66466932afda6b",
       "mode": "100644"
     },
     {
       "path": "agent/billing_view.py",
-      "sourceBlob": "ee603cc56e7121b96a5c8038cc84bae78bc37b01",
-      "sha256": "98dba1d561647afeb60973d8624bfc3ee0bec0d10fef0ebb0c914f4b4e0f566f",
+      "sourceBlob": "a574e568af996dfa6a1565a01193e2d51c4dd20c",
+      "sha256": "157108332aff96a0b0d557e014f074a6156b955c0efc3d9aa7b8ae3566534660",
       "mode": "100644"
     },
     {
@@ -398,8 +398,8 @@
     },
     {
       "path": "agent/chat_completion_helpers.py",
-      "sourceBlob": "0e0b7c1006ad9af71de885099595c7df1cf1f163",
-      "sha256": "fb64004ef713047dc5b78ca72be4ff8b5703fc0d49655e1c6c4f9fbc30fb8315",
+      "sourceBlob": "d751c8cebed5573859af925b5ee3125097c2cd6f",
+      "sha256": "53709ea18c7553cc73b0b0f38115842e75869d2abbd664345ed0dc87eb07e2eb",
       "mode": "100644"
     },
     {
@@ -428,8 +428,8 @@
     },
     {
       "path": "agent/client_lifecycle.py",
-      "sourceBlob": "bf65b6edafe03e76c9f4e567d6689e73352da489",
-      "sha256": "5333b2dd5c96427996f060e9c01f6ca86d882cb89a59f60482e2281de8b66d5f",
+      "sourceBlob": "1ed18021f543b0d9a9a008a4547fb088618050d9",
+      "sha256": "642167a93e599b0bf76b138942bfee90994c44a53a32cb2c4af0c6573107fb7b",
       "mode": "100644"
     },
     {
@@ -554,8 +554,8 @@
     },
     {
       "path": "agent/conversation_loop.py",
-      "sourceBlob": "74ef6786223fec4a43340a1ceb3d79ab6b79d78d",
-      "sha256": "03ec14765382da39d8b8fd5a10c1ed19235ea4d0277bf10a280b763c2cbf4576",
+      "sourceBlob": "16c5a49ecbe83e64692d9adc4ed59ad7df86b596",
+      "sha256": "d1ef08428fb32983746f06562f18c0e44f6b7bede86dbcaaecc84a9bad8eb39d",
       "mode": "100644"
     },
     {
@@ -572,8 +572,8 @@
     },
     {
       "path": "agent/credential_pool.py",
-      "sourceBlob": "cd64a15a1a7a1a3cbfca0b0d41edda6829980c75",
-      "sha256": "c5a22bcea07b4e38c8a6c51f888e0825a0090695b4362342e3227ca3d71f1c4f",
+      "sourceBlob": "f44ffa30d10766f3abd109025a8e20fb5febf7ab",
+      "sha256": "70de36177b646372a4c970be18023be4fa9a1f7ee56a114017bc37a241304b70",
       "mode": "100644"
     },
     {
@@ -974,8 +974,8 @@
     },
     {
       "path": "agent/model_metadata.py",
-      "sourceBlob": "e68aeb5cb2ed53ec1baa180cb6903ed0c9ba052d",
-      "sha256": "4199aadc2ad65ecc7be51a1bef2dfa32c638921befd49726bc4c2c996a130381",
+      "sourceBlob": "8c2c9e8e2713f1c2b7ddcf84b944cbf249bb9c57",
+      "sha256": "0187f5b11b21917731ff39efe3aee3abc19614c4ad354139241de0e678a557ed",
       "mode": "100644"
     },
     {
@@ -1208,8 +1208,8 @@
     },
     {
       "path": "agent/prompt_builder.py",
-      "sourceBlob": "4f1b075edf847f1ecf4198e9304b578ad00d2ae5",
-      "sha256": "45d73a6c91bc3df99525535886e3aa19b1f30bd3006de5737ffc8a1643a1cbdd",
+      "sourceBlob": "e645a42cf8b3d178702ee45d06d6d3d12ec8e2e1",
+      "sha256": "617c16b9f8f545d1b26d20064db4e07745254e2d195788247194a06ed3ee1450",
       "mode": "100644"
     },
     {
@@ -1544,8 +1544,8 @@
     },
     {
       "path": "agent/subscription_view.py",
-      "sourceBlob": "9d390963d81b17ec94244eee4fe3c6df79fa2e74",
-      "sha256": "27fcc4898957196da433f61bcaf1e3e56c3ec727decad384b66ccac8af24f678",
+      "sourceBlob": "9ddcc79a4e18bd8ab7d51a498c9d10ac6b5bf6b1",
+      "sha256": "ba09fc1e1dd8b868eb269cae33a7d56fcf1d7c9e0da74c520dff9ce39d9f64a4",
       "mode": "100644"
     },
     {
@@ -1556,8 +1556,8 @@
     },
     {
       "path": "agent/system_prompt.py",
-      "sourceBlob": "c010d59bc4fef545225e9009a3e458655f889b2a",
-      "sha256": "3b2c40033b7ad01f92c0343e1fc6b00309709d304ab60f63fc9a14f145728f7a",
+      "sourceBlob": "dbbf36c4ebc56f02904656e25bae00c870f9d68d",
+      "sha256": "86eda43e13d452f75bbfc32d4fc3641bd769fa856b94fb70dab67af37e2df551",
       "mode": "100644"
     },
     {
@@ -1736,8 +1736,8 @@
     },
     {
       "path": "agent/turn_api_call.py",
-      "sourceBlob": "36d8c977aba42f561201a66d0e301e792e930730",
-      "sha256": "8a30fbfd7e91f06b9b688be5a5b20be9c62c4114aae5e3bd14c0adf5ff23f16b",
+      "sourceBlob": "3589c0172c4db99c0ca2dd92ee44d1f009a27aaf",
+      "sha256": "6581274ca58d1228c5e43a6b179463fe28bf894e89969f0e5cb2b91e3aa6816a",
       "mode": "100644"
     },
     {
@@ -1850,8 +1850,8 @@
     },
     {
       "path": "agent/turn_recovery.py",
-      "sourceBlob": "5fdb162785355e88bf5c483ff8d6d9b0d08c2d5c",
-      "sha256": "aed06c9c6f44df95da421296d266638b9f6af3474739ba90f2b7e80f22b0df03",
+      "sourceBlob": "82875b5c5be31dba2efa08d16a4a7b97f5a89212",
+      "sha256": "7fbda0bb68a1915567497a816953517399e3f0091e7c2cc7dab5e51a0c965843",
       "mode": "100644"
     },
     {
@@ -1928,8 +1928,8 @@
     },
     {
       "path": "agent/usage_pricing.py",
-      "sourceBlob": "4a0873096b509147f4313279e41b487ac8339891",
-      "sha256": "08340944c5f3be79a3104b96b242787c7b5690fde752375f8c54a8849a0df9e1",
+      "sourceBlob": "82a0e4922aec2ffea1ee1961bdb9c0e3c505eae0",
+      "sha256": "811e483a1dad4e44626edea661c75030962c77c317ea56906584cc4ca5d009d8",
       "mode": "100644"
     },
     {
@@ -12110,8 +12110,8 @@
     },
     {
       "path": "apps/desktop/src/app/session/hooks/use-prompt-actions/utils.ts",
-      "sourceBlob": "59485978afa6de6adb790bf3c99dea8fe4bf3aad",
-      "sha256": "328522c58d48cc2dbb52b7b0c84dfb646284a2f2f2b95c557c009712fb4d5db1",
+      "sourceBlob": "22b53e9f5393cd581dc6605fff19c917823dab37",
+      "sha256": "2b8701b49fed2534a37dbebef8966d706f115fe7894a292d451212682187c942",
       "mode": "100644"
     },
     {
@@ -23276,14 +23276,14 @@
     },
     {
       "path": "apps/shared/src/gateway-contract.generated.ts",
-      "sourceBlob": "e0d7a2d1d15f161901572555925dc1aeeb0707de",
-      "sha256": "8816501ef5e6eb5fc005157c6eeee7714785ac868a34357c10555580e16bb247",
+      "sourceBlob": "fbc43ee3f444d90e6ab985c9bb0e4527c50dc40a",
+      "sha256": "c9056c70be6343bfd555b904560f83cc45fb7a2fa5716b4a00e3636a3cf350c2",
       "mode": "100644"
     },
     {
       "path": "apps/shared/src/gateway-contract.openrpc.json",
-      "sourceBlob": "875faed282148a54e870f7ad1a7ac63cc23e164e",
-      "sha256": "89c9433f67d12dda516d4d02f65f7716b3c1719cb8baa48625d0706dc31fab7e",
+      "sourceBlob": "5043600745c8862c8da6faa2f5334bcde5e6315c",
+      "sha256": "159970e99ea28607038ce43e728153e3e9dfafa6518561b7f9ff04090751d8f3",
       "mode": "100644"
     },
     {
@@ -23881,6 +23881,12 @@
       "mode": "100755"
     },
     {
+      "path": "docs/operations/mithril-account-login.md",
+      "sourceBlob": "3068a0a34978b639d20615ea1a22dfd2cada251c",
+      "sha256": "6eacb4d3454a98f6177abd76dbd80d40c1940861f2b8f261a34a713b8d33c8d8",
+      "mode": "100644"
+    },
+    {
       "path": "eslint.config.shared.mjs",
       "sourceBlob": "827f2fcbb6f393cc7db5f1e6cc2c3c6108188201",
       "sha256": "9ec870b511f516477a6f032349516432b78b9e94cbb963348c65a3a564e80e8b",
@@ -24134,8 +24140,8 @@
     },
     {
       "path": "gateway/kanban_watchers_dispatcher.py",
-      "sourceBlob": "8c58fcb60c79489e384fce5eca6ecdd7093a3f2c",
-      "sha256": "670c866569f862d13a448a87a30f2271de2745a7a41c37b45bd396b0522b86f1",
+      "sourceBlob": "305a3ca426171f455611d163c68354f0c880da3a",
+      "sha256": "9e431c15a32f82ff0d6cb51f01250b72c0324557cd486f86e8a901ed0b923839",
       "mode": "100644"
     },
     {
@@ -24146,8 +24152,8 @@
     },
     {
       "path": "gateway/lifecycle_ledger.py",
-      "sourceBlob": "0c65956ea4fc7c36218fbea834995d91acf1b2b9",
-      "sha256": "9333df09017e5f0dfad4ea469b07f34f85b39e52cb3e7f8cadf66439df0ef87b",
+      "sourceBlob": "f006734af85f6449c16eeea43167142f114e09b1",
+      "sha256": "96a1419b0bf690f90f85d1651995e037bbd0980b2e76d73fb207286d6780d223",
       "mode": "100644"
     },
     {
@@ -24434,8 +24440,8 @@
     },
     {
       "path": "gateway/platforms/whatsapp_common.py",
-      "sourceBlob": "1ac99c8839aa44d8021dc79a065f0d7ea0d3fc2e",
-      "sha256": "3ad51b589a4355716cafa057a6f951b669ba2cc43134fd0204f36042327a19ac",
+      "sourceBlob": "7d9749445d6f14aa8934877f550c85c113a94b52",
+      "sha256": "2cb00ed1d78b8b719b70dfd60a3b2593f48af150276142ea6254d8a3ecabd253",
       "mode": "100644"
     },
     {
@@ -24476,8 +24482,8 @@
     },
     {
       "path": "gateway/relay/__init__.py",
-      "sourceBlob": "70434ea4d1ac85d6d9116e3ea19ae577a98b6181",
-      "sha256": "3ba9d3f82a3123a2ef0c1e04919e183081b4ea98ad3aeb4746d8edc2cb537094",
+      "sourceBlob": "5a23a0f7dda7470bf852b42d70d942aed9b801c2",
+      "sha256": "f93eb935c23e550a12b68af0d733ffce515bce9bcdea2b3eb3ef4bc12eef6414",
       "mode": "100644"
     },
     {
@@ -24494,8 +24500,8 @@
     },
     {
       "path": "gateway/relay/command_manifest.py",
-      "sourceBlob": "6fd8ec2cf9ff8ad17be11fe926bd7153f3acebd0",
-      "sha256": "45d8ce8fe535abaca9566bfb30cac60f8408b7e0665259810735dba00083812d",
+      "sourceBlob": "b0a9f971a822dc280386af74752d6a1ef898f8b7",
+      "sha256": "8dacbb687c08dbe55deaff7743b23223cced31e23d18b135d93acf3aaec79577",
       "mode": "100644"
     },
     {
@@ -24512,8 +24518,8 @@
     },
     {
       "path": "gateway/relay/media.py",
-      "sourceBlob": "4b957f41659123b9b86de1b64a510adef7f81bd7",
-      "sha256": "eab73484e82241509fdcf9630c166f2364d99218e5eb59061f332624e288e4c7",
+      "sourceBlob": "46a23929af5576612378f1f1d8e4fd719ce615f8",
+      "sha256": "3bdf92dd9dd0690d24bd6935a59ead1b5abe64ad1f300e716ba5eb0bd13b06af",
       "mode": "100644"
     },
     {
@@ -24554,8 +24560,8 @@
     },
     {
       "path": "gateway/run.py",
-      "sourceBlob": "620fe26bfe9730e85871f680e81bd8608dd4577f",
-      "sha256": "c1184c3dd38d42a08cfec0a29538382ab33fe03d948faa02d607d17148aa601a",
+      "sourceBlob": "1326e7dc4fe147c03e251e2f29ce9d0de49624ab",
+      "sha256": "fa8e6d3eacde68f5adc7cf67d02d1f92c002960f4d7ccc78f549222030543f85",
       "mode": "100644"
     },
     {
@@ -24626,14 +24632,14 @@
     },
     {
       "path": "gateway/run_inbound_unauthorized.py",
-      "sourceBlob": "3ac5523d182ae80c53fb79363d0e4ab40a4263e9",
-      "sha256": "016bfe2bd985ec88633867e993699cd52e7ab53e7e87bbd4c029cddcbdbb05bf",
+      "sourceBlob": "2f51ec084d9d4678f9b583b28e7ff3990d103cd4",
+      "sha256": "1aff3c66c1faea44c78afb3a8f4d24692080eba120e3d8236ff29e0f9be86e18",
       "mode": "100644"
     },
     {
       "path": "gateway/run_notifications.py",
-      "sourceBlob": "ebc3e900ab2a380c99120acf374c7d89c9406289",
-      "sha256": "bfc53530fd3997ccc31f12e3c4423b7bd3a2dbd3c6455360f4a18d069f081425",
+      "sourceBlob": "2add390cf88b55e8885e7159a00ba12701d1d61a",
+      "sha256": "584af781bdf052de22c17ff11c1a03c39ad16f69e5fa5640e6b675634da1e797",
       "mode": "100644"
     },
     {
@@ -24656,8 +24662,8 @@
     },
     {
       "path": "gateway/run_startup.py",
-      "sourceBlob": "c38fe1c7dbca3523cdc6aaa47ab91983d87c8e90",
-      "sha256": "c6f959d546fa2b3b8d6b8b395d076905772e8d23f4248f856d4bdbb3ddc639d3",
+      "sourceBlob": "1d6d910f43f48c05730604df53ad41503b8ff588",
+      "sha256": "6dc7615b0bd7e2791f4945af9bed6b6dee228bae2bc1f92632a51193cf199e9e",
       "mode": "100644"
     },
     {
@@ -24812,8 +24818,8 @@
     },
     {
       "path": "gateway/slash_commands.py",
-      "sourceBlob": "1489cac88ef1f616dd34fd6792806e3602deb06e",
-      "sha256": "a01076382ce9b055bf7bb12ae4b7d6acd03590f457760d63b329157e9c5ae96d",
+      "sourceBlob": "2228d2fb9d29c941c33a8fd5f6a8c447d08850bc",
+      "sha256": "9b7bbb8960d70dfd12e305c8a47442eceb2e2b0d81ab363f954c454ca8f52464",
       "mode": "100644"
     },
     {
@@ -24830,8 +24836,8 @@
     },
     {
       "path": "gateway/slash_commands_login.py",
-      "sourceBlob": "231bce1482db3532f43b4a5627de84146991a87d",
-      "sha256": "8580e0d9b5514dd1b75a0974cddec8d9b92c9f3edfa08a15361038ca7a48f48b",
+      "sourceBlob": "f1b4a703d1e9f196291859d699ab4cc37f5190bf",
+      "sha256": "b3cbd443a95ff2d9635c6812659680def3674736149c81ec0187866a08731657",
       "mode": "100644"
     },
     {
@@ -24848,8 +24854,8 @@
     },
     {
       "path": "gateway/slash_commands_status.py",
-      "sourceBlob": "7c60eba99081425a3ce3a80c143cc966b3d829c6",
-      "sha256": "1b372a14d0c3b06358aef2bf3e914639e4ef9ec18ff3bf2d5cd1af7fc71169f3",
+      "sourceBlob": "8fe205045372b0f5701d73f47e9c1bb32eb2c2bf",
+      "sha256": "5d255c32dede968002c5278464b2ec9d11362555afc3d5082a13f46bf7cc0292",
       "mode": "100644"
     },
     {
@@ -25028,8 +25034,8 @@
     },
     {
       "path": "hermes_cli/_startup_fast.py",
-      "sourceBlob": "658c106467bcb63942e186b0dadea07d6ce0b7ea",
-      "sha256": "aba4c16c207f08d5c8cd0306394dbc0da221a445bf0b4bcc9ddb6acfd523f55c",
+      "sourceBlob": "8270cc9ecff3aacff7ab979eeb04c3361a51c4ab",
+      "sha256": "c50a5a995f219019aa420803a18f0ea64a8c03b539e881fe7e4f686c68037140",
       "mode": "100644"
     },
     {
@@ -25070,14 +25076,14 @@
     },
     {
       "path": "hermes_cli/anon_auth.py",
-      "sourceBlob": "23fa9d33654953364eba00f37946c1550dfbf7e3",
-      "sha256": "6f820ce7b59d2f812a8f17e65193bee07e634115c5f2731448e2d09d520a4b1f",
+      "sourceBlob": "9d7477612af8f3293d61110b16b5c95105e6f1ca",
+      "sha256": "bed96aa40ba38ab4abc36a7697e3dd0d3a0a19116470ac8ca95bb4e6e02ae6a9",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/anon_sign_in.py",
-      "sourceBlob": "d1238c4bfb9f38c9fbe0a1261e93da09e8ac7df9",
-      "sha256": "9cec7e05d161fb525197e7d227518a8c7e2d555d7b2ef93ac8cc626129963ec4",
+      "sourceBlob": "cb574ca52dbebbb2c1376e10134d9464451a300f",
+      "sha256": "6982b24a123268552ba0f465c8d74ce8e31b1586eb230aa4d651c76073dccca7",
       "mode": "100644"
     },
     {
@@ -25118,14 +25124,14 @@
     },
     {
       "path": "hermes_cli/auth.py",
-      "sourceBlob": "3c5ae498919b643bc4c08e5d7f622906d79c8b1d",
-      "sha256": "15fc74ef51f949b7dea0f9b447791046e2f4d2bba01883885b6d4420c1b19479",
+      "sourceBlob": "3c38df25798b9ad10bd4019d14c3ba2c7bba82cf",
+      "sha256": "585868dfd365f88ff0b657301135ded85462786b1323a5ce5548f86360fa3653",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/auth_codex.py",
-      "sourceBlob": "2a57e0c29d2215e5dbf692012d76ac449bceab34",
-      "sha256": "85c4644c052f5f5b3d4dc0f862592b5f13f286bf48d4d239015c3c74ae3f8e91",
+      "sourceBlob": "9d41bb974da93b1d6b1b7b18006c82fedb6e0645",
+      "sha256": "d939c567c511cac2dcb8ac12730b43acb344b3d6803cc2c9ac8e788f329550f1",
       "mode": "100644"
     },
     {
@@ -25136,8 +25142,8 @@
     },
     {
       "path": "hermes_cli/auth_commands.py",
-      "sourceBlob": "75d52b7aa4d5230982ae6da78d55e7a287fd2780",
-      "sha256": "16c18f21402ac9940815450a41854cfeaadad6a34bffeb98d27de648df749d1a",
+      "sourceBlob": "bd4b61928adb2557975bf2aaa367e41db437c337",
+      "sha256": "c23842530df659df0f0b28f4e20f7817e2d1c3d415e3d9aa2f2c26b20785134a",
       "mode": "100644"
     },
     {
@@ -25172,8 +25178,8 @@
     },
     {
       "path": "hermes_cli/auth_nous.py",
-      "sourceBlob": "9e79f39e50a27e60e089ae2af4d9d4cee86e59ce",
-      "sha256": "3faaca4a44a8d00c236c184f071599cdd31cb8e9585aa72f05cf10405fd4c3fb",
+      "sourceBlob": "8f2dd43b9cf5171bb10894c7be49f7331048e026",
+      "sha256": "69451e592cc25c3546a090c6ba7a483f907eb93e017534e179a2e0b7d79a5d9c",
       "mode": "100644"
     },
     {
@@ -25262,8 +25268,8 @@
     },
     {
       "path": "hermes_cli/banner.py",
-      "sourceBlob": "6fff6328e27961027e689b94a13ba38daf35173e",
-      "sha256": "2b0eb4c14efe71d80962d047b3a149060e2ac2e20abfc3c64b71af9ddb0a8fdf",
+      "sourceBlob": "b35f4bef75de5e9cfe31b19a248acbbec76aefc1",
+      "sha256": "e91cb4724ede6333b9ea74708c4d5ede41fadb56fad57cc88a87ee2dce686fc8",
       "mode": "100644"
     },
     {
@@ -25346,8 +25352,8 @@
     },
     {
       "path": "hermes_cli/cli_billing_mixin.py",
-      "sourceBlob": "f86ad3cfdb40421af27ebe2e8139d6a323b438be",
-      "sha256": "98fc1b6434dcaaf00f5ac3d20a73dcd9874cd12c9795f73d3f3be473aa47ee4d",
+      "sourceBlob": "5f7413a36003e2e813788516d35cbb969777d54d",
+      "sha256": "f864342c3bc539ed28c7f0f767a73e06517f45134525af13fc5cb1bca2ff4adb",
       "mode": "100644"
     },
     {
@@ -25364,8 +25370,8 @@
     },
     {
       "path": "hermes_cli/cli_commands_mixin.py",
-      "sourceBlob": "1bbf4c75f94413e1b3dd4383b0f00c73e590ac05",
-      "sha256": "10f8a18d932f9a4be458a83e054937c17c7b9dc9f9c4d25c19067f357b198164",
+      "sourceBlob": "5c0b3dee943772873e81d79668a904fbcc61598d",
+      "sha256": "5fbd89326f0708e1ffc29c66dc83075b844b02ca9e2a7da9a9c95727f2a3df71",
       "mode": "100644"
     },
     {
@@ -25544,8 +25550,8 @@
     },
     {
       "path": "hermes_cli/commands.py",
-      "sourceBlob": "0597fd616a6bdb1e20c63b9edd91626174425a77",
-      "sha256": "ef6678bad95af19011c3e99144658bd1df62c87b514dc8d95f50577dd537570f",
+      "sourceBlob": "a1e10bd5b7e6265ad0d7f641036cc42615c7574c",
+      "sha256": "5f7ed421d2b9a89554bd5e0da453bf79f981bec75731c4d4a519baca36193859",
       "mode": "100644"
     },
     {
@@ -25568,8 +25574,8 @@
     },
     {
       "path": "hermes_cli/config.py",
-      "sourceBlob": "26e4ec7117312728e610e9313b7099e628580e24",
-      "sha256": "d13588bb376ac915349e344ebb86f23b1684b6d2409d6f35216184ebb6d471fe",
+      "sourceBlob": "143c8f06aa3cbffceabd78a11a7bb9afa5199583",
+      "sha256": "a6a67b1c385565d893315421237ebf9f61a01f80756f152cc9a859ec9d635ff4",
       "mode": "100644"
     },
     {
@@ -25580,8 +25586,8 @@
     },
     {
       "path": "hermes_cli/config_defaults.py",
-      "sourceBlob": "6e5749f914e0a5f06b97ecbf4e23b8a065413924",
-      "sha256": "807e1334c7ba8911172e2cb516eb7e15e1820899c3578cb087bf71deeb9c04d7",
+      "sourceBlob": "f6e3a5c96a77f387717fb10ba7edbae2ce010f86",
+      "sha256": "491a657b94552a543b18d03b915fac7ba8166b00d35f449bfbbccca9aa17cea4",
       "mode": "100644"
     },
     {
@@ -25646,8 +25652,8 @@
     },
     {
       "path": "hermes_cli/copilot_auth.py",
-      "sourceBlob": "9a31a47fe595c8a8ea61ca500f97a01e1cf75250",
-      "sha256": "14d1f42f1d03d2dbf120ab03625248c1bc4d3462f05119cedd9e11defb886ef4",
+      "sourceBlob": "8b98755c47184b8d04ba6f2eec40e4139b0424b6",
+      "sha256": "cf5d6ff5ff1feb13713d9b1dda151dfbcf18ad8aade113e9d3236c74225b1901",
       "mode": "100644"
     },
     {
@@ -25772,8 +25778,8 @@
     },
     {
       "path": "hermes_cli/dashboard_register.py",
-      "sourceBlob": "a6d2d1e248f10c9c8002224e6b068e398c5606e0",
-      "sha256": "157239a131bad6387baa85faa15cd373ecd33dcb05aa0433b1f49443bb4b7811",
+      "sourceBlob": "81b7d44f09e4c7616c8a20501bf203dfe449a4e6",
+      "sha256": "bb9f7e3bdbbe4cfb75dc5663fb21c4f88f69e03c75c85b319d79c6ddef03e4ec",
       "mode": "100644"
     },
     {
@@ -25796,14 +25802,14 @@
     },
     {
       "path": "hermes_cli/debug.py",
-      "sourceBlob": "2c055698e91b322a381a250730e2f1e80aa29d9d",
-      "sha256": "d52aaf73f1c146bb839dd65e09000f9e0e72bc20c331cca823f1fe7e61680914",
+      "sourceBlob": "a433aa24e33baa6093662bff7585176066831e4e",
+      "sha256": "4b98648596cd4085d4ff4745891b78cbe26eec8246402ad9ebca32991d592e9c",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/default_soul.py",
-      "sourceBlob": "3a194050217571f6b93cb29c6e852ffbcf31d5a5",
-      "sha256": "b65192a631f0011fcef245c94d9741e0c716defe605d3edfd0e59f26da211d2d",
+      "sourceBlob": "f61b48a23f2326103bdbd2a8f36b01b89b74f358",
+      "sha256": "d2198725cdd5e91117de6e7163be33b987958cd38b7085af214faac619b99174",
       "mode": "100644"
     },
     {
@@ -25820,8 +25826,8 @@
     },
     {
       "path": "hermes_cli/diagnostics_upload.py",
-      "sourceBlob": "6bfdc63f88cfe815aaaa4e6fde05488cf09f09d1",
-      "sha256": "2f3cf1f57be4a462d77f00545814cad84f198a880bf26131ab9d1ec436debd1f",
+      "sourceBlob": "f6f73b2adb16b9376258beddb4238cf91ec1cfaa",
+      "sha256": "a72789e2bac59f42ad41865a31cd7094e4a59a268b819d269fbfbf432c1a2c22",
       "mode": "100644"
     },
     {
@@ -25922,8 +25928,8 @@
     },
     {
       "path": "hermes_cli/free_tier_bootstrap.py",
-      "sourceBlob": "5ccdba1ca8a3edb99f3dd342469e770871ea94bf",
-      "sha256": "58b1df80cd16e957e2fa3260cd86f64b26e9d05b46eee64dc9e022afa8c08fce",
+      "sourceBlob": "40098528e69321f790f7dd8ac52699d34b0f9737",
+      "sha256": "4325e65803dc1f93cc6112d7649e7e0e8fe52363780ac78da2037b2ec7163574",
       "mode": "100644"
     },
     {
@@ -25946,8 +25952,8 @@
     },
     {
       "path": "hermes_cli/gateway_enroll.py",
-      "sourceBlob": "7ff31fb488e17481d1d892a91f9d4a7bc966d3ff",
-      "sha256": "a165fe57e7fd88bfd83e96bee1cb611928dba7e1ae53635665601c5fd044caeb",
+      "sourceBlob": "559342650d30e20f0893b3a57e983891b17345aa",
+      "sha256": "8f02e75e3f3a2ebc5c3eafea36e555aeaf41673f2cca7c14afc9365db775c329",
       "mode": "100644"
     },
     {
@@ -25994,8 +26000,8 @@
     },
     {
       "path": "hermes_cli/gateway_setup_wizard.py",
-      "sourceBlob": "9f702a1cf9c578a9835844cfade299788c617a3c",
-      "sha256": "c36ce474a4bd499e29b8d78b1dbce7d7119696889a53937aef1c0ae1f64f8f82",
+      "sourceBlob": "2e64fbfc0b2fc2e176f096a5633a2013dda84fee",
+      "sha256": "95f7fddc13f46380a16b23da146a2f463fde3feeed473dbcaf48201b945ef720",
       "mode": "100644"
     },
     {
@@ -26096,8 +26102,8 @@
     },
     {
       "path": "hermes_cli/inventory.py",
-      "sourceBlob": "6c6740beaad380bf6aa9f5b6c06195dccd084200",
-      "sha256": "c25cecbd6f86e1c7f03e86b15f6f2d17f81e2ee724645e2d60ab0292c349fd43",
+      "sourceBlob": "cc680fa560e5c84933b09f915bcc85f5b088b70c",
+      "sha256": "9029ac059cc612fdb17aae265cf317ce6e3344715ffc571f0d7d0fd8d85587ce",
       "mode": "100644"
     },
     {
@@ -26264,8 +26270,8 @@
     },
     {
       "path": "hermes_cli/local_runtime/catalog.py",
-      "sourceBlob": "09dd85a5ae6d48a5070d614bfc7608cfb68a0da9",
-      "sha256": "3ea53544c5bff03ce2be69513e1d0ef4811c10ac12fe92616440230d1558ce72",
+      "sourceBlob": "0579113a4ac026d1f655e0ffbb5a91abddb48ded",
+      "sha256": "cf796a7662998504306811c4af3ceff4098da2b26df8e988285ab10bc3864e6e",
       "mode": "100644"
     },
     {
@@ -26372,8 +26378,8 @@
     },
     {
       "path": "hermes_cli/main.py",
-      "sourceBlob": "db4e60f5913f1f0f2861433544de96493520a92b",
-      "sha256": "eacf7cd515b6667dff0818d4215765a1f73bf48020ad28e3201449b327551df2",
+      "sourceBlob": "c3b7292d9779b1c4ba897c867fb1fca7e8deefb6",
+      "sha256": "994fe64606328b86b200ff89c24b5be136c038d68051da1f8d36bdbfd5c917f0",
       "mode": "100644"
     },
     {
@@ -26384,8 +26390,8 @@
     },
     {
       "path": "hermes_cli/main_dashboard.py",
-      "sourceBlob": "5a5ca614f4171b1da655ce7c8b13452b300c0262",
-      "sha256": "0aae55aefa88d74e840c2cd861129271612bda33321fcee7e5899e802f8000ee",
+      "sourceBlob": "0f581a558293a5f3272a6b1eb7a5be596af9f85e",
+      "sha256": "1844433f6c127973db7ae5ff1489da5b885b56d366d02ada8e302e67ae561584",
       "mode": "100644"
     },
     {
@@ -26396,8 +26402,8 @@
     },
     {
       "path": "hermes_cli/main_desktop.py",
-      "sourceBlob": "6a506cf7db09b9403544134ab1bea1207c147c80",
-      "sha256": "4f508f10bb09d652c179ad376ba4250271672ccfbb02bf316cc30c721a71c076",
+      "sourceBlob": "1412057a873dd17270747dab329680fbd95bbfc1",
+      "sha256": "a8dfb74d151b621607b6cd2f376d4863a6d7eb7ceac74bc8365ba568edc10c6b",
       "mode": "100644"
     },
     {
@@ -26408,8 +26414,8 @@
     },
     {
       "path": "hermes_cli/main_platform_setup.py",
-      "sourceBlob": "f72db22199c63c749ce54e5c6315e59fdf1bbf6f",
-      "sha256": "4e2e7c14556724fb99d163e98ce1e0bc8d1a70c112218cb8db756a08c902840c",
+      "sourceBlob": "a3faefdb6c18b500cf2181fb73331124844a9e35",
+      "sha256": "e95e4ed695dd05af8e243902db25b0c2e8f671c65ed78c0f555cb7b87f5359a4",
       "mode": "100644"
     },
     {
@@ -26516,8 +26522,8 @@
     },
     {
       "path": "hermes_cli/mithril_account.py",
-      "sourceBlob": "9829c47673b5c642e57e61ba9fe24aa439ade462",
-      "sha256": "64dd76a471bf45ac99ce932adbc4cfadc1ced26fea278e243f87719f4de2dfe6",
+      "sourceBlob": "086f68fb400e4727e7ac97d7c25af037009178a9",
+      "sha256": "4534be1b37f7c9c7c0123defba43a83ef4fe2e080f658d0bd501fa80aa4c9406",
       "mode": "100644",
       "sourceRepository": "mithril-lang/mithril-fund",
       "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
@@ -26525,8 +26531,8 @@
     },
     {
       "path": "hermes_cli/mithril_auth.py",
-      "sourceBlob": "d11693f1a16a6f6c2a20575a3356ea0ca65fec13",
-      "sha256": "0fab595e56367486df8c30d44ad8cc323d91a13a52dac20f03908eaad22c8139",
+      "sourceBlob": "868ec3913147694699413db92f499767e6e4b38d",
+      "sha256": "5641fe1a478894573a0e967a78f41914719223d717bdf66d6d649ddc6d9cd521",
       "mode": "100644",
       "sourceRepository": "mithril-lang/mithril-fund",
       "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
@@ -26546,8 +26552,8 @@
     },
     {
       "path": "hermes_cli/model_catalog.py",
-      "sourceBlob": "4a94b1316b80190ae286bb5f378b5c0196748141",
-      "sha256": "ceb014b614f3813a261e2b904c897d80997b5dc86a18960aa7f6138a5fcfd2a5",
+      "sourceBlob": "c39c9575cd6acbcd67b7209d4e90b0deec876902",
+      "sha256": "7947e38334530e13a5e97fefbe1e2ca8c9ad1940eaff450bd72a056ec91645e5",
       "mode": "100644"
     },
     {
@@ -26582,8 +26588,8 @@
     },
     {
       "path": "hermes_cli/model_setup_flows.py",
-      "sourceBlob": "3dbc4e8aff54055c3852653c17d92b63c45c2e89",
-      "sha256": "61e3f56837c497d964f486f3543c4e047fa9695c646658ac082bd9efa8baa0de",
+      "sourceBlob": "9a294ed28b7750615d44e8ddfee7dd901a66582b",
+      "sha256": "318f1601ca3c0d3c6a21576c157f0bd1d105f3fc43244d5ff373ff5417f2fa7c",
       "mode": "100644"
     },
     {
@@ -26612,20 +26618,20 @@
     },
     {
       "path": "hermes_cli/model_switch.py",
-      "sourceBlob": "d0c0e3b5a4dfefb0bdf7325030fa51c380482e66",
-      "sha256": "d6884a3a1314158e4ac3619be6d8b6b82295f8c356a8033579d08c0353007763",
+      "sourceBlob": "2cdf9bd925fff596b8c9a99993afd3e70950e954",
+      "sha256": "4f85aefea977ee6670396e8ca5fbe69446cbbbb047d5ece10ab06eb507ad3f7a",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/model_switch_providers.py",
-      "sourceBlob": "292e9c9baced2945acfbcfb27d8d488e0ced2f41",
-      "sha256": "49f2ace9e229ccb9e421a7955398b284e07db60e89e3adb0f6cf0d849e8d3cbc",
+      "sourceBlob": "202f76fb167ac7c824897e7fcc8b7e1c37f2ad63",
+      "sha256": "f53834aebe4fa2b5dace38c8a7b5cad5b033989ab79bcf1835f095eb01cb7089",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/models.py",
-      "sourceBlob": "abc390a2eaedd0e90036dab5fcf82bc6bcf759ba",
-      "sha256": "8de095ce670b9c4f65a11c8d11ff0e5c6ea79988a76788823e8925d9ca847ef9",
+      "sourceBlob": "4ed5d207769ec61904056301512d9018e807dd86",
+      "sha256": "6c241ef8bfe131767ffb205dd654757b787ba5fba6a45bdb2bd1d3d3da8d16bf",
       "mode": "100644"
     },
     {
@@ -26648,8 +26654,8 @@
     },
     {
       "path": "hermes_cli/models_pricing.py",
-      "sourceBlob": "8409af26d179c5dfe8de654db7ef4937eb978d8b",
-      "sha256": "6a585d43a6e84810c342853e40f11c39499e1453d53258cfc4023848888172d4",
+      "sourceBlob": "1611490781eaf54f50592663d57690f4f5b865ca",
+      "sha256": "76505581a98cd9efe1ddc96e747ad2f34e8fb89119823a0fd8da145a2c2084ef",
       "mode": "100644"
     },
     {
@@ -26660,8 +26666,8 @@
     },
     {
       "path": "hermes_cli/models_reasoning_caps.py",
-      "sourceBlob": "7072de677efae951ed8a41be1bb9128d8e02dde2",
-      "sha256": "61ec96e3b7269494de5088b1babe3a831d26c27edf7253122c76b0c423d23834",
+      "sourceBlob": "1d1e2cb7e8d0bd7265cd2c2374b187be9c9a9826",
+      "sha256": "e9356ff2f83503e647451b738928f163a564e4852776667632b5f352129ed72e",
       "mode": "100644"
     },
     {
@@ -26672,26 +26678,26 @@
     },
     {
       "path": "hermes_cli/nous_account.py",
-      "sourceBlob": "b62ebfc223678b7628e9cc67a6cd2e77f6467154",
-      "sha256": "d4ed5b7f0478d31c57e37c052534c80cb71ce72bc2ea15f3c865162bb776fb74",
+      "sourceBlob": "a5f48dbf32156cc3e053a4c79bf0738e9180e861",
+      "sha256": "6a04ce1bc506df0975b25a23b4d7dbc45e62916d14b8bea602aef8246ab298f5",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/nous_auth_keepalive.py",
-      "sourceBlob": "f25d819a560bf134f2b8c7769455802a6723d58e",
-      "sha256": "dc008bf8be7b93492c2b67c1cae69c62c4400e0745365262f7382f1af7befaeb",
+      "sourceBlob": "95e7dff7ba5ee7f65b7ee4a870d90e181ac8dad5",
+      "sha256": "068b7fc78e527ceecf0e9e192c0641b0e20a8f7805f7d89aae9c3240d50825f0",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/nous_billing.py",
-      "sourceBlob": "71269138230781bb0ae32b880225881fb9c5bf74",
-      "sha256": "0ea15e756693d3d53a1034f58d0a10a3528aeafe34180168033be48c9ba2d242",
+      "sourceBlob": "9e668cf5abbba08a4d647e679c47cb165b477efc",
+      "sha256": "11b169377c4dcbf7fe8d6c025cf33918c5ed00569a43ea887e4a9f4a372805d8",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/nous_subscription.py",
-      "sourceBlob": "505c924bb73ba8200f8047f508616cac7488d6e5",
-      "sha256": "803a1859b9191b1dfc10e20a1e46f68f38b9d797ab71179078b6301600f84541",
+      "sourceBlob": "421af4c645e15635416f67859b00c7439599cf4b",
+      "sha256": "194c6149bf15c49d0d0d20b3ed6d73ce200ee5909c28c787783562708146f008",
       "mode": "100644"
     },
     {
@@ -26822,8 +26828,8 @@
     },
     {
       "path": "hermes_cli/observability/shared_metrics_send_config.py",
-      "sourceBlob": "de8ac454ade014964b7d34d1dff7571e8b747e4e",
-      "sha256": "7d8b5862a500a10223a6dfa3ef5d9f25e5e29101ba683a2d7e71757eb3d3afe1",
+      "sourceBlob": "9921d31d0a09d20a9409e0aaa5858cb4458ec9d8",
+      "sha256": "2520d6fa67d5023afcec3f86138806f7c15c5422aa083c7ac59c99367c92a7b3",
       "mode": "100644"
     },
     {
@@ -26936,8 +26942,8 @@
     },
     {
       "path": "hermes_cli/plugin_catalog.py",
-      "sourceBlob": "09057524df4e49946234b875f1259cf549d2252b",
-      "sha256": "7f0c9584343fc9294a724e9a132f31dfe30550e68e960f679746a40ff521c267",
+      "sourceBlob": "25273d1669233e3e38b07be80631b36862d57392",
+      "sha256": "a4547af5fb3aeb8c129161d98e880fc76e1c42aa020b7ac5303e0cc7b61e78cb",
       "mode": "100644"
     },
     {
@@ -27134,8 +27140,8 @@
     },
     {
       "path": "hermes_cli/portal_cli.py",
-      "sourceBlob": "f5feedecf534a37e6b96c243214168c7a1cc8ac9",
-      "sha256": "3b113c97b73a1191c3898ac87b2a88e46fcdc34770a1d35e5855648c4307dc10",
+      "sourceBlob": "5df7b161726f26e0462a65cb8e17a3f377b0c365",
+      "sha256": "60500f43b5e85bd33a60a98161dc0357b3bbeff31a74df5f6a434671d5ea91e1",
       "mode": "100644"
     },
     {
@@ -27194,8 +27200,8 @@
     },
     {
       "path": "hermes_cli/profiles.py",
-      "sourceBlob": "0aba3f91cc5f8d832219602d8c9168c6f3185510",
-      "sha256": "5dc225a3900851ff11b8a7cd035f84aa1e1244f1d237fd70e6adfcbc2b12a666",
+      "sourceBlob": "39f19fc067317821b00cbf7a877cbca0f21b9944",
+      "sha256": "65ba8be5a3375a2273cd805b581bfa1230380baf4f395adcedd2d62bbbdcd3ba",
       "mode": "100644"
     },
     {
@@ -27349,6 +27355,12 @@
       "mode": "100644"
     },
     {
+      "path": "hermes_cli/request_identity.py",
+      "sourceBlob": "829dd4f8700170527f744a293f6ad9f225b0b529",
+      "sha256": "48a5c41a0b79441e007cb3050ac8979f13db825de4bc50d7300bf0f1fee23eed",
+      "mode": "100644"
+    },
+    {
       "path": "hermes_cli/resource_limits.py",
       "sourceBlob": "276d24f18a11c6c1e8e436a76f62dc6e2a7140a0",
       "sha256": "1500329398ff7f290121cff6cfc7945bd28bd033a09a0c71f8e698b5757bb4be",
@@ -27368,8 +27380,8 @@
     },
     {
       "path": "hermes_cli/runtime_provider.py",
-      "sourceBlob": "2e1f9d26302dffadab42ed3e32b1aee651e4e482",
-      "sha256": "6fa7cf555a6924fabac01212fdc38a88d1bae951b6a3a7be2ee85b9418020dda",
+      "sourceBlob": "4984a9cf2279cfca5937a2492a25a99d65cca3a0",
+      "sha256": "260d32945609e3c07d7f321db8ce260054cd56a66a2a2594c1e223358de5e1d4",
       "mode": "100644"
     },
     {
@@ -27380,8 +27392,8 @@
     },
     {
       "path": "hermes_cli/runtime_provider_custom.py",
-      "sourceBlob": "d0ee1a81eee255026bba09bebc887fb0fbab7366",
-      "sha256": "26b6c2579eb495fa417bfe97aaaf3bcb258154a7555a5cc8532eeec3136f26f5",
+      "sourceBlob": "608fc9d7cf4e7dc9401ca1066886b95e3c0287a7",
+      "sha256": "30d2f14d5b340d90c90f3e3bd725784ec11aabbde3c87f122bd939b02575d4c0",
       "mode": "100644"
     },
     {
@@ -27530,8 +27542,8 @@
     },
     {
       "path": "hermes_cli/setup.py",
-      "sourceBlob": "f032d15380d51f9e5478255363d2c83adc71137c",
-      "sha256": "ad49beccfe5b7767e845ee3031f3c7b3e2538388f0f5e2904229e549b1169add",
+      "sourceBlob": "28c6d29b2ec5085d680ac9715064b092cc11c318",
+      "sha256": "4d7af5d67019faa62daf01b244245f2f88ca211e92fd53e868174eb0ab20c4c6",
       "mode": "100644"
     },
     {
@@ -27548,8 +27560,8 @@
     },
     {
       "path": "hermes_cli/setup_platforms.py",
-      "sourceBlob": "bb1e9ee675bf3eb75a4a86cd8fd0cfa099895c12",
-      "sha256": "8e6514bfc70366a2428039d5cc9bd1c69512bf9ebd8086f5a35b89c97c3eecae",
+      "sourceBlob": "0d88f0b66523bf9ec0ac18105ac3e0fc6b1aba5f",
+      "sha256": "492c54316d9ec540002527bc9581fec71fcdc59dcca766e0ac21a7211e7b71a8",
       "mode": "100644"
     },
     {
@@ -27560,14 +27572,14 @@
     },
     {
       "path": "hermes_cli/setup_quick.py",
-      "sourceBlob": "8fed4386d2410cb980e09901450410a99de5756c",
-      "sha256": "1436f02d96b1e1665a1fab00c7b0552468cb0de6361f6377bb2100e7ebd2e28b",
+      "sourceBlob": "825fd2eb8e478a16bd750a9d3bcbe82836b77dc5",
+      "sha256": "27d11fd12d04d5575f09a795ec5245e31bf3e3d53cfa2ae5dc853f9da9f918d3",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/setup_summary.py",
-      "sourceBlob": "cd95157d75024e86858a9a87d16a5f2c23e86cf7",
-      "sha256": "e2b85bbb84c5fe1109b6d0d9c87024a45e0b01af37c66ff2e1be2c4526ae932b",
+      "sourceBlob": "41842ebb628fdc8f6b0e4cb7995c4f479f69a9d4",
+      "sha256": "381873d5463daf911a90dd49ab1dab81957bdda3d037baf68a4fdadd17e6a55a",
       "mode": "100644"
     },
     {
@@ -27662,8 +27674,8 @@
     },
     {
       "path": "hermes_cli/source_releases.py",
-      "sourceBlob": "07ff640f088bab628f2e6a02ee8b53a5a4e77107",
-      "sha256": "24bbdcc84b9e488c549c2d99a226c72a2c6cec640bfe6d2bda30b39a42862f90",
+      "sourceBlob": "ab73f95a5aad260a218dc5e195df03eef2bec7e9",
+      "sha256": "091c46749f8ed906c0b9508c98bc5f4c2ab0dd0a99e82e04b1cd5466992a3b77",
       "mode": "100644"
     },
     {
@@ -27704,8 +27716,8 @@
     },
     {
       "path": "hermes_cli/status_auth.py",
-      "sourceBlob": "204af458789efbe937518b824a1d0e103c44355a",
-      "sha256": "c64d504711a764f408bad083c83d3e7babb953ef2f55eaad38c5252238881ed3",
+      "sourceBlob": "606c160a5a5234ef231e54235b47b7aa24f614d4",
+      "sha256": "80dc82660f5ad7487943c1936289d653a52597bb4c36886e5ced8596d9366178",
       "mode": "100644"
     },
     {
@@ -27860,8 +27872,8 @@
     },
     {
       "path": "hermes_cli/subcommands/debug.py",
-      "sourceBlob": "8e5a15a8926c908a63741a0faed17b47bf32bdd6",
-      "sha256": "d866b801c35c8c6fefa56a971912e68d8a59986925168e793a73cb433a874495",
+      "sourceBlob": "b799aa15dd0f3fb604d83a1e039aeff32ca676a0",
+      "sha256": "f96993830f8690b68442f90817ff5b6f621290de6e599b9bd81a58d0e83c80ac",
       "mode": "100644"
     },
     {
@@ -28046,8 +28058,8 @@
     },
     {
       "path": "hermes_cli/subcommands/setup.py",
-      "sourceBlob": "1145f13e09be59c4d88adbb9aab4e2cd8380a4b6",
-      "sha256": "233df9808bcf7af997dfdbdcce5ad9b726ad3b5303909dbdb5d849e1ad9d133e",
+      "sourceBlob": "b1bc7ccd2ba0d21bbba7e72736d1d2be5fb0bf21",
+      "sha256": "641f60940486c717fe84ebb1a9a3e8c914cf7c62aa40a6b8cbef4dd07dd09b1f",
       "mode": "100644"
     },
     {
@@ -28076,8 +28088,8 @@
     },
     {
       "path": "hermes_cli/subcommands/sync.py",
-      "sourceBlob": "69d4200086e8227a9f952a566196cd66fb9d0463",
-      "sha256": "521b826e23c8c6e91a240e1329586a3bbf0e445f3c62385580afb50fa63be8e9",
+      "sourceBlob": "8991d8e1b2ed27bdb862a8ddf0f5d2d2f55bab8b",
+      "sha256": "27a78d4c2f14a4770f840a1b965a39fb9b3966e4a3c4c301a428d0f356e5ec20",
       "mode": "100644"
     },
     {
@@ -28094,8 +28106,8 @@
     },
     {
       "path": "hermes_cli/subcommands/update.py",
-      "sourceBlob": "364142607c1170dbeb932438757a1caca77e743d",
-      "sha256": "5c5db83b6dc0ddb90a53dcb407816dd6830052d772650ed2486629401a52abf0",
+      "sourceBlob": "6e5212478e994447055f74481bf28ba24655128f",
+      "sha256": "4f264b914215c1fc839e2b3be46e4b3a8494801af3e7210041197fdfc4e56329",
       "mode": "100644"
     },
     {
@@ -28142,8 +28154,8 @@
     },
     {
       "path": "hermes_cli/telegram_managed_bot.py",
-      "sourceBlob": "6a825b649bf9c71f34c8e2e84ff25cfa403b0cc1",
-      "sha256": "04db2140c8a301aa7afb954eec355269f38e8cfdd72dab01ab52b76b9953f955",
+      "sourceBlob": "212e151fea3b19c36441fe487ec7f03a55894218",
+      "sha256": "d5665d035a882aa5516895e6190cae48e854887c802505d298b2231e37b3a5c9",
       "mode": "100644"
     },
     {
@@ -28184,8 +28196,8 @@
     },
     {
       "path": "hermes_cli/tools_config.py",
-      "sourceBlob": "7c42c29c9cacacdeff548ea6a4a23d7e1312fa42",
-      "sha256": "ee1db982256a787c868f059fbf41d709418e208844181cff598e12ee2db89aa5",
+      "sourceBlob": "d855521fa42c7f9b6184a6b5a0acf96b6fbb362c",
+      "sha256": "42bd8343b8187f35c1928038241bb927d6462e200d8668b8b421892c6fe82938",
       "mode": "100644"
     },
     {
@@ -28208,8 +28220,8 @@
     },
     {
       "path": "hermes_cli/tools_config_providers.py",
-      "sourceBlob": "d710dce9c5fa2730428c4104d48e258d7d471ebf",
-      "sha256": "b2185bad4626e16c5bb6ccbe64f31bd26bfd7d8bee0fdc119b1e655c30e35dfc",
+      "sourceBlob": "dda52cfe07011ab9af37781a61de3f390bf55995",
+      "sha256": "d2319f30135ce925c67a9e09c6cbf9950e600d5e4b4864dd5f932211a3b62a74",
       "mode": "100644"
     },
     {
@@ -28226,8 +28238,8 @@
     },
     {
       "path": "hermes_cli/uninstall.py",
-      "sourceBlob": "b00a5587588a7fe4ced22948b854908dbfcb3586",
-      "sha256": "d59b1ad793fc651b4df41f7f9d1e4ed0d92e4e9763dd5811174f7b61440349e8",
+      "sourceBlob": "29bbd996e51d1075e35c05f47eda6a7710591ee0",
+      "sha256": "52d1b56cdca72f6a660556b91975425a2f0e4ea5d577f4d8c879a509dd5049a8",
       "mode": "100644"
     },
     {
@@ -28244,8 +28256,8 @@
     },
     {
       "path": "hermes_cli/update_cmd.py",
-      "sourceBlob": "382e331eba7779353a7c3d3f301577a58980e0b6",
-      "sha256": "75c1116cdaa859828e31b2a2189325f3e8b341366b7fac4926e04e30a49f5f02",
+      "sourceBlob": "d6c897b2df40bc8923f2222ee66aa22349310833",
+      "sha256": "78087517e020a76722ac34430fb8cc9df5d7cc85dfb0d49fb444cfd09da7f0ee",
       "mode": "100644"
     },
     {
@@ -28328,8 +28340,8 @@
     },
     {
       "path": "hermes_cli/update_cmd_zip.py",
-      "sourceBlob": "ce8db1ca96d7df6c5def0417a04e7da02467eb53",
-      "sha256": "3ffae011aa9a782b376887dca98be0bbde9ac4a82f936a8f37f089a826b4625f",
+      "sourceBlob": "830558955d8b2a4979d2ad9d19e8fa6eed13dd3e",
+      "sha256": "58eea5633a28748349b7558d0a49420b5c10216486528b19feee4fceee87090a",
       "mode": "100644"
     },
     {
@@ -28472,8 +28484,8 @@
     },
     {
       "path": "hermes_cli/web_models.py",
-      "sourceBlob": "29f1fd3572b4c0a006514bed3dd54c127f2f6f2b",
-      "sha256": "cfa9bd5fb437995d5523e5f75539486194d45a2074c29fef865e4272c8b19949",
+      "sourceBlob": "2af60c6c3bbe28c07cdd3b763f3a390b20ef5e48",
+      "sha256": "507f9138b2a89ffd1e5ad658e83980b0304b46703afb577baf436e05a62d6497",
       "mode": "100644"
     },
     {
@@ -28586,8 +28598,8 @@
     },
     {
       "path": "hermes_cli/web_routers/messaging.py",
-      "sourceBlob": "1c51889393c88470d9ca75337e5d3cafa96cd63c",
-      "sha256": "0daeeb48252a238c2339e07f9fc067fa766e32d5762676e8baed83d51944b832",
+      "sourceBlob": "a7ac5094051974455bd2a2bf9f134d9e6940e65d",
+      "sha256": "81cc67a75bd1828d7ce3a7d65e9007d43f9ae1b0ac6a42e4172bafab2101b69d",
       "mode": "100644"
     },
     {
@@ -28598,8 +28610,8 @@
     },
     {
       "path": "hermes_cli/web_routers/oauth.py",
-      "sourceBlob": "a7caf6b40124dff2eb4a1d57fe537d8b81e9cd28",
-      "sha256": "fe4daead9163157c61a5ee25e81acf250cc603c0eac7239da1695090d06da418",
+      "sourceBlob": "b33773bd0cc01dff82050ed1f6f9d91d44d3213e",
+      "sha256": "b14f80f39eb388dbda7a08942e02f94351b7686c7a2687706db4be2a5d4ec89f",
       "mode": "100644"
     },
     {
@@ -28622,14 +28634,14 @@
     },
     {
       "path": "hermes_cli/web_routers/skills.py",
-      "sourceBlob": "9fc1f6dc36f1a311d47c7ead320feff8c5e0ab14",
-      "sha256": "5d47cadadc7482a0f6ee84b161a2f1faf2b7bbe5e76585ce54e820a05a42e2a0",
+      "sourceBlob": "076dd6cbdc968265ed02bf1390d2ddf6c7fc7105",
+      "sha256": "365be39954a529b177de3c56d5d2f6fad1c8a3e9d140a491cd532b61c127cfff",
       "mode": "100644"
     },
     {
       "path": "hermes_cli/web_routers/status.py",
-      "sourceBlob": "c2ed1f2eec78a069c546c49eb727ffa8de74a541",
-      "sha256": "4727ff2a4ca2a53df64a7ec4d08593d42eefd9eb9bea2ef4d9cb5e52e96c8a6e",
+      "sourceBlob": "a064261d6f2dfc61fd89a78fa9b4035e6ee4b60a",
+      "sha256": "11ef9dc1a3daac29e541cffcef262186f5577780b1c06e0abad316bc4541813e",
       "mode": "100644"
     },
     {
@@ -28712,8 +28724,8 @@
     },
     {
       "path": "hermes_cli/web_server_messaging.py",
-      "sourceBlob": "487771ffd5188e2a07569c278d4cb7dd7cacaa32",
-      "sha256": "4d0712b55cae0199454dcedd4926c2b5221a57decccc5ddd15b6c065a791eb60",
+      "sourceBlob": "7302f936a2953a6eae3a9b28921009387196aff8",
+      "sha256": "9aa4609b0f4941ac530898a699264fcf14f0689c1d9baa3bec2944c0c5351bc3",
       "mode": "100644"
     },
     {
@@ -29300,8 +29312,8 @@
     },
     {
       "path": "mcp/mithril-fund/server.py",
-      "sourceBlob": "2d0d286ec5f612725e15fcd9abd4f44df634b563",
-      "sha256": "706788b12b42d6addd209a636effab804e71d9ff79cea1104f9bb7c9ffed9475",
+      "sourceBlob": "93c3c1a1cf35d1abbdc3bca02974bb427d2505b8",
+      "sha256": "f3c5373824c0b5184ae27b6237c524dd3ea9fa61c0b34a2c08111087dc1072e4",
       "mode": "100644"
     },
     {
@@ -36950,8 +36962,8 @@
     },
     {
       "path": "plugins/image_gen/openrouter/__init__.py",
-      "sourceBlob": "7b26a7c99977362fc4523d4623701fc43cb6b0f9",
-      "sha256": "9108e5ca7752eebc1ce16b2620bc527905b844b8bac3712f3201ab8f75290c57",
+      "sourceBlob": "09a2e7eaae4143c7c3e7a1d7836ff0956da9fd66",
+      "sha256": "2da11fce6f8bc0e40de473733fcb0ca16fe390d90c91ac5de812c8414c430982",
       "mode": "100644"
     },
     {
@@ -36962,8 +36974,8 @@
     },
     {
       "path": "plugins/image_gen/xai/__init__.py",
-      "sourceBlob": "cabd124f2c8e6929ac382429abbb4f7558b10521",
-      "sha256": "2c9692ed19969c867ea95a8a6e30c7c862ecb8db24c6b7a4959e727b2e71a563",
+      "sourceBlob": "5a0b2fd4731a32ab3331d243b898e8f11b3e0dbe",
+      "sha256": "990490b97a9966d6e49f6954b37eab9e6e5222a44a3a67c031dd144e28a94e92",
       "mode": "100644"
     },
     {
@@ -37364,8 +37376,8 @@
     },
     {
       "path": "plugins/model-providers/ai-gateway/__init__.py",
-      "sourceBlob": "409476ecf6151c4bab4ae441c3bc7c05d88b858a",
-      "sha256": "d59d6bf990b3817b33dc2b5477d61396d18882092ea9964c8321f48da168059e",
+      "sourceBlob": "f0074288762095ce259e80938aad61a4447580ad",
+      "sha256": "ced374dbe2272c158df7106fb4964917d3b63b90f583057a5b65a3677d9de0b3",
       "mode": "100644"
     },
     {
@@ -37520,8 +37532,8 @@
     },
     {
       "path": "plugins/model-providers/fireworks/__init__.py",
-      "sourceBlob": "e8b67e39e79070041ed13ff39a38cbc4d7b676d2",
-      "sha256": "a0fa31f422ebea9af020da6a42f8f55f3cdf5872bb61b296f2d1c8f6f4e69d31",
+      "sourceBlob": "fb532ee31e9d92e51a1498b744f8697cbd79dc95",
+      "sha256": "0130486628416bef1a15f734c3e12b62e911ffa039425fa0c4acb514e40dc57b",
       "mode": "100644"
     },
     {
@@ -37544,8 +37556,8 @@
     },
     {
       "path": "plugins/model-providers/gmi/__init__.py",
-      "sourceBlob": "942b7452a66db1598e621fc2192cf4e95b3180c6",
-      "sha256": "1cfc7c6501d977b22878674091a10ac896809a695a63c76bcf30e3ed900de910",
+      "sourceBlob": "c16b98e0d56f5a18f6caa64b1fdfce217b98a9cd",
+      "sha256": "6beb93d5b280154a07ac91a08a7331caf7b68275f492e3ca5c500dc4efa7582c",
       "mode": "100644"
     },
     {
@@ -37580,8 +37592,8 @@
     },
     {
       "path": "plugins/model-providers/kimi-coding/__init__.py",
-      "sourceBlob": "440c0df5f869973679c7cef82ebf2b8ee2b5dd57",
-      "sha256": "2e46a8a248787ab6f253cdbe7a4d0208f196a728a947efdac81843bf2e0abea5",
+      "sourceBlob": "f4b6aee7a49d2127de5e73bff89764104a90ebca",
+      "sha256": "dbc90fd43342e3bb8d2cca34cbb5d2a1c30440741f99bbcd7b633bfadb3a6cd2",
       "mode": "100644"
     },
     {
@@ -37688,8 +37700,8 @@
     },
     {
       "path": "plugins/model-providers/opencode-zen/__init__.py",
-      "sourceBlob": "da334bc48c7bf6f94f85cb0548e70f5e95813765",
-      "sha256": "829502d68fde46e219e2146dec497719d5c0142a237dd8bb800354e612a25565",
+      "sourceBlob": "b99ea63e1fcf9480c3ae2fc63009fb28ef8b8d29",
+      "sha256": "8ed73895e886a3b0288964c62bdb6461eb393818b4d4e6c8c06849ffc20cff03",
       "mode": "100644"
     },
     {
@@ -37724,8 +37736,8 @@
     },
     {
       "path": "plugins/model-providers/router/__init__.py",
-      "sourceBlob": "de9200ebaebce2db68d555786a18bcdeb160eab3",
-      "sha256": "01260416864eda6e79d9a72d9b8ffd65b8114794a2af9e180aebe267c48c9823",
+      "sourceBlob": "9b39d1ffe72ca15a3f80aa1e5345f8500c2e4b7f",
+      "sha256": "cba8f072ef9c62bc2380a6bdfe0d2a76639fd241d3f05ecc1769aeaa7415d7b6",
       "mode": "100644"
     },
     {
@@ -38630,8 +38642,8 @@
     },
     {
       "path": "plugins/video_gen/fal/__init__.py",
-      "sourceBlob": "d322b71cfa79034353e559d4c5a4f2dc528cf3f5",
-      "sha256": "4cd88a875f293ffaca6158830d38f71d1ee849ccbe7377993303657d38a98b56",
+      "sourceBlob": "c9e0e96c47a5be253e8c9c49342b9b7258e9826d",
+      "sha256": "f7602fc84476c8187faf8922508a37892ce57e9d7247e8752770b328c674d629",
       "mode": "100644"
     },
     {
@@ -38642,8 +38654,8 @@
     },
     {
       "path": "plugins/video_gen/openrouter/__init__.py",
-      "sourceBlob": "6c8c8180168f27b09ba9a5dd8677cbeeec85272c",
-      "sha256": "bc1a130bafe7b85b58011082e6524dfe289ea73cecc77afa8c54f40287cb2a33",
+      "sourceBlob": "030355594bb64b82bc55affaf8cfb0858357d277",
+      "sha256": "6c16643e54401a6e2d3ab3c190b45544b5de77db01a5981e471c72adb6c7f0e5",
       "mode": "100644"
     },
     {
@@ -38654,8 +38666,8 @@
     },
     {
       "path": "plugins/video_gen/xai/__init__.py",
-      "sourceBlob": "e4d2587517987c9a0fc27c4d17e29a78e747f7b0",
-      "sha256": "2415781d9035a54c1e2a63d0d079a93a0e54322b0f783af2565bf949392632dd",
+      "sourceBlob": "e4dd624e61fa9900c04573705e0a9b00314b21e5",
+      "sha256": "1ec768a22d1275c8b2279051ce1d840023119c8eef4af209663c019b873300fa",
       "mode": "100644"
     },
     {
@@ -38828,8 +38840,8 @@
     },
     {
       "path": "plugins/web/perplexity/provider.py",
-      "sourceBlob": "b2d446f5d88076783b2a93e77fce45c62a1357a0",
-      "sha256": "68956ce43b79e3a4e8f2e690a6f69565e94d2a9b777ea366dfd37b286bdbb35a",
+      "sourceBlob": "964b58d9a33cff6f7ae1831c98b16a534dca93e5",
+      "sha256": "ac570300bbeefc19c9c156508a436132a91ac4909b1b7e349f4d9e8a0665c03f",
       "mode": "100644"
     },
     {
@@ -38882,8 +38894,8 @@
     },
     {
       "path": "plugins/web/xai/provider.py",
-      "sourceBlob": "18b12fc09d31ff096ff5f53589f68d8a75ea05f7",
-      "sha256": "12ebc53aa33d8bb9ae15bb751c3f109abcba0d94272f0a45c71c0fd797adc16b",
+      "sourceBlob": "7647f0ffd77a7ccec7db4092ccc2f9a69a69dce8",
+      "sha256": "d7e6eed01153f334ca60bc892767ab34a89d960e59098b0e39044c47efe5ba4e",
       "mode": "100644"
     },
     {
@@ -38912,8 +38924,8 @@
     },
     {
       "path": "pm/artifact_mirror.py",
-      "sourceBlob": "fd45c9a3894173e7782d34007ab86ee999e9a5bf",
-      "sha256": "c0f8a06d0b9ac4315f87198f976233cb761955693cabaeebc410277e55442577",
+      "sourceBlob": "733d79602bbc837d237d899bfa5ab098dba94909",
+      "sha256": "ce6432b6b26f8dca778501605ef15a4e258f8ffd0c02e5b13f917ad07124ce7e",
       "mode": "100644"
     },
     {
@@ -39218,8 +39230,8 @@
     },
     {
       "path": "providers/base.py",
-      "sourceBlob": "8fd9e1f2f9f6c645a1138dff216cfeaec02e96a6",
-      "sha256": "53c48f8c6a10e0085dea8ac6622ece055218db0a03a4d575d5eaaf4a1b84ebf0",
+      "sourceBlob": "a58af93193ea68ad187ab182287b0c2bb3684e77",
+      "sha256": "d504786993277bb8ab902abb36964266fb3556f4373859ea3a840210fb4e9bd8",
       "mode": "100644"
     },
     {
@@ -39728,8 +39740,8 @@
     },
     {
       "path": "scripts/export-mithril-runtime.py",
-      "sourceBlob": "920f37054b2c9031e7bba02e063e87beeee613a1",
-      "sha256": "a7082729b8f95a9148cedccc09d76e950ca2c3dac33d45e44104325fd9b0a1b8",
+      "sourceBlob": "4fe37c5ce4e740a4090bf868bca9054f52a02ef9",
+      "sha256": "bced121750ec922396970e297f4b55a7a89bd83b792edf75178fbf2672e78f48",
       "mode": "100644"
     },
     {
@@ -39769,6 +39781,12 @@
       "mode": "100755"
     },
     {
+      "path": "scripts/install-mithril.ps1",
+      "sourceBlob": "e2d22d2325e97006c47e797478374cf3bcbf915b",
+      "sha256": "676f137a669dd046ad1ba2d239517402bbfc1f424da44078977799e70f059071",
+      "mode": "100644"
+    },
+    {
       "path": "scripts/install.cmd",
       "sourceBlob": "e60b4ff3448d2c0bfbc9bfc34af84a8b118a7591",
       "sha256": "c2ee750b6eda7902abbd85fb058ee1db2495c3d18c576e090554fcf4b81479ba",
@@ -39776,14 +39794,14 @@
     },
     {
       "path": "scripts/install.ps1",
-      "sourceBlob": "7ab82037d1f8d9755bc1e44e9cd225469e106145",
-      "sha256": "5204fb92ced8b94af58e9ce37151cbbbc489b3b03ca81830a57362362d3d20da",
+      "sourceBlob": "cefd4222a6989922fb740dbf974229cba52e168f",
+      "sha256": "243776c19db71d50a91265b40eb0e466ff4cd3c6d0df6ec6731abdb728f29c92",
       "mode": "100644"
     },
     {
       "path": "scripts/install.sh",
-      "sourceBlob": "2eb9212769eaab03da6c7a7929a8ee3bacbc78ec",
-      "sha256": "eb542ee6e9d35055223fc2b2fa84ae69a787f2e78b2fde0d3d50de699ff21c25",
+      "sourceBlob": "40222c12d6da793754bd05df8bfcdc2f6fb7b56b",
+      "sha256": "318ca7a4147558d317bee70df85853501f8901db1073a1118715d3ef1047e48a",
       "mode": "100755"
     },
     {
@@ -39824,8 +39842,8 @@
     },
     {
       "path": "scripts/mithril",
-      "sourceBlob": "e78af548d8333ec990c823c80f09d999954c9e53",
-      "sha256": "278a18935fef983373f65307e0941e06205c57cfa7b9dfd4b6556d77b66d3ab6",
+      "sourceBlob": "96f414ad1511f18800b05955dd83bed472156bdb",
+      "sha256": "471e74a372d33b9bd7f1f3d222a026e6e4365a2e8cc3af9d435c469ad77fae64",
       "mode": "100755"
     },
     {
@@ -40046,14 +40064,14 @@
     },
     {
       "path": "scripts/run_tests.sh",
-      "sourceBlob": "8fcc4294f48a16968fd68f6d5edad45d74354166",
-      "sha256": "9e4814fa934f4706d2eb1ba111175a0d1887600cccd0dd6cffca4d2c0e76050f",
+      "sourceBlob": "52101210dc948f27cc71799bf8f30de01ae54c05",
+      "sha256": "afda9e7a80be1d67202bd0b7e5189b9f873401520a751096ee5c52e4be30d34b",
       "mode": "100755"
     },
     {
       "path": "scripts/run_tests_parallel.py",
-      "sourceBlob": "21178fd246edd2460d1d6ae4cfb7937262458ffc",
-      "sha256": "b4fda1a4914f6ed8fdddc7d1027ad97990efa7a23c729d5ac1c1ca515417cfec",
+      "sourceBlob": "0020b568443da15a2f24f791f3b8e81875cb7aa4",
+      "sha256": "dabef93aaff617349aa2464798810845ed188b5f45d42cef9f912169a1871775",
       "mode": "100644"
     },
     {
@@ -40094,8 +40112,8 @@
     },
     {
       "path": "scripts/standalone/README.md",
-      "sourceBlob": "2838ddfe0fdb9723109cb1384411fa49458c8806",
-      "sha256": "467f41a26e1058c63c541fb624f657eb3c90993a500f9c4e7c8c2c64fa3aa1c9",
+      "sourceBlob": "2b926ef04efa274b20cba7360c50fed26368ce1d",
+      "sha256": "b9fbf12da02a6568f965bd456c5029b30292f6790f9381ad6f3085d21bf3d3f7",
       "mode": "100644"
     },
     {
@@ -40106,8 +40124,8 @@
     },
     {
       "path": "scripts/standalone/cloudflare/controller.mjs",
-      "sourceBlob": "72687a14a58cb5608a087214cc6661048491513e",
-      "sha256": "a956f548a1f3488cf7737b966f274ee87fcbd602710298cf41576efe60693dc7",
+      "sourceBlob": "f54d886828065d17035c1a65929253757df3136b",
+      "sha256": "26012bce7183ffd364314e007439075a8d0695e51129d40b30f0fee1993eb2f8",
       "mode": "100644"
     },
     {
@@ -40123,6 +40141,12 @@
       "mode": "100644"
     },
     {
+      "path": "scripts/standalone/cloudflare/idle-stop-candidate.md",
+      "sourceBlob": "95b7a049e239fc4b990b9c8d7fb97cf0907d9a07",
+      "sha256": "46ccf19f26cf351ff8cd7a24e673b0ffe0b6029e307eb91549dccca773fc915b",
+      "mode": "100644"
+    },
+    {
       "path": "scripts/standalone/cloudflare/live-probe.py",
       "sourceBlob": "af4e5266d1c6361b8cad6748d05ca3fc4bc43b18",
       "sha256": "5949e52c6deaf84a0331baa7e5778fefcd8f9ae076813f9b67448f28d39a2e83",
@@ -40130,14 +40154,14 @@
     },
     {
       "path": "scripts/standalone/cloudflare/managed-controller.mjs",
-      "sourceBlob": "95e6d1270f9e1291d19309e37eda778a28f9f6d1",
-      "sha256": "94f05da5c604ea8d0f2746984767bc48a73729daac8b5e7c74d1f806b790b75e",
+      "sourceBlob": "614ca6d910d81c7a891330bc503e5db7c74c2444",
+      "sha256": "e39291118ea50cfe2d45467ef4a34ad12c64b8fd7923beab0687bf836bc7a9b7",
       "mode": "100644"
     },
     {
       "path": "scripts/standalone/cloudflare/managed-policy.mjs",
-      "sourceBlob": "29309b2968c3e7396ac76a11660d912f2a98e216",
-      "sha256": "f08a2381278e2352ba8949b7bef22657b2e41ddb76477fadc9e3503af0f97c56",
+      "sourceBlob": "17d435ed479af4503f0477616dc40b4975604227",
+      "sha256": "549b433beaf9698b75c980fa06dee76eeab8208181d0a0439f28727a1cc6862e",
       "mode": "100644"
     },
     {
@@ -40166,14 +40190,14 @@
     },
     {
       "path": "scripts/standalone/gateway-contract.mjs",
-      "sourceBlob": "21f976a639965e899fcf76ed88c09999189db9e3",
-      "sha256": "ddd7f1d15dbb924a133a733ee0e07ee9fb9d93e68a0732c733cf1d403c32f1ba",
+      "sourceBlob": "a14fb66e1ebd8a03859499c428fdc40e7b11c4ee",
+      "sha256": "ae3faddd1eaa9741ba2836d3d9e1efe65e4f82950448a9e4f089f929e1696a42",
       "mode": "100644"
     },
     {
       "path": "scripts/standalone/gateway-desktop.py",
-      "sourceBlob": "2a28dd879e67e55a3febdbf02674efb19bc58791",
-      "sha256": "811a7220bb91cb6c26fb63494c94eca0fd5bb594ec5d38d381b502a67b3785a6",
+      "sourceBlob": "2c17de359857aed941ff2515867f112406a3036a",
+      "sha256": "8067a9851c6aab32a178a35b3dfb11f45c537609f00d0b2b4411bd3108785043",
       "mode": "100644"
     },
     {
@@ -40208,8 +40232,8 @@
     },
     {
       "path": "scripts/standalone/gateway-trial-start.py",
-      "sourceBlob": "7600045402c9a13ae6b40afd57b230840180dccc",
-      "sha256": "523932995f76e691278a22c2dcae5ed24a79d693f56bac2385398dfe09f808f0",
+      "sourceBlob": "fbebb106378c8c04b1722870e20dc7b07acbcc85",
+      "sha256": "8693f98ebe630ae54b2626506a062e1a83bed41c785242a025597740f362acea",
       "mode": "100644"
     },
     {
@@ -40220,9 +40244,15 @@
     },
     {
       "path": "scripts/standalone/gateway.mjs",
-      "sourceBlob": "a1b312eabc004a26713c6dafbafed41b2b8d49ce",
-      "sha256": "aafc9b1585851c331d0732fe4401cd4dc33f0f441ec50ef802ce0d49b6939876",
+      "sourceBlob": "7019385d9e423f2e8c2ea39037f3c6295a0afa52",
+      "sha256": "37efe77221f0b86a886c01e50a454f8e5306d80e124af5a5e3b14a8e6763e77d",
       "mode": "100644"
+    },
+    {
+      "path": "scripts/standalone/mithril-gateway-oci-entrypoint.sh",
+      "sourceBlob": "28b0ef6bef5843ff87f89f26ec00e70389c207c0",
+      "sha256": "05f5a528b8145bab3200e2b552dd42b0f40b3e5d10ca11f5c09ec23f2fd5db44",
+      "mode": "100755"
     },
     {
       "path": "scripts/termux/assembly_permissions.sh",
@@ -43106,14 +43136,14 @@
     },
     {
       "path": "tools/connectors/gateway/client.py",
-      "sourceBlob": "8657e90289277bf5e789ca4b5c6e6499d0dc25bb",
-      "sha256": "74b902676be74960deb8ecfb3d7291c738079cbd271c22217f2390851c28c97c",
+      "sourceBlob": "62e85774e2f0fdc09109a2ccd8545b54d4cc821d",
+      "sha256": "9327e2a01186ec89841654c0191c4295c1e9672d4b3dad9c8b2ec017f42e1458",
       "mode": "100644"
     },
     {
       "path": "tools/connectors/gateway/config.py",
-      "sourceBlob": "6e18857088bf56921b3c911f9c7082c3368f059f",
-      "sha256": "28acb3337a4de332747eb1da8fab2a08960ee03656b39d1079ea6cd2bf77db0a",
+      "sourceBlob": "83043222a2530f29880cc69cd66beb43e2092987",
+      "sha256": "fbc7a45ce70a8cc23281f37fc8fd0da7ad02674ac772c0237a02a6d0bf209f9b",
       "mode": "100644",
       "sourceRepository": "mithril-lang/mithril-fund",
       "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
@@ -43151,8 +43181,8 @@
     },
     {
       "path": "tools/connectors/managed.py",
-      "sourceBlob": "b9797a795fcedbcfae00e8de4a662c44013172bc",
-      "sha256": "f8ff16eb0e6e4fea15ad8ec91f88fcb8550309e6ac6233e3f5ac9b881656cb78",
+      "sourceBlob": "288d4a87e914bc66c25505fb0a340128fac3ac75",
+      "sha256": "a2e5acd4eb9747d24a21653621079113da57bb4945a49f9afeccf37ec783cc29",
       "mode": "100644"
     },
     {
@@ -43181,8 +43211,8 @@
     },
     {
       "path": "tools/connectors/portal/client.py",
-      "sourceBlob": "5211a6b59a837f0e1411d83a6c37fd5ba822c8e9",
-      "sha256": "194c0340903498c31447cb636b42a545d7abb46a29db808b9041a5b0faa82979",
+      "sourceBlob": "54155275c8b4f773c3cc89f17f34ae8651e26a71",
+      "sha256": "52f11889b4a1a4fb03bca318b35d72ab817bcd773723412228d761fbd0d10656",
       "mode": "100644",
       "sourceRepository": "mithril-lang/mithril-fund",
       "sourceRevision": "f6886abed860099d958899beb79cf6891c5cdc61",
@@ -43202,8 +43232,8 @@
     },
     {
       "path": "tools/connectors/portal/tools_cache.py",
-      "sourceBlob": "28575fc71898b29d272ef1445a9f14e8ff475c3e",
-      "sha256": "285993fa419856da4a9cfd483e9a0daa68263e3c798901db54c4b4be181981b4",
+      "sourceBlob": "8d46e168c43eab0555f4e5df0949b9127ed1cf42",
+      "sha256": "5b530f20b3bf351c66a68eebec81ab81a97b9b5bc42acbc536eaeb857ab67e85",
       "mode": "100644"
     },
     {
@@ -43220,20 +43250,20 @@
     },
     {
       "path": "tools/connectors/search.py",
-      "sourceBlob": "38d5d455820031fa43f4156abac06177d939b818",
-      "sha256": "17dc49dc29f42c8bbde7176741465bf85818a35bdb608b22878057f317a7e089",
+      "sourceBlob": "2761794020f2114281755fc2e5fa6db80fd5af08",
+      "sha256": "c637035836f6f84dc65c08442cf2636fa65abf26d273faec0be3315660988995",
       "mode": "100644"
     },
     {
       "path": "tools/connectors/targets.py",
-      "sourceBlob": "40cc763738461cd0f4c2ffdf92e8a038e8436f4e",
-      "sha256": "641f430f2e70c287843e3ab8400c7667d5e687fb089579a8f0cefc054d9c5250",
+      "sourceBlob": "bee79f6c124658d0d716167c6f97177617723224",
+      "sha256": "85f630dec0f35b8a4c16a7981743763221629f285eb5d82de00e2e060287be8f",
       "mode": "100644"
     },
     {
       "path": "tools/connectors/tool.py",
-      "sourceBlob": "dce527280c525d3c1f06ad02d6beaebd446b036b",
-      "sha256": "9c6f58f97010b88425336298b8d8bee334501d742515c70d7c0139cf89a4689f",
+      "sourceBlob": "e11ff7f266e0829c963be90d35a072848ae0d60e",
+      "sha256": "497364f8d22231b41947290e6f0ff4046689a9f241e1b104de74c0ad8dadff7f",
       "mode": "100644"
     },
     {
@@ -43610,8 +43640,8 @@
     },
     {
       "path": "tools/image_generation_tool.py",
-      "sourceBlob": "2ad502aa530c394d21dd3433359d6058f037a338",
-      "sha256": "a6f27ab2fdd48ae162e438ede31e58d1c2c39192a9040e9ebe0507ef3c7884ad",
+      "sourceBlob": "602b220caa20cd478a29ebca7251dcd2d4f6e8cb",
+      "sha256": "581d82ead33cdff9a2fef6a1fe7a4c216645903d886ef3297c7dac79c59dd2b8",
       "mode": "100644"
     },
     {
@@ -43667,8 +43697,8 @@
     },
     {
       "path": "tools/managed_tool_gateway.py",
-      "sourceBlob": "c893e6bc1c2793fe2c0451ddab7db656b8e49e9e",
-      "sha256": "40a2cfb5fc3e85df38ea25e4f04011b61149778f4fea976a857c4c8c343070b8",
+      "sourceBlob": "9507ad0652a77612393cb8e2bde8b73ce98ee7b3",
+      "sha256": "176ae92a25a87f9af31b9f912f0e092a26829faa387cefc37978cc973a72c679",
       "mode": "100644"
     },
     {
@@ -43691,8 +43721,8 @@
     },
     {
       "path": "tools/mcp_oauth.py",
-      "sourceBlob": "1a05f37f8fe689865d66b62b224ddc2bcc7b78b8",
-      "sha256": "7ee27fa7c1d3a6231d1c6865d5204a8a6679b076ff90b98fe2ca37716cd06746",
+      "sourceBlob": "126852e32394c80d85a8e102ff20cf90e07057b2",
+      "sha256": "35544a35cc5a6d65f0cc92208a79580d7b7a26e044327a8c8af846207af687e3",
       "mode": "100644"
     },
     {
@@ -44123,14 +44153,14 @@
     },
     {
       "path": "tools/skills_hub_official.py",
-      "sourceBlob": "a896d89d6d19ac422ca378349a7dc17ea5ce0efd",
-      "sha256": "2e066e2fac7643a01c7e1b7a29899b9765db7d690f988b8948656709731ebd5c",
+      "sourceBlob": "46216d07e846bd93faacc9702c96c3b9b099f784",
+      "sha256": "cc3af235b434fcc634c3519976b8fd88288b108e0a7399eb6871b23dee364d06",
       "mode": "100644"
     },
     {
       "path": "tools/skills_hub_search.py",
-      "sourceBlob": "b284f2a4e743ad85af6679b10bf62aac690ee44c",
-      "sha256": "e3a9b3394b6920abeae73e3b6ebda92ca06c53b710fba6f3e3695d2ccdcc4c42",
+      "sourceBlob": "ba9dcca7b7e3f089a34285f0b6d58cd8818e3f35",
+      "sha256": "adcef6385b59d0014244fa483c58d267fc56dd8a4fbe856c08848de89978932a",
       "mode": "100644"
     },
     {
@@ -44159,14 +44189,14 @@
     },
     {
       "path": "tools/skills_sync_client.py",
-      "sourceBlob": "d494ca0b30886715fd1a02b222d1cba65a2fa335",
-      "sha256": "eb20a071a1325d1abebcada6ba9d0e9f5611fe5a54a9b1c17b39d8e67847943b",
+      "sourceBlob": "68edc7e5e5d3b887ccb21d94c59c00287cacdcb2",
+      "sha256": "5984b6ff0374abc756e5075cd19b0d7192c2d58983a3112c53dc85ed8ae8ac9e",
       "mode": "100644"
     },
     {
       "path": "tools/skills_sync_client_org.py",
-      "sourceBlob": "f8cc09157d41d40912e19630848778bb680c9349",
-      "sha256": "e888296a8cca71200071ae51c82c20da29a53602da626c3ca0642ba47b2e6e2a",
+      "sourceBlob": "45ce2b6dbf06be673816d6acfb9577ffdba6dc1b",
+      "sha256": "33d13fedc06e0f5c42c77315680f99323c37c45411caac4b643c9f71339c7d0f",
       "mode": "100644"
     },
     {
@@ -44237,14 +44267,14 @@
     },
     {
       "path": "tools/terminal_tool.py",
-      "sourceBlob": "474b64e89260f594636f2868b2b04606d282cbcd",
-      "sha256": "5eea5fe78ee5736a154bdfee22afcfd6397b01a66bb4a7b6565a44c18fcba93a",
+      "sourceBlob": "45e3a34a8e0948036db5937ec0be5fc98e6a91a4",
+      "sha256": "42c97ed3846cb17aed4dbe679f0f21995455325fc960b9fc16cd96e4bf3754cc",
       "mode": "100644"
     },
     {
       "path": "tools/terminal_tool_backends.py",
-      "sourceBlob": "ac74ea3fd2bcf67d5341ec6800dc843582f338fd",
-      "sha256": "cc7642a4ce80deb12772bc17cc8221ad07a8317cd2d899aefdb95ef712047d60",
+      "sourceBlob": "0ca993a1227a97cc4589a68e967a7b61d7370f12",
+      "sha256": "14dc43fef834184d4bd8b4e025133bbe60e0bf11ffda5281c0054702f2592b77",
       "mode": "100644"
     },
     {
@@ -44315,8 +44345,8 @@
     },
     {
       "path": "tools/tool_backend_helpers.py",
-      "sourceBlob": "01f75ef9abb093d6a6f3e7bb04257a5441290e94",
-      "sha256": "111b506c2ef54603fea212027d7a393729dcee9031d789eb85bf6414cfde42ee",
+      "sourceBlob": "8fa22a26f04e739522bc2c3a44323d879c569e88",
+      "sha256": "174f1d55848fdf57a28a7be27a4314ef77fd1e9da5e2c63fefa5debaa1886232",
       "mode": "100644"
     },
     {
@@ -44375,8 +44405,8 @@
     },
     {
       "path": "tools/transcription_cloud.py",
-      "sourceBlob": "7c14eebf029d0bfe42adf128b02588850a234a9c",
-      "sha256": "fdc3080093040ce4db6e09eb2a749127a78fac750500bdb6e586df93d67f281a",
+      "sourceBlob": "3ea2bfa4382ac9c46f8e63064622ad2c815f9ac0",
+      "sha256": "b2a5b62b1d00db6398df6053ce6cb7647251cb5779b94107a0bf16a9417026d9",
       "mode": "100644"
     },
     {
@@ -44447,8 +44477,8 @@
     },
     {
       "path": "tools/tts_tool_openai.py",
-      "sourceBlob": "189b10c08e18d3a8b7a1163a52188b2ca65c7588",
-      "sha256": "9a2dfa0c5f7564e7ec796636ed0fce69896bbc9a7fbf14c0081267a880206874",
+      "sourceBlob": "461efa42bcc87a95646be248825d5079c11fbcab",
+      "sha256": "c8dcba39158688c1f3271c29774e8c64fdd0ebc999dd922cbe0f1057900e9ca8",
       "mode": "100644"
     },
     {
@@ -44459,8 +44489,8 @@
     },
     {
       "path": "tools/tts_tool_providers.py",
-      "sourceBlob": "c16ddf910f493faf9fdad5aa68b27b12668cc037",
-      "sha256": "b7ea3efa78490dc858631ae287256652577382faff9fdc9d6487790003e3287f",
+      "sourceBlob": "43febf89b5b07c66647e5a5cddb6c5065b9cdd2e",
+      "sha256": "d65560482ff926f9304a399a135dbd192716a39a1f5496e08b917a2277b2b37d",
       "mode": "100644"
     },
     {
@@ -44597,14 +44627,14 @@
     },
     {
       "path": "tools/x_search_tool.py",
-      "sourceBlob": "d57f819350e6d7e13a92ad6e4c5bc0ecc8c1a189",
-      "sha256": "94294eaee1614e0298ec50615db83cb83e4d329eb9d85127f9342b83a670e679",
+      "sourceBlob": "e1be9ca8632c4fb6e587f6a6be0329409f45538c",
+      "sha256": "e148a4f62a41c6eedb090a9d80d5e3733997719b66987b4090611fb6046a5f48",
       "mode": "100644"
     },
     {
       "path": "tools/xai_http.py",
-      "sourceBlob": "bdf19b1779532d2fc7c35de0cc7bcc22dcd8e010",
-      "sha256": "f335be8f7ef2c2c56991a7af42ebe4680e5480eb760f14869d18242d310feaa8",
+      "sourceBlob": "16eae42e7714c0a309b66fb304e200650f0148e6",
+      "sha256": "ba364f86315d9fbda81835095de71ea4556bdef2578aa25b02f558feb2075b41",
       "mode": "100644"
     },
     {
@@ -44789,8 +44819,8 @@
     },
     {
       "path": "tui_gateway/contracts/registry.py",
-      "sourceBlob": "75f218fe7e15b09313ccdc39aba662ebffeca521",
-      "sha256": "b7e0f2e346e7d844d79cb35713f5e6a69b51a20fe772637c2171ae757a86006c",
+      "sourceBlob": "20d092a9bac549463d7c3d18933d50d0f52f6bd5",
+      "sha256": "4a506effbb4c64886e07dcf3bc3c34f99ab28a269cddab0d36f220f768c5ef64",
       "mode": "100644"
     },
     {
@@ -44801,8 +44831,8 @@
     },
     {
       "path": "tui_gateway/contracts/sessions.py",
-      "sourceBlob": "685161f1e74eea1216b1ee979fd2899b698b0a3c",
-      "sha256": "b6e768c172a8b5737f1a5525bbdfdce2152b385a33c6e04b0be35f32396dd318",
+      "sourceBlob": "c716ce7e192b262c1512ba41d863af9dae11c9c3",
+      "sha256": "0ab1977af21b66cf4a6a679703b35f70e3769d335435b52381fe363c6bb720b7",
       "mode": "100644"
     },
     {
@@ -44933,8 +44963,8 @@
     },
     {
       "path": "tui_gateway/methods_complete.py",
-      "sourceBlob": "a1a6bc518fc5e32f411246944efb6434672b3d9c",
-      "sha256": "e45635409f0bd46f058a1b92c966f9f3381295b6048a28f7e59b45c72c57fc86",
+      "sourceBlob": "9faae8203a7c4a844792cca9516e00751fe5ca80",
+      "sha256": "446914dc376cba71dd7fb97dda13b9c0d62533711f9a33b6a39e2884ba8201ae",
       "mode": "100644"
     },
     {
@@ -44945,8 +44975,8 @@
     },
     {
       "path": "tui_gateway/methods_config.py",
-      "sourceBlob": "3a631c18728abae9631c976ab7e4b4f49477b003",
-      "sha256": "881ff08e7516788a979d9e3c02acaa1e3f827ecb2cbe3a9cc7bce23e3a234da8",
+      "sourceBlob": "e2052344eca460104238928fac27c08b6ec6c79d",
+      "sha256": "886f876717b71b3b57cbf0132dc3d889b9dee2a8ae0ea74e1ab17a7338137762",
       "mode": "100644"
     },
     {
@@ -44981,14 +45011,14 @@
     },
     {
       "path": "tui_gateway/methods_free_tier.py",
-      "sourceBlob": "a461d1face7632803e90c75a79637a2ec43ea5b8",
-      "sha256": "d04ecf19b2e67c6162d53d83d2884b898768029be03e88f68b00183fa304c7f7",
+      "sourceBlob": "9bf31b77e9084f2f1fbbfe5f53983618f7972add",
+      "sha256": "8c18f737c4c6700bd9f920b85449c742cd993f2cb6f4b74e0d9809728ea023c7",
       "mode": "100644"
     },
     {
       "path": "tui_gateway/methods_groups.py",
-      "sourceBlob": "5778910f213dc98f9a1aa0795433e831bd300133",
-      "sha256": "902f79272a8cb391de9f25a2c2acd0d5dbbeaf31654f55e410d36536d77cfce2",
+      "sourceBlob": "e4cb81bb30755980af6d6bb7dec74b2694eb260d",
+      "sha256": "8a245a52f8ffcead3ab7254a28ec351fd12a0b50d2f45c8a12e07eaf851e47c6",
       "mode": "100644"
     },
     {
@@ -44999,8 +45029,8 @@
     },
     {
       "path": "tui_gateway/methods_images.py",
-      "sourceBlob": "84df312ba129236dc851e4eddceadcd3a119ba3c",
-      "sha256": "a86841313ff0087c9462bdcc4fea82d9cbff17572c3a264de1b93305c8fcaafc",
+      "sourceBlob": "d2ff3e22d99ff7ea6b8736c8618b5221c2cb579b",
+      "sha256": "96e8759db727b6653330ec434e33f9782dd54dec414b6707769316e874caa1e3",
       "mode": "100644"
     },
     {
@@ -45023,14 +45053,14 @@
     },
     {
       "path": "tui_gateway/methods_prompt.py",
-      "sourceBlob": "0a6bf0b8853213a0b5d171667124bea80397d78f",
-      "sha256": "724893b261d3e81e7ea4cbb2f6ae9169df7d1692260409fb6d4ab6d8bbb5bc08",
+      "sourceBlob": "54d26db09a93f9ffdbe3bbfc0dcaa35d6fcbae87",
+      "sha256": "3e73b3ccaa063b1e4c2b330d72f1dec0feae50ebc9a5715f8210a08c817b7c81",
       "mode": "100644"
     },
     {
       "path": "tui_gateway/methods_session.py",
-      "sourceBlob": "029001063b7193d86e24398da8bf36dae6cc1d8a",
-      "sha256": "75b32808640e6d4f83839c175af8d158496289cd633a81fffdc0750980436a4a",
+      "sourceBlob": "3dbe686ae31b2f9350377a3acf778420e654d6ea",
+      "sha256": "43a04af6a0af0661e2a07771bf353afcbd2876ab862238fca3c580509e2f897f",
       "mode": "100644"
     },
     {
@@ -45059,8 +45089,8 @@
     },
     {
       "path": "tui_gateway/methods_slash.py",
-      "sourceBlob": "33946acf0af57b4d74c0c52e214eafc6f40ce174",
-      "sha256": "4e5c9f471425764aa7427e5f2b29d7315aee6b17b054c3701ce58afa76ebd732",
+      "sourceBlob": "d598ced6045c63e7020d82e6cf28f83768a92d16",
+      "sha256": "80c6a88e5548a383cdf8d92233c1d305961bf528452d654a9187a1aceedc3fda",
       "mode": "100644"
     },
     {
@@ -45137,14 +45167,14 @@
     },
     {
       "path": "tui_gateway/rpc_dispatch.py",
-      "sourceBlob": "fc2e486ad5d8a71e7d72a1a7217e47037890715b",
-      "sha256": "631f3919339de79a36d4e983a4d933c0a1db56d1811d47b5f7fbd1b657db111d",
+      "sourceBlob": "2dca83b9f7c93287e35f17d0402ae7b659e9ffb5",
+      "sha256": "191854c6960f4c2a9e7799973d490d5ec977d684dbe584fd6037b8db61b67108",
       "mode": "100644"
     },
     {
       "path": "tui_gateway/server.py",
-      "sourceBlob": "55036972b5db31c01d5c1abf7efdae6c138eb3cc",
-      "sha256": "b0a89503da6db5b11c6215d397f0fe39645fb63cc6312571a789d0b7ee2e04b1",
+      "sourceBlob": "4470099568d083b53ed61e4738fb3dbbcff780cc",
+      "sha256": "8b94efa7bb902a03338e1fed807e56316e7307f3c9065e5305127c834b26359a",
       "mode": "100644"
     },
     {
@@ -45239,8 +45269,8 @@
     },
     {
       "path": "tui_gateway/user_messages.py",
-      "sourceBlob": "7822c0587468fff4b2113d6298ba8d5163fa079c",
-      "sha256": "c9a4d2c029e1cc624575254e0db59e4601ec4ce6b5854bdaba6c68ee14bb1cab",
+      "sourceBlob": "d0579d2c4e00fa454582e739d6364a4a661e1dd0",
+      "sha256": "c1ab35e659f5b41f5e99a3b6028346362b3f5670652d328fd8f0a1134f1ff615",
       "mode": "100644"
     },
     {
@@ -47267,8 +47297,8 @@
     },
     {
       "path": "ui-tui/src/app/slash/commands/session.ts",
-      "sourceBlob": "1a567a3c604f15b87cc5a29aad0d4a02c9866499",
-      "sha256": "151b79540e79a296cad6522147d813aa2c6d85cfccc089c346446e75ee690c5e",
+      "sourceBlob": "8af28a09f610f9a96fba8992be6b68f3ec00815b",
+      "sha256": "5f1eb09f1f13727037093a9204313c682594892599e6f04adea9c9bebac8d72c",
       "mode": "100644"
     },
     {
@@ -47807,8 +47837,8 @@
     },
     {
       "path": "ui-tui/src/gatewayTypes.ts",
-      "sourceBlob": "beae19afb6424d7682e50c9d3b8c8d48fc25dda4",
-      "sha256": "998f0516f900c94bcd16b44122cc299d3a1340dbf8580b7c90ac838dd02c23ed",
+      "sourceBlob": "71c535aaaf9d729dcfc8b048edbd6768ff86de39",
+      "sha256": "080a539de2467fa6b2c9c17f9330447e246ea4e8dd6ce4b6c9106e9a87f4ad5a",
       "mode": "100644"
     },
     {
@@ -48731,8 +48761,8 @@
     },
     {
       "path": "web/src/components/SidebarFooter.tsx",
-      "sourceBlob": "310ccad7b22c597ed5f9948c1bc6b9eb6feecb4e",
-      "sha256": "c070c3c534b7b51bef52b1de94cdeca1d6a2e1e8b357016af8115993e29ad306",
+      "sourceBlob": "d8885d8da8527665df07d5351687dd8fee4e6a00",
+      "sha256": "6fe8e07c092a86b28bcabc57868d979f41d88c69ae84f07c9c53bb3b70b6893b",
       "mode": "100644"
     },
     {
@@ -48964,6 +48994,12 @@
       "mode": "100644"
     },
     {
+      "path": "web/src/lib/agent-docs.ts",
+      "sourceBlob": "40b1d2b45d22ed4d09fecb9ff8e68959293e9713",
+      "sha256": "96b8663e3a3c3b6b8707e2f7ec5034671a9440b61e2425ef99ac7f4658604bf7",
+      "mode": "100644"
+    },
+    {
       "path": "web/src/lib/api-error.test.ts",
       "sourceBlob": "eb2668a37bab54d4b07cc06e308d927cead62a1a",
       "sha256": "63ed748419e3f1e79429b240d9b9777286ba5d08f2450adacc08a1542f5b8c09",
@@ -48983,8 +49019,8 @@
     },
     {
       "path": "web/src/lib/api.ts",
-      "sourceBlob": "96bf20e003445f1e5dc9253a8dfcd8c7afb5ef16",
-      "sha256": "83f79ae1e6576a3b08de3c858a850794d55a481ff0d0cb0413559e7e93230b3c",
+      "sourceBlob": "4627de5afc2bce75c07afcf4d9ce643c0c7b057d",
+      "sha256": "5596117f82f81cb4e94e0f58e969ce234313d239805533e09be9f2fe4aa23f63",
       "mode": "100644"
     },
     {
@@ -49487,8 +49523,8 @@
     },
     {
       "path": "web/src/pages/ChannelsPage.tsx",
-      "sourceBlob": "66c9676c8b85f40bb0c6778ab120bf1e314124ab",
-      "sha256": "59022e2362464b73a2e585e741384ae4f9cfa0c8c9914abe1001354dbcf5b9fc",
+      "sourceBlob": "80b87ad01dac0c6bcc3ae7b3f3a5633002314170",
+      "sha256": "7cd5da7cd4a3e475351549fb277f9b270eb43a30dd0dfd55bbd76860be04fd8a",
       "mode": "100644"
     },
     {
@@ -49517,8 +49553,8 @@
     },
     {
       "path": "web/src/pages/DocsPage.tsx",
-      "sourceBlob": "fa929377b1c7c952c05f9ba21bc6839da42f994c",
-      "sha256": "99a72b939db339c0749678cf3ef2262d2fbd634ee162314a663cc05e7b77a13e",
+      "sourceBlob": "f350ea1011c1e8672045fc170ba40b4ee60565fc",
+      "sha256": "499cf215bc90ca5c7aa10fed673d3c7ff9076f8edb561f76e5b23096e466b762",
       "mode": "100644"
     },
     {
@@ -49541,8 +49577,8 @@
     },
     {
       "path": "web/src/pages/McpPage.tsx",
-      "sourceBlob": "773479abbba47ba51a721edc58e44ae2826bd45b",
-      "sha256": "897737151545182966b07b32a044c5f6ee9df79923f5982d6821c1b911526f5e",
+      "sourceBlob": "b378720a6c495b2155f27cff1fcceb82425c13c8",
+      "sha256": "bfef2882b2b59533231ce3743cea013b857b8d74c093e9950d19e33f93b3d17d",
       "mode": "100644"
     },
     {
@@ -49565,8 +49601,8 @@
     },
     {
       "path": "web/src/pages/PluginsPage.tsx",
-      "sourceBlob": "d309991dfbf4c5b3b974e15a1ee001085e49d001",
-      "sha256": "2b76f7be012680671d733770dc9ce0b5289f1b21de3ee4a25cd89a7d1a4dd101",
+      "sourceBlob": "3b39259bee20fdf990cecd926bf449266a02d55e",
+      "sha256": "ec79cada3647c39f0e2ce3369d084f50b493b14968b9cd1780aafd20cbd4ec4c",
       "mode": "100644"
     },
     {
@@ -49595,14 +49631,14 @@
     },
     {
       "path": "web/src/pages/SkillsPage.tsx",
-      "sourceBlob": "65598e90ba9f66729eea2160ccaf8a544c98eb25",
-      "sha256": "9cdb802e1aeb60328e1701663cbb6fbddf7dca9275f946c2e13596b03a287f77",
+      "sourceBlob": "2f8459d32401f9cccc03552e3a72c368fdbbeade",
+      "sha256": "92d9884bd883899c639f81388e72b0f89242650bc91e2aa84adda3bde49ef216",
       "mode": "100644"
     },
     {
       "path": "web/src/pages/SystemPage.tsx",
-      "sourceBlob": "dc0bcb01f2f78c053e325b845e62fc7037b0e4a0",
-      "sha256": "8427f2ca749e15de1d0f9354a614588d490b621bcf6c62d24d0a4ecae89a613e",
+      "sourceBlob": "4a94f74c0ca98053697136680822a123e6b1252f",
+      "sha256": "0eef87ffd9f138c972508f6dc4317010c6c131a3cfb26e75491e731c54bb8c10",
       "mode": "100644"
     },
     {
@@ -49734,13 +49770,13 @@
   ],
   "sessionController": {
     "repository": "mithril-lang/mithril-fund",
-    "sourceRevision": "ccb30bfb12abef31a6972ca15223908c48f4c6e7",
+    "sourceRevision": "0204e8b77581a3d39c51b02359d4e9608472f507",
     "files": [
       {
         "path": "scripts/mithril-runtime/session.py",
         "sourcePath": "scripts/agent-runtime/session.py",
-        "sourceBlob": "9b2aa41deee4a1ad847c7374b56b993b00cf43f3",
-        "sha256": "e7e2b88ede5b177cf04016ea67940083dd14b0b952e2fc719135eab674f3bc47"
+        "sourceBlob": "d783e44d186503d79961a66e9273303d86f2baac",
+        "sha256": "10a1df5f5d9ae9aa071da67eea0a0799f9b70141fb3cd855aeebb5b8f3bd6d89"
       },
       {
         "path": "scripts/mithril-runtime/backend.py",
@@ -49764,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "32a85be1077987dfab8bc6b8e445183ddfe138c4c1b52a42adeba085ab2e8bf8",
+    "sha256": "4b62f0b02cd5b3cd08d34563895dcd2a34b8bc170e49e4cb5c8dca0d8f8b9b76",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "3e15749e29e48215044014dcff5dc2f4b816e880d7ae1f4b591b287d0bbcf0d2"
+        "sha256": "ff282bd8ce5b0a2fabbac24d9709fd0f59d77923f1201394e9e3dc4af84146e1"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49779,17 +49815,17 @@
       {
         "path": "Formula/mithril-agent.rb",
         "baseSha256": "4d908abffc64ab027c8263df977124ee1c056f08828f53e9fbe6fe739ded42ba",
-        "sha256": "82a51565f5462827b868c048c5e6385e06452e6d65bd3856223b729fb984e72c"
+        "sha256": "49400928323be6cc669fd31d5c4e13a834b4e2db09a05e8e7272b3d92d331bbc"
       },
       {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "7a050133a8060fc399a73804e2a0277aa6919f25460269a5c4ba1d4bb6814cb7"
+        "sha256": "2fcdfc7590addba1a8adf71f20cad68a77fb183462747192103ece8bddd461bd"
       },
       {
         "path": "agent/auxiliary_client.py",
         "baseSha256": "c034b1b6b3b19bfab81aebd3aa01fd7d78bcabf77f7d264d99917ca5162af21d",
-        "sha256": "9ba2534c1f0b812a28e682d2e919ee6d5dd449ce1c2cb0b5b424985154dd84b9"
+        "sha256": "0aee202eb40831aef87f9be56c10819adde471f0b949175a482ec49f8f4c8f0a"
       },
       {
         "path": "agent/error_classifier.py",
@@ -49819,22 +49855,22 @@
       {
         "path": "hermes_cli/banner.py",
         "baseSha256": "c50ba5f5e8aeec6751df313712bf427d0df989c78689d57e6c0c1910c2edb145",
-        "sha256": "2b0eb4c14efe71d80962d047b3a149060e2ac2e20abfc3c64b71af9ddb0a8fdf"
+        "sha256": "e91cb4724ede6333b9ea74708c4d5ede41fadb56fad57cc88a87ee2dce686fc8"
       },
       {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
-        "sha256": "eacf7cd515b6667dff0818d4215765a1f73bf48020ad28e3201449b327551df2"
+        "sha256": "994fe64606328b86b200ff89c24b5be136c038d68051da1f8d36bdbfd5c917f0"
       },
       {
         "path": "hermes_cli/mithril_account.py",
         "baseSha256": "ba2548a50977ca950268b52b232176596ef24513635a3de8df2e62f40b537d36",
-        "sha256": "64dd76a471bf45ac99ce932adbc4cfadc1ced26fea278e243f87719f4de2dfe6"
+        "sha256": "4534be1b37f7c9c7c0123defba43a83ef4fe2e080f658d0bd501fa80aa4c9406"
       },
       {
         "path": "hermes_cli/mithril_auth.py",
         "baseSha256": "8349b3b65da840c05af21f1dbe7e91dd94275bb833587381c7300963ad63e128",
-        "sha256": "0fab595e56367486df8c30d44ad8cc323d91a13a52dac20f03908eaad22c8139",
+        "sha256": "5641fe1a478894573a0e967a78f41914719223d717bdf66d6d649ddc6d9cd521",
         "canonicalSource": {
           "repository": "mithril-lang/mithril-fund",
           "revision": "039310d864f77c4322bc6b3591ce158818e06ce3",
@@ -49845,7 +49881,7 @@
       {
         "path": "hermes_cli/mithril_startup.py",
         "baseSha256": null,
-        "sha256": "82b0625550ef16901da1dd312543832c8900c514a7591d589ef74d0eb90fcd85"
+        "sha256": "186cb59b59e847fb5b1f669a19678716a548a01211e9206c89f1b73cd22f99ec"
       },
       {
         "path": "hermes_cli/mithril_updates.py",
@@ -49855,7 +49891,7 @@
       {
         "path": "hermes_cli/runtime_provider_custom.py",
         "baseSha256": "57bece2cc527e93abb4448674a411e8cf353eb18e097b9e15e3347c5fec8ffd6",
-        "sha256": "26b6c2579eb495fa417bfe97aaaf3bcb258154a7555a5cc8532eeec3136f26f5"
+        "sha256": "30d2f14d5b340d90c90f3e3bd725784ec11aabbde3c87f122bd939b02575d4c0"
       },
       {
         "path": "hermes_cli/source_check.py",
@@ -49865,7 +49901,7 @@
       {
         "path": "hermes_cli/source_releases.py",
         "baseSha256": "52657b9dbe4e20e2dcf3cb0fb59635313ff980ed747833773d0400e2aff3e65e",
-        "sha256": "24bbdcc84b9e488c549c2d99a226c72a2c6cec640bfe6d2bda30b39a42862f90"
+        "sha256": "091c46749f8ed906c0b9508c98bc5f4c2ab0dd0a99e82e04b1cd5466992a3b77"
       },
       {
         "path": "hermes_cli/update_cmd_maint.py",
@@ -49875,7 +49911,7 @@
       {
         "path": "pm/artifact_mirror.py",
         "baseSha256": "80554900b7372c76cb38392a93761229575520e27446fef6d3fb69cad84bfa5d",
-        "sha256": "c0f8a06d0b9ac4315f87198f976233cb761955693cabaeebc410277e55442577"
+        "sha256": "ce6432b6b26f8dca778501605ef15a4e258f8ffd0c02e5b13f917ad07124ce7e"
       },
       {
         "path": "scripts/build-mithril-release.py",
@@ -49890,12 +49926,12 @@
       {
         "path": "scripts/install.sh",
         "baseSha256": "0fbf2969c12b9ef9c90b81519814865faa9ee4e22056e2a9a4d0b1d5e59966e8",
-        "sha256": "eb542ee6e9d35055223fc2b2fa84ae69a787f2e78b2fde0d3d50de699ff21c25"
+        "sha256": "318ca7a4147558d317bee70df85853501f8901db1073a1118715d3ef1047e48a"
       },
       {
         "path": "scripts/mithril",
         "baseSha256": "718fa123ad84b8b6a875de009e3b598eabc6d3f51e418532b18ba924d56860e3",
-        "sha256": "278a18935fef983373f65307e0941e06205c57cfa7b9dfd4b6556d77b66d3ab6"
+        "sha256": "471e74a372d33b9bd7f1f3d222a026e6e4365a2e8cc3af9d435c469ad77fae64"
       },
       {
         "path": "scripts/mithril-brew-launcher",
@@ -49910,7 +49946,7 @@
       {
         "path": "scripts/run_tests.sh",
         "baseSha256": "16cd6223a3b517326e023c3b716a182e2818fcc04ebf8a1855f83dc72e52743d",
-        "sha256": "9e4814fa934f4706d2eb1ba111175a0d1887600cccd0dd6cffca4d2c0e76050f",
+        "sha256": "afda9e7a80be1d67202bd0b7e5189b9f873401520a751096ee5c52e4be30d34b",
         "canonicalSource": {
           "repository": "mithril-lang/mithril-fund",
           "revision": "039310d864f77c4322bc6b3591ce158818e06ce3",
@@ -49921,7 +49957,7 @@
       {
         "path": "scripts/run_tests_parallel.py",
         "baseSha256": "15b0f3e3702bab00d8352a56471111d08f3af7e98f7967130ff81e09b7b94015",
-        "sha256": "b4fda1a4914f6ed8fdddc7d1027ad97990efa7a23c729d5ac1c1ca515417cfec",
+        "sha256": "dabef93aaff617349aa2464798810845ed188b5f45d42cef9f912169a1871775",
         "canonicalSource": {
           "repository": "mithril-lang/mithril-fund",
           "revision": "039310d864f77c4322bc6b3591ce158818e06ce3",

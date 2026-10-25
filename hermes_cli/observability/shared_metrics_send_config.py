@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
@@ -60,6 +61,12 @@ def resolve_send_config(config: dict | None) -> SendConfig:
 
     enabled = shared.get("enabled") is True
     send_requested = shared.get("send") is True
+
+    # Mithril can keep the user's opted-in collection on this Profile, but it has no
+    # Mithril-owned shared-metrics destination yet. Never relay those records to the
+    # Hermes/Nous endpoint (or a copied custom endpoint) from a Mithril runtime.
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return SendConfig(enabled=enabled, send=False, endpoint="")
 
     if send_requested and not enabled:
         # Loud, not silent: the user believes telemetry is being sent, and it never will be.

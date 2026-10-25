@@ -19,7 +19,9 @@ import webbrowser
 API = "https://api.mithril.fund"
 CONSOLE = "https://console.mithril.fund/account/device"
 TOKEN_ENV = "MITHRIL_ACCOUNT_TOKEN"
-SCOPES = frozenset({"inference", "workspace:read"})
+BASE_SCOPES = frozenset({"inference", "workspace:read"})
+BILLING_SCOPE = "billing:read"
+SCOPES = BASE_SCOPES | {BILLING_SCOPE}
 CONNECTOR_SCOPES = frozenset({"connectors:read", "connectors:write"})
 
 
@@ -86,7 +88,7 @@ def validate_grant(grant):
     return expected
 
 
-def poll(grant, call=request, now=time.monotonic, wait=time.sleep, required_scopes=SCOPES):
+def poll(grant, call=request, now=time.monotonic, wait=time.sleep, required_scopes=BASE_SCOPES):
     deadline = now() + grant["expires_in"]
     interval = grant["interval"]
     while now() < deadline:
@@ -108,7 +110,7 @@ def poll(grant, call=request, now=time.monotonic, wait=time.sleep, required_scop
         if (not isinstance(token, str) or not re.fullmatch(r"mf_[A-Za-z0-9_-]{16,252}", token)
                 or result.get("token_type") != "Bearer"
                 or not isinstance(result.get("scope"), str)
-                or set(result["scope"].split()) != required_scopes):
+                or not required_scopes <= set(result["scope"].split())):
             raise SignInError("Mithril did not confirm the requested sign-in permissions.")
         return token
     raise SignInError("The approval code expired. Run mithril login to start again.")
@@ -151,12 +153,37 @@ def select_home(profile=None):
         os.environ["HERMES_HOME"] = resolve_profile_env(profile)
 
 
-def verified_identity(identity, required_scopes=SCOPES):
+def verified_identity(identity, required_scopes=BASE_SCOPES):
     user = identity.get("user")
     scopes = identity.get("scopes")
     return (isinstance(user, dict) and isinstance(user.get("id"), str) and bool(user["id"])
             and isinstance(scopes, list) and all(isinstance(scope, str) for scope in scopes)
             and required_scopes <= set(scopes))
+
+
+def _format_micro_usd(value):
+    """Format a signed micro-USD ledger amount to cents without float rounding."""
+    cents_total = (abs(value) + 5_000) // 10_000
+    dollars, cents = divmod(cents_total, 100)
+    sign = "-" if value < 0 else ""
+    return f"{sign}${dollars:,}.{cents:02d}"
+
+
+def mithril_balance_lines(token, identity):
+    """Return a verified, read-only Mithril ledger balance line for a profile."""
+    scopes = identity.get("scopes") if isinstance(identity, dict) else None
+    if not isinstance(scopes, list) or BILLING_SCOPE not in scopes:
+        return ["Mithril balance unavailable. Run `mithril login` to approve read-only billing access."]
+    try:
+        value = request("/v1/billing/status", token=token)
+    except Exception:
+        return ["Mithril balance unavailable. Check your connection and try again."]
+    balance = value.get("balanceMicroUsd")
+    ledger_sum = value.get("ledgerSum")
+    if (type(balance) is not int or abs(balance) > 9_007_199_254_740_991
+            or type(ledger_sum) is not int or ledger_sum != balance or value.get("consistent") is not True):
+        return ["Mithril balance hidden because the account ledger could not be verified. Check https://console.mithril.fund/account."]
+    return [f"Mithril balance: {_format_micro_usd(balance)}"]
 
 
 def persist(token, model):
@@ -218,6 +245,43 @@ def uses_existing_provider_auth(argv):
             and len(stripped) > 2 and not stripped[2].startswith("-"))
 
 
+def startup_login(argv=None):
+    """Sign in the selected Profile before its first Mithril chat; 0 when already signed in."""
+    from hermes_cli.config import is_managed, load_env
+
+    argv = list(sys.argv[1:] if argv is None else argv)
+    profile = None
+    model = None
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        if arg in ("-p", "--profile") and index + 1 < len(argv):
+            profile = argv[index + 1]
+        elif arg.startswith("--profile="):
+            profile = arg.split("=", 1)[1]
+        elif arg in ("-m", "--model") and index + 1 < len(argv):
+            model = argv[index + 1]
+        elif arg.startswith("--model="):
+            model = arg.split("=", 1)[1]
+        index += 1
+    try:
+        select_home(profile)
+        if is_managed():
+            return 0
+        if load_env().get(TOKEN_ENV, "").strip():
+            return 0
+    except (OSError, RuntimeError, ValueError):
+        print("Mithril Agent: cannot read this Profile's sign-in settings. Run `mithril login` to check them.",
+              file=sys.stderr)
+        return 1
+    login_argv = ["login"]
+    if profile:
+        login_argv.extend(["--profile", profile])
+    if model:
+        login_argv.extend(["--model", model])
+    return main(login_argv, continue_on_login=True)
+
+
 def main(argv=None, *, continue_on_login=False, profile_selected=False):
     argv = list(sys.argv[1:] if argv is None else argv)
     if uses_existing_provider_auth(argv):
@@ -251,7 +315,7 @@ def main(argv=None, *, continue_on_login=False, profile_selected=False):
         if args.command == "logout":
             require_env_writable(TOKEN_ENV, "remove")
             remove_env_value(TOKEN_ENV)
-            print("Signed out on this Profile. Manage or revoke device access at https://console.mithril.fund/account.")
+            print("Removed the Mithril token from this Profile. Server-side access may remain active until expiry or Console revocation: https://console.mithril.fund/account.")
             return 0
         if args.command == "account":
             token = load_env().get(TOKEN_ENV)
@@ -262,6 +326,8 @@ def main(argv=None, *, continue_on_login=False, profile_selected=False):
             if not verified_identity(identity):
                 raise SignInError("Mithril could not verify this account. Run mithril login.")
             print("Signed in to Mithril Fund on this Profile.")
+            for line in mithril_balance_lines(token, identity):
+                print(line)
             return 0
         require_env_writable(TOKEN_ENV, "set")
         if is_managed():
@@ -273,7 +339,7 @@ def main(argv=None, *, continue_on_login=False, profile_selected=False):
         current = current.get("default") if isinstance(current, dict) else current
         if args.connectors and args.model:
             raise SignInError("Use a separate mithril login --model command to change the inference model.")
-        requested = SCOPES | CONNECTOR_SCOPES if args.connectors else SCOPES
+        requested = SCOPES | CONNECTOR_SCOPES if args.connectors else BASE_SCOPES
         grant = request("/v1/device/code", {"device_name": "Mithril Agent CLI", "scope": " ".join(sorted(requested))})
         url = validate_grant(grant)
         print("Sign in to Mithril Fund and approve this device in your browser.", flush=True)

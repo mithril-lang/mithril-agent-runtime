@@ -6,6 +6,7 @@ Availability fails closed; the gateway remains authoritative for entitlement and
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
@@ -89,6 +90,8 @@ def connectors_available(
     not in the schema at all, so the model never narrates a gateway 404 to a user the portal has
     not enabled. Free-tier identities are always in; accounts are in only when the portal says so
     via the token claim."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     try:
         resolved_loader = config_loader or load_config
         if not resolved_loader().enabled:

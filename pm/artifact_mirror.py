@@ -35,4 +35,6 @@ def pinned_source(url: str, dest: Path, sha256: str) -> Source:
     archive = mirror_url(sha256)
     # The lock records registry.npmjs.org; a user's npm mirror serves the same pinned bytes (#123132).
     url = npm_registry_url(url, os.environ)
-    return Source(url, dest, sha256, fallbacks=() if url == archive else (archive,))
+    mithril_mode = os.environ.get("MITHRIL_AGENT") == "1"
+    fallbacks = () if mithril_mode or url == archive else (archive,)
+    return Source(url, dest, sha256, fallbacks=fallbacks)

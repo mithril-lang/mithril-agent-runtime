@@ -278,6 +278,10 @@ def _nous_persist_selection(selected: str, creds: dict) -> dict:
 
 def _model_flow_nous(config, current_model="", args=None):
     """Nous Portal provider: ensure logged in, then pick model."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        _say(
+            "Nous models are unavailable in Mithril Agent. Run `mithril login` to choose a Mithril model.", "")
+        return
     from hermes_cli.auth import get_provider_auth_state, _prompt_model_selection, _login_nous, PROVIDER_REGISTRY
     from hermes_cli.config import load_config
     from hermes_cli.nous_subscription import prompt_enable_tool_gateway

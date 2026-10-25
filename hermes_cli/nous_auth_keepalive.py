@@ -84,6 +84,8 @@ def _observed_lifetime_seconds() -> Optional[int]:
     """Server-issued lifetime (seconds) of the current Nous credentials; the shorter of the access
     token and the invoke agent key governs. None when nothing usable is stored.
     """
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     state = get_provider_auth_state("nous") or {}
     lifetimes = []
     for key in ("expires_in", "agent_key_expires_in"):
@@ -151,6 +153,8 @@ def refresh_nous_auth_keepalive_once(
     min_access_ttl_seconds: Optional[int] = None, timeout_seconds: Optional[float] = None,
 ) -> bool:
     """Refresh Nous auth once if credentials are configured (pool entry first, then singleton state)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return False
     # This runs in a bare daemon thread, so it does not inherit a request's ContextVars. Once a
     # gateway multiplexes profiles, even the launch profile must bind its own scope before a
     # credential read; otherwise the fail-closed routing reader warns on every tick.
@@ -199,6 +203,8 @@ def start_nous_auth_keepalive(
     min_key_ttl_seconds: int = NOUS_INVOKE_JWT_MIN_TTL_SECONDS, timeout_seconds: Optional[float] = None,
 ) -> Optional[threading.Thread]:
     """Start the process-wide Nous auth keepalive thread (idempotent; None when disabled)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return None
     interval_seconds = _interval_seconds(interval_seconds)
     if interval_seconds <= 0:
         return None

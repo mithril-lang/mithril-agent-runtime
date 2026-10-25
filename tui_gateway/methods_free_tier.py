@@ -7,6 +7,7 @@ Bodies are rebound onto server.py's globals (method_ctx.bind_module) and referen
 """
 
 import logging
+import os
 
 from .method_ctx import HandlerRegistry, bind_module
 
@@ -27,6 +28,11 @@ def _(rid, params: dict) -> dict:
 
     A pure read. The identity is created by the boot bootstrap (``free_tier_bootstrap``), never as
     a side effect of a client polling this method (NS-845 Q1.2)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _ok(rid, {
+            "has_guest": False, "enabled": False, "available": False,
+            "notice_pending": False, "model": "", "label": "",
+        })
     try:
         from hermes_cli import anon_auth
         has_guest = anon_auth.has_guest()
@@ -53,6 +59,11 @@ def _(rid, params: dict) -> dict:
     turned on later) and the user asks again. The user's click is the one attempt that may run
     inside the mint memo's cooldown. ``{has_guest, enabled}``, plus
     ``{error, error_code, retryable, retry_after}`` when the portal refused."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _ok(rid, {
+            "has_guest": False, "enabled": False,
+            "error": "Mithril Agent does not provision guest identities.",
+        })
     try:
         from hermes_cli import anon_auth
         from hermes_cli import free_tier_bootstrap
@@ -81,6 +92,8 @@ def _(rid, params: dict) -> dict:
 def _(rid, params: dict) -> dict:
     """Mark the availability notice shown on the free-tier identity. ``acked`` is false when there is
     no free-tier identity to mark (nothing to show again either)."""
+    if os.environ.get("MITHRIL_AGENT") == "1":
+        return _ok(rid, {"acked": False})
     try:
         from hermes_cli import anon_auth
         return _ok(rid, {"acked": bool(anon_auth.mark_guest_notice_shown())})

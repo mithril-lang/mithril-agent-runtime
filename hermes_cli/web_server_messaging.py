@@ -23,34 +23,34 @@ _log = logging.getLogger("hermes_cli.web_server")
 # and pulls required_env from a plugin's PlatformEntry when available.
 _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "telegram": {
-        "name": "Telegram", "description": "Run Hermes from Telegram DMs, groups, and topics.",
-        "docs_url": "https://core.telegram.org/bots/features#botfather",
+        "name": "Telegram", "description": "Run Mithril Agent from Telegram DMs, groups, and topics.",
+        "docs_url": "https://core.telegram.org/bots/tutorial",
         "env_vars": ("TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_USERS", "TELEGRAM_PROXY"),
         "required_env": ("TELEGRAM_BOT_TOKEN",),
     },
     "discord": {
-        "name": "Discord", "description": "Connect Hermes to Discord DMs, channels, and threads.",
-        "docs_url": "https://discord.com/developers/applications",
+        "name": "Discord", "description": "Connect Mithril Agent to Discord DMs, channels, and threads.",
+        "docs_url": "https://docs.discord.com/developers/quick-start/getting-started",
         "env_vars": ("DISCORD_BOT_TOKEN", "DISCORD_ALLOWED_USERS"),
         "required_env": ("DISCORD_BOT_TOKEN",),
     },
     "slack": {
         "name": "Slack",
-        "description": "Use Hermes from Slack via Socket Mode. Add allowed Slack member IDs so connected bots can respond.",
-        "docs_url": "https://api.slack.com/apps",
+        "description": "Use Mithril Agent from Slack via Socket Mode. Add allowed Slack member IDs so connected bots can respond.",
+        "docs_url": "https://api.slack.com/apis/connections/socket",
         "env_vars": ("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_ALLOWED_USERS"),
         "required_env": ("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"),
     },
     "mattermost": {
         "name": "Mattermost",
-        "description": "Connect Hermes to Mattermost channels and direct messages.",
-        "docs_url": "https://mattermost.com/deploy/",
+        "description": "Connect Mithril Agent to Mattermost channels and direct messages.",
+        "docs_url": "https://docs.mattermost.com/developers/integrate/reference/personal-access-token",
         "env_vars": ("MATTERMOST_URL", "MATTERMOST_TOKEN", "MATTERMOST_ALLOWED_USERS"),
         "required_env": ("MATTERMOST_URL", "MATTERMOST_TOKEN"),
     },
     "matrix": {
-        "name": "Matrix", "description": "Use Hermes in Matrix rooms and direct messages.",
-        "docs_url": "https://matrix.org/ecosystem/servers/",
+        "name": "Matrix", "description": "Use Mithril Agent in Matrix rooms and direct messages.",
+        "docs_url": "",
         "env_vars": (
             "MATRIX_HOMESERVER", "MATRIX_ACCESS_TOKEN", "MATRIX_USER_ID", "MATRIX_ALLOWED_USERS",
         ),
@@ -58,14 +58,14 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "signal": {
         "name": "Signal", "description": "Connect through a signal-cli REST bridge.",
-        "docs_url": "https://github.com/bbernhard/signal-cli-rest-api",
+        "docs_url": "",
         "env_vars": ("SIGNAL_HTTP_URL", "SIGNAL_ACCOUNT", "SIGNAL_ALLOWED_USERS"),
         "required_env": ("SIGNAL_HTTP_URL", "SIGNAL_ACCOUNT"),
     },
     "whatsapp": {
         "name": "WhatsApp",
-        "description": "Use Hermes through the bundled WhatsApp bridge with QR-based auth.",
-        "docs_url": "https://github.com/tulir/whatsmeow",
+        "description": "Use Mithril Agent through the bundled WhatsApp bridge with QR-based auth.",
+        "docs_url": "",
         "env_vars": (
             "WHATSAPP_ENABLED", "WHATSAPP_MODE", "WHATSAPP_DM_POLICY", "WHATSAPP_ALLOWED_USERS",
         ),
@@ -73,39 +73,39 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     },
     "homeassistant": {
         "name": "Home Assistant",
-        "description": "Control your smart home from Hermes via Home Assistant.",
+        "description": "Control your smart home from Mithril Agent via Home Assistant.",
         "docs_url": "https://www.home-assistant.io/docs/authentication/",
         "env_vars": ("HASS_URL", "HASS_TOKEN"), "required_env": ("HASS_URL", "HASS_TOKEN"),
     },
     "email": {
-        "name": "Email", "description": "Talk to Hermes through an IMAP/SMTP mailbox.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+        "name": "Email", "description": "Connect Mithril Agent through an IMAP/SMTP mailbox.",
+        "docs_url": "",
         "env_vars": ("EMAIL_ADDRESS", "EMAIL_PASSWORD", "EMAIL_IMAP_HOST", "EMAIL_SMTP_HOST"),
         "required_env": ("EMAIL_ADDRESS", "EMAIL_PASSWORD", "EMAIL_IMAP_HOST", "EMAIL_SMTP_HOST"),
     },
     "sms": {
         "name": "SMS (Twilio)", "description": "Send and receive text messages via Twilio.",
-        "docs_url": "https://www.twilio.com/console",
+        "docs_url": "https://www.twilio.com/docs/messaging/quickstart",
         "env_vars": ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"),
         "required_env": ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"),
     },
     "dingtalk": {
-        "name": "DingTalk", "description": "Connect Hermes to DingTalk groups (钉钉).",
+        "name": "DingTalk", "description": "Connect Mithril Agent to DingTalk groups (钉钉).",
         "docs_url": "https://open.dingtalk.com/document/orgapp/the-robot-development-process",
         "env_vars": ("DINGTALK_CLIENT_ID", "DINGTALK_CLIENT_SECRET"),
         "required_env": ("DINGTALK_CLIENT_ID", "DINGTALK_CLIENT_SECRET"),
     },
     "feishu": {
-        "name": "Feishu / Lark", "description": "Use Hermes inside Feishu / Lark.",
-        "docs_url": "https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/intro",
+        "name": "Feishu / Lark", "description": "Use Mithril Agent inside Feishu / Lark.",
+        "docs_url": "https://open.feishu.cn/document/client-docs/bot-v3/bot-overview",
         "env_vars": (
             "FEISHU_APP_ID", "FEISHU_APP_SECRET", "FEISHU_ENCRYPT_KEY", "FEISHU_VERIFICATION_TOKEN",
         ),
         "required_env": ("FEISHU_APP_ID", "FEISHU_APP_SECRET"),
     },
     "google_chat": {
-        "name": "Google Chat", "description": "Connect Hermes to Google Chat via Cloud Pub/Sub.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/google_chat",
+        "name": "Google Chat", "description": "Connect Mithril Agent to Google Chat via Cloud Pub/Sub.",
+        "docs_url": "https://developers.google.com/workspace/add-ons/chat/quickstart-pubsub",
     },
     "wecom": {
         "name": "WeCom (group bot)", "description": "Send-only WeCom group bot via webhook.",
@@ -126,22 +126,22 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "weixin": {
         "name": "Weixin / WeChat (Personal)",
         "description": "Connect a personal WeChat account through Tencent's iLink Bot API.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/weixin/",
+        "docs_url": "",
         "env_vars": ("WEIXIN_ACCOUNT_ID", "WEIXIN_TOKEN", "WEIXIN_BASE_URL"),
         "required_env": ("WEIXIN_ACCOUNT_ID", "WEIXIN_TOKEN"),
     },
     "bluebubbles": {
         "name": "BlueBubbles (iMessage)",
-        "description": "Use Hermes through iMessage via a BlueBubbles server.",
-        "docs_url": "https://bluebubbles.app/",
+        "description": "Use Mithril Agent through iMessage via a BlueBubbles server.",
+        "docs_url": "https://bluebubbles.app/install/",
         "env_vars": (
             "BLUEBUBBLES_SERVER_URL", "BLUEBUBBLES_PASSWORD", "BLUEBUBBLES_ALLOWED_USERS",
         ),
         "required_env": ("BLUEBUBBLES_SERVER_URL", "BLUEBUBBLES_PASSWORD"),
     },
     "qqbot": {
-        "name": "QQ Bot", "description": "Connect Hermes to a QQ Bot from the QQ Open Platform.",
-        "docs_url": "https://q.qq.com",
+        "name": "QQ Bot", "description": "Connect Mithril Agent to a QQ Bot from the QQ Open Platform.",
+        "docs_url": "",
         "env_vars": ("QQ_APP_ID", "QQ_CLIENT_SECRET", "QQ_ALLOWED_USERS"),
         "required_env": ("QQ_APP_ID", "QQ_CLIENT_SECRET"),
     },
@@ -149,44 +149,44 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     # plugin registry. Only the docs link needs an override here so the
     # Channels page can point at the Microsoft Teams setup guide.
     "teams": {
-        "description": "Connect Hermes to Microsoft Teams chats via the Bot Framework.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams",
+        "description": "Connect Mithril Agent to Microsoft Teams chats via the Bot Framework.",
+        "docs_url": "https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/create-a-bot-for-teams",
     },
     # Bundled platform plugins: name comes from the plugin registry label;
     # give each a human description (the registry's install_hint is a
     # dependency note, not a description) and a docs link.
     "irc": {
-        "description": "Relay messages between an IRC channel (or DMs) and Hermes.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/irc",
+        "description": "Relay messages between an IRC channel (or DMs) and Mithril Agent.",
+        "docs_url": "",
     },
     "line": {
-        "description": "Use Hermes from LINE via the LINE Messaging API webhook.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/line",
+        "description": "Use Mithril Agent from LINE via the LINE Messaging API webhook.",
+        "docs_url": "https://developers.line.biz/en/docs/messaging-api/getting-started",
     },
     "ntfy": {
-        "description": "Chat with Hermes over ntfy push topics (ntfy.sh or self-hosted).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/ntfy",
+        "description": "Chat with Mithril Agent over ntfy push topics (ntfy.sh or self-hosted).",
+        "docs_url": "https://docs.ntfy.sh/publish/",
     },
     "photon": {
-        "description": "Use Hermes through iMessage via Photon's managed Spectrum platform.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/photon",
+        "description": "Use Mithril Agent through iMessage via Photon's managed Spectrum platform.",
+        "docs_url": "",
     },
     "raft": {
         "description": "Join a Raft workspace as an external agent.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/raft",
+        "docs_url": "",
     },
     "simplex": {
-        "description": "Talk to Hermes over SimpleX Chat via a local simplex-chat daemon.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/simplex",
+        "description": "Talk to Mithril Agent over SimpleX Chat via a local simplex-chat daemon.",
+        "docs_url": "https://simplex.chat/docs/cli.html",
     },
     "yuanbao": {
-        "name": "Yuanbao (元宝)", "description": "Connect Hermes to Tencent Yuanbao.", "docs_url": "",
+        "name": "Yuanbao (元宝)", "description": "Connect Mithril Agent to Tencent Yuanbao.", "docs_url": "",
         "required_env": (),
     },
     "api_server": {
         "name": "API server",
-        "description": "Expose Hermes as an OpenAI-compatible HTTP API for tools like Open WebUI.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/",
+        "description": "Expose Mithril Agent as an OpenAI-compatible HTTP API for tools like Open WebUI.",
+        "docs_url": "https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-openai-compatible/",
         "env_vars": (
             "API_SERVER_ENABLED", "API_SERVER_KEY", "API_SERVER_PORT", "API_SERVER_HOST",
             "API_SERVER_MODEL_NAME",
@@ -196,23 +196,23 @@ _PLATFORM_OVERRIDES: dict[str, dict[str, Any]] = {
     "webhook": {
         "name": "Webhooks",
         "description": "Receive events from GitHub, GitLab, and other webhook sources.",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/webhooks/",
+        "docs_url": "",
         "env_vars": ("WEBHOOK_ENABLED", "WEBHOOK_PORT", "WEBHOOK_SECRET"), "required_env": (),
     },
     "msgraph_webhook": {
         "name": "Microsoft Graph Webhook",
         "description": "Receive Microsoft Graph change notifications (Teams meetings, Outlook, …).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/msgraph-webhook",
+        "docs_url": "https://learn.microsoft.com/en-us/graph/change-notifications-delivery-webhooks",
         "required_env": (),
     },
     "whatsapp_cloud": {
         "name": "WhatsApp Cloud API",
-        "description": "Use Hermes via Meta's hosted WhatsApp Cloud API (no local bridge).",
-        "docs_url": "https://hermes-agent.nousresearch.com/docs/user-guide/messaging/whatsapp-cloud",
+        "description": "Use Mithril Agent via Meta's hosted WhatsApp Cloud API (no local bridge).",
+        "docs_url": "https://whatsappbusiness.com/developers/developer-hub/",
     },
     "relay": {
         "name": "Relay (experimental)",
-        "description": "Generic relay adapter fronted by the Hermes Relay connector.",
+        "description": "Generic relay adapter fronted by the Mithril Agent Relay connector.",
         "docs_url": "", "required_env": (),
     },
 }
@@ -375,6 +375,19 @@ def _restart_gateway_after_whatsapp_onboarding(profile: Optional[str] = None) ->
 
 _TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.hermes-agent.nousresearch.com"
 _TELEGRAM_ONBOARDING_USER_AGENT = f"HermesDashboard/{get_version_info().base_version}"
+_TELEGRAM_MITHRIL_UNAVAILABLE = (
+    "Automatic Telegram bot setup is unavailable in Mithril Agent. "
+    "Use the manual setup with @BotFather."
+)
+
+
+def _telegram_managed_onboarding_available() -> bool:
+    return os.environ.get("MITHRIL_AGENT") != "1"
+
+
+def _require_telegram_managed_onboarding() -> None:
+    if not _telegram_managed_onboarding_available():
+        raise HTTPException(status_code=501, detail=_TELEGRAM_MITHRIL_UNAVAILABLE)
 
 
 @dataclass
@@ -413,6 +426,9 @@ _TELEGRAM_INVALID = "Telegram setup service returned an invalid response."
 def _telegram_onboarding_request_sync(
     method: str, path: str, *, body: dict[str, Any] | None = None, bearer_token: str | None = None
 ) -> dict[str, Any]:
+    # Defense in depth: no caller may send Mithril profile data or credentials to
+    # the upstream Hermes onboarding service, even if a route forgets its guard.
+    _require_telegram_managed_onboarding()
     import httpx
     headers = {"Accept": "application/json", "User-Agent": _TELEGRAM_ONBOARDING_USER_AGENT}
     request_kwargs: dict[str, Any] = {}
