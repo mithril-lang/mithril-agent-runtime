@@ -13,9 +13,6 @@ class MithrilAgent < Formula
     inreplace "scripts/install-mithril.sh", /^revision='[0-9a-f]{40}'$/, "revision='#{runtime_revision}'"
     libexec.install "scripts/install-mithril.sh"
     libexec.install "scripts/mithril-brew-launcher" => "mithril"
-    (libexec/"hermes_cli").install "hermes_cli/mithril_updates.py"
-    (libexec/"distributions/mithril").install "distributions/mithril/update-trust.json"
-    libexec.install "scripts/mithril-update-bootstrap.py"
     bin.write_exec_script libexec/"mithril"
   end
 

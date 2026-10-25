@@ -1,11 +1,11 @@
 # Mithril CLI signed updates
 
-This is an unreleased candidate pending exact-source CI and installed-client
-qualification. Jun approved the dedicated CLI signing root on 2026-10-25.
+Release availability and qualification are recorded in the signed release
+metadata and release evidence. Jun approved the dedicated CLI signing root on 2026-10-25.
 The private key was saved to 1Password Private and projected into the runtime
 CircleCI project. Its public-key SHA-256 fingerprint is
 `a04b726c147049b395338db49d884fd63b570bb87be14427c4508a080c575b34`.
-This provisioning is separate from a published and verified release.
+Key provisioning is separate from a published and verified release.
 
 ## Proposed release authority
 

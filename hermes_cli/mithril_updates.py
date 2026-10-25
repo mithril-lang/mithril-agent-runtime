@@ -120,17 +120,17 @@ def verify(envelope, trust, *, now=None, state=None):
         raise UpdateError("Release metadata is expired or has an invalid validity period")
     installer = payload.get("installer", {})
     expected = f"https://github.com/{REPOSITORY}/releases/download/v{payload['version']}/install-mithril.sh"
-    if (installer.get("url") != expected or type(installer.get("size")) is not int
+    if (not isinstance(installer, dict) or installer.get("url") != expected or type(installer.get("size")) is not int
             or not 0 < installer["size"] <= MAX_INSTALLER
             or not re.fullmatch(r"[0-9a-f]{64}", str(installer.get("sha256", "")))):
         raise UpdateError("Release installer identity is invalid")
     archive = payload.get("source_archive", {})
-    if (archive.get("url") != expected.removesuffix("install-mithril.sh") + "mithril-cli-runtime.tar.gz"
+    if (not isinstance(archive, dict) or archive.get("url") != expected.removesuffix("install-mithril.sh") + "mithril-cli-runtime.tar.gz"
             or type(archive.get("size")) is not int or not 0 < archive["size"] <= 256 * 1024 * 1024
             or not re.fullmatch(r"[0-9a-f]{64}", str(archive.get("sha256", "")))):
         raise UpdateError("Release source archive identity is invalid")
     provenance = payload.get("provenance", {})
-    if (provenance.get("source_repository") != "mithril-lang/mithril-fund"
+    if (not isinstance(provenance, dict) or provenance.get("source_repository") != "mithril-lang/mithril-fund"
             or not SHA.fullmatch(str(provenance.get("source_revision", "")))
             or not re.fullmatch(r"[0-9a-f]{64}", str(provenance.get("manifest_sha256", "")))):
         raise UpdateError("Release source provenance is missing")
@@ -353,6 +353,8 @@ def rollback(home, state):
 
 
 def run(home, *, check=False, undo=False):
+    from agent.ssl_verify import install_truststore
+    install_truststore()
     home = Path(home).resolve(strict=True)
     with install_lock(home):
         receipt = home / "mithril-update.json"
