@@ -49764,12 +49764,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "0bb081120c9d1d7306147ef287a67087f0569a4bf1de77315913d56d1ac648f2",
+    "sha256": "9b0b5e32946bdd370ba09018a9dce61d0b9d73046a31efd8d1a1766bd7b63056",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "b0a8276704e781857527e8800eae0f56ecb9fa081107e75883da398d786e4695"
+        "sha256": "ffd2e6dcb9072b868c3a08f0578ea503b7a1e841c3601f3bfe0147bbcb3ba306"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49868,6 +49868,11 @@
         "sha256": "24bbdcc84b9e488c549c2d99a226c72a2c6cec640bfe6d2bda30b39a42862f90"
       },
       {
+        "path": "hermes_cli/update_cmd_maint.py",
+        "baseSha256": "046e79ffb25abeed1260612c6b861a2447dbad8e2f3b111a63655fbb64133241",
+        "sha256": "30cae5a7e2a90d527c0930d54a40074e454bb5f5164c8d9db96c9ff77ed4cc59"
+      },
+      {
         "path": "pm/artifact_mirror.py",
         "baseSha256": "80554900b7372c76cb38392a93761229575520e27446fef6d3fb69cad84bfa5d",
         "sha256": "c0f8a06d0b9ac4315f87198f976233cb761955693cabaeebc410277e55442577"
@@ -49964,6 +49969,16 @@
         "path": "tests/test_mithril_updates.py",
         "baseSha256": null,
         "sha256": "df53e650e8e52d44ae7a36322cf3bd8c4b59b068446f4d2ad7552c17201c2252"
+      },
+      {
+        "path": "tests/test_profile_skill_sync.py",
+        "baseSha256": null,
+        "sha256": "f69520d330bea796d9fd6cfb32a4bc6122e81e952966e7f8d6ecc1b0272856e2"
+      },
+      {
+        "path": "tools/skills_sync.py",
+        "baseSha256": "4167dc3d99e0abb33cae3f38822753fe24d474b45e451ccc90c7b482e7024a98",
+        "sha256": "fd481cff2a9cb8ef0f291c29627ad4d068a3821b26a6f32d8e033d9174d564ab"
       }
     ]
   }
