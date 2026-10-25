@@ -291,7 +291,8 @@ def apply(target, home, state, *, prepare_runtime=prepare):
     if pointer.exists() and not pointer.is_symlink():
         raise UpdateError("The CLI selection path is not an updater-owned symlink")
     # Keep source releases on the same Work volume as the current runtime.
-    store = Path(current["path"]).parent / ".mithril-cli-releases"
+    install_id = hashlib.sha256(str(home.resolve()).encode()).hexdigest()[:16]
+    store = Path(current["path"]).parent / ".mithril-cli-releases" / install_id
     prepared = prepare_runtime(target, home, store)
     prepared = inspect_runtime(prepared["path"], target["runtime_revision"])
     journal = dict(state, pending=True, previous=current, current=prepared)

@@ -167,3 +167,28 @@ def test_profile_update_preferences_are_respected(monkeypatch, settings):
     assert len(calls) == (0 if settings.get("check") is False else 1)
     if calls:
         assert calls[0][1] == {"check": True}
+
+
+def test_reexec_keeps_original_explicit_default_profile_arguments(monkeypatch):
+    from hermes_cli import config
+    monkeypatch.setenv("MITHRIL_INSTALL_HOME", "/selected/install")
+    monkeypatch.delenv("MITHRIL_UPDATE_REEXEC", raising=False)
+    monkeypatch.setattr(config, "load_config_readonly", lambda: {})
+    monkeypatch.setattr(update, "run", lambda *a, **kw: {"selected": "/new/runtime"})
+    executed = []
+    monkeypatch.setattr(update.os, "execv", lambda executable, args: executed.append((executable, args)))
+    update.before_chat(["chat"], restart_argv=["-p", "default", "chat"])
+    assert executed == [("/new/runtime/.hermes/bin/hermes", ["/new/runtime/.hermes/bin/hermes", "-p", "default", "chat"])]
+
+
+def test_interrupted_selection_blocks_chat_until_explicit_recovery(monkeypatch):
+    from hermes_cli import config
+    monkeypatch.setenv("MITHRIL_INSTALL_HOME", "/selected/install")
+    monkeypatch.delenv("MITHRIL_UPDATE_REEXEC", raising=False)
+    monkeypatch.setattr(config, "load_config_readonly", lambda: {})
+    def pending(*a, **kw):
+        raise update.IncompleteUpdateError("rollback required")
+    monkeypatch.setattr(update, "run", pending)
+    with pytest.raises(SystemExit) as result:
+        update.before_chat([])
+    assert result.value.code == 1

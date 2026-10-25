@@ -33,8 +33,8 @@ def before_chat(argv=None, *, restart_argv=None):
             return
         from hermes_cli import mithril_updates
 
-        mithril_updates.before_chat(argv, restart_argv=restart_argv)
         if load_env().get(mithril_auth.TOKEN_ENV, "").strip():
+            mithril_updates.before_chat(argv, restart_argv=restart_argv)
             return
     except (OSError, RuntimeError, ValueError):
         print("Mithril Agent: cannot read this Profile's sign-in settings. Run `mithril login` to check them.",
@@ -49,3 +49,4 @@ def before_chat(argv=None, *, restart_argv=None):
     result = mithril_auth.main(login_argv, continue_on_login=True, profile_selected=True)
     if result != 0:
         raise SystemExit(result)
+    mithril_updates.before_chat(argv, restart_argv=restart_argv)
