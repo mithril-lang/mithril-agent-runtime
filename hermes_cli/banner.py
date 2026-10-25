@@ -195,9 +195,8 @@ def get_latest_release_tag(repo_dir: Optional[Path] = None) -> Optional[tuple]:
 
     Release URL always points at the canonical NousResearch/hermes-agent repo (forks get no link).
     """
-    if os.environ.get("MITHRIL_AGENT") == "1":
+    if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
         return None
-
     def _compute():
         rd = repo_dir or _resolve_repo_dir()
         tag = source_check._git_stdout(["describe", "--tags", "--abbrev=0"], cwd=rd, timeout=3) if rd else None
@@ -284,10 +283,7 @@ def prefetch_update_check():
 
     No-op under pytest — see ``_skip_background_prefetch``.
     """
-    if os.environ.get("MITHRIL_AGENT") == "1":
-        _update_check_done.set()
-        return
-    if _skip_background_prefetch():
+    if _skip_background_prefetch() or os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
         _update_check_done.set()
         return
 

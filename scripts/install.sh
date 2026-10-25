@@ -21,6 +21,10 @@ set -u
 export UV_NO_CONFIG=1
 
 REPO_URL="${HERMES_REPO_URL:-https://github.com/NousResearch/hermes-agent.git}"
+if [ "${MITHRIL_AGENT:-}" = 1 ] && [ "$REPO_URL" != 'https://github.com/mithril-lang/mithril-agent-runtime.git' ]; then
+    printf '%s\n' 'Mithril installation requires its owned runtime repository' >&2
+    exit 1
+fi
 BRANCH="main"
 INSTALL_COMMIT=""
 INSTALL_DIR="${HERMES_INSTALL_DIR:-}"
@@ -299,7 +303,7 @@ ensure_uv() {
                 5|6|7|18|22|28|52|55|56) ;;
                 *) rm -rf "$_tmp"; fail "failed to download pinned uv from $UV_PIN_URL (curl $_curl_status)" ;;
             esac
-            if [ -n "${UV_PIN_MIRROR:-}" ] && curl -LsSf "$UV_PIN_MIRROR" -o "$_tmp/uv.tar.gz"; then
+            if [ "${MITHRIL_AGENT:-}" != 1 ] && [ -n "${UV_PIN_MIRROR:-}" ] && curl -LsSf "$UV_PIN_MIRROR" -o "$_tmp/uv.tar.gz"; then
                 _fetched_from="$UV_PIN_MIRROR"
             else
                 rm -rf "$_tmp"

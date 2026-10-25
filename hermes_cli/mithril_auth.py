@@ -22,6 +22,7 @@ TOKEN_ENV = "MITHRIL_ACCOUNT_TOKEN"
 BASE_SCOPES = frozenset({"inference", "workspace:read"})
 BILLING_SCOPE = "billing:read"
 SCOPES = BASE_SCOPES | {BILLING_SCOPE}
+CONNECTOR_SCOPES = frozenset({"connectors:read", "connectors:write"})
 
 
 class SignInError(Exception):
@@ -87,7 +88,7 @@ def validate_grant(grant):
     return expected
 
 
-def poll(grant, call=request, now=time.monotonic, wait=time.sleep):
+def poll(grant, call=request, now=time.monotonic, wait=time.sleep, required_scopes=BASE_SCOPES):
     deadline = now() + grant["expires_in"]
     interval = grant["interval"]
     while now() < deadline:
@@ -109,7 +110,7 @@ def poll(grant, call=request, now=time.monotonic, wait=time.sleep):
         if (not isinstance(token, str) or not re.fullmatch(r"mf_[A-Za-z0-9_-]{16,252}", token)
                 or result.get("token_type") != "Bearer"
                 or not isinstance(result.get("scope"), str)
-                or set(result["scope"].split()) != SCOPES):
+                or not required_scopes <= set(result["scope"].split())):
             raise SignInError("Mithril did not confirm the requested sign-in permissions.")
         return token
     raise SignInError("The approval code expired. Run mithril login to start again.")
@@ -175,7 +176,7 @@ def mithril_balance_lines(token, identity):
         return ["Mithril balance unavailable. Run `mithril login` to approve read-only billing access."]
     try:
         value = request("/v1/billing/status", token=token)
-    except SignInError:
+    except Exception:
         return ["Mithril balance unavailable. Check your connection and try again."]
     balance = value.get("balanceMicroUsd")
     ledger_sum = value.get("ledgerSum")
@@ -191,32 +192,35 @@ def persist(token, model):
                                    require_readable_config_before_write, save_env_value,
                                    remove_env_value)
     require_env_writable(TOKEN_ENV, "set")
-    original = require_readable_config_before_write()
-    config = copy.deepcopy(original)
-    providers = config.setdefault("providers", {})
-    if not isinstance(providers, dict):
-        raise SignInError("Repair the providers section in config.yaml before signing in.")
-    # This dedicated route leaves existing provider keys and API credentials intact.
-    providers["Mithril Account"] = {"name": "Mithril Account", "base_url": API + "/v1",
-                                   "key_env": TOKEN_ENV}
-    model_config = config.setdefault("model", {})
-    if not isinstance(model_config, dict):
-        model_config = config["model"] = {}
-    # Pin the model route as well: the CLI otherwise inherits OPENROUTER_BASE_URL.
-    model_config.update({"provider": "Mithril Account", "default": model, "base_url": API + "/v1"})
-    stale_keys = ("api", "api_key", "key_env", "api_key_env", "key_cmd", "api_mode")
-    if any(key in model_config for key in stale_keys):
-        backup = get_config_path().parent / "backups" / ("before-mithril-login-" + uuid.uuid4().hex + ".yaml")
-        backup.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        atomic_config_write(backup, original)
-        os.chmod(backup, 0o600)
-    for stale in stale_keys:
-        model_config.pop(stale, None)
+    config = None
+    if model is not None:
+        original = require_readable_config_before_write()
+        config = copy.deepcopy(original)
+        providers = config.setdefault("providers", {})
+        if not isinstance(providers, dict):
+            raise SignInError("Repair the providers section in config.yaml before signing in.")
+        # This dedicated route leaves existing provider keys and API credentials intact.
+        providers["Mithril Account"] = {"name": "Mithril Account", "base_url": API + "/v1",
+                                       "key_env": TOKEN_ENV}
+        model_config = config.setdefault("model", {})
+        if not isinstance(model_config, dict):
+            model_config = config["model"] = {}
+        # Pin the model route as well: the CLI otherwise inherits OPENROUTER_BASE_URL.
+        model_config.update({"provider": "Mithril Account", "default": model, "base_url": API + "/v1"})
+        stale_keys = ("api", "api_key", "key_env", "api_key_env", "key_cmd", "api_mode")
+        if any(key in model_config for key in stale_keys):
+            backup = get_config_path().parent / "backups" / ("before-mithril-login-" + uuid.uuid4().hex + ".yaml")
+            backup.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            atomic_config_write(backup, original)
+            os.chmod(backup, 0o600)
+        for stale in stale_keys:
+            model_config.pop(stale, None)
     previous = load_env().get(TOKEN_ENV)
     try:
         save_env_value(TOKEN_ENV, token)
         os.chmod(get_env_path(), 0o600)
-        atomic_config_write(get_config_path(), config)
+        if config is not None:
+            atomic_config_write(get_config_path(), config)
     except BaseException:
         if previous is None:
             remove_env_value(TOKEN_ENV)
@@ -241,7 +245,44 @@ def uses_existing_provider_auth(argv):
             and len(stripped) > 2 and not stripped[2].startswith("-"))
 
 
-def main(argv=None):
+def startup_login(argv=None):
+    """Sign in the selected Profile before its first Mithril chat; 0 when already signed in."""
+    from hermes_cli.config import is_managed, load_env
+
+    argv = list(sys.argv[1:] if argv is None else argv)
+    profile = None
+    model = None
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        if arg in ("-p", "--profile") and index + 1 < len(argv):
+            profile = argv[index + 1]
+        elif arg.startswith("--profile="):
+            profile = arg.split("=", 1)[1]
+        elif arg in ("-m", "--model") and index + 1 < len(argv):
+            model = argv[index + 1]
+        elif arg.startswith("--model="):
+            model = arg.split("=", 1)[1]
+        index += 1
+    try:
+        select_home(profile)
+        if is_managed():
+            return 0
+        if load_env().get(TOKEN_ENV, "").strip():
+            return 0
+    except (OSError, RuntimeError, ValueError):
+        print("Mithril Agent: cannot read this Profile's sign-in settings. Run `mithril login` to check them.",
+              file=sys.stderr)
+        return 1
+    login_argv = ["login"]
+    if profile:
+        login_argv.extend(["--profile", profile])
+    if model:
+        login_argv.extend(["--model", model])
+    return main(login_argv, continue_on_login=True)
+
+
+def main(argv=None, *, continue_on_login=False, profile_selected=False):
     argv = list(sys.argv[1:] if argv is None else argv)
     if uses_existing_provider_auth(argv):
         previous = sys.argv
@@ -261,11 +302,13 @@ def main(argv=None):
     parser.add_argument("action", nargs="?", choices=("status",))
     parser.add_argument("--model", help="Mithril model identifier to use after sign-in")
     parser.add_argument("--no-browser", action="store_true", help="Print the approval URL without opening it")
+    parser.add_argument("--connectors", action="store_true", help="Authorize native connectors without changing inference settings")
     parser.add_argument("-p", "--profile", help="Existing local Profile (default: current Profile)")
     args = parser.parse_args(argv)
     try:
         # Resolve before importing config or secret readers; never share another Profile's token.
-        select_home(args.profile)
+        if not profile_selected:
+            select_home(args.profile)
         from hermes_cli.config import (is_managed, load_env,
                                        require_readable_config_before_write,
                                        require_env_writable, remove_env_value)
@@ -290,12 +333,14 @@ def main(argv=None):
         if is_managed():
             raise SignInError("This Profile is managed. Ask its administrator to configure account sign-in.")
         config = require_readable_config_before_write()
-        if not isinstance(config.get("providers", {}), dict):
+        if not args.connectors and not isinstance(config.get("providers", {}), dict):
             raise SignInError("Repair the providers section in config.yaml before signing in.")
         current = config.get("model", {})
         current = current.get("default") if isinstance(current, dict) else current
-        model = select_model(request("/v1/models"), args.model, current)
-        grant = request("/v1/device/code", {"device_name": "Mithril Agent CLI", "scope": " ".join(sorted(SCOPES))})
+        if args.connectors and args.model:
+            raise SignInError("Use a separate mithril login --model command to change the inference model.")
+        requested = SCOPES | CONNECTOR_SCOPES if args.connectors else BASE_SCOPES
+        grant = request("/v1/device/code", {"device_name": "Mithril Agent CLI", "scope": " ".join(sorted(requested))})
         url = validate_grant(grant)
         print("Sign in to Mithril Fund and approve this device in your browser.", flush=True)
         print(f"Approval code: {grant['user_code']}\n{url}", flush=True)
@@ -305,12 +350,17 @@ def main(argv=None):
                 webbrowser.open(url)
             except webbrowser.Error:
                 pass
-        token = poll(grant)
+        token = poll(grant, required_scopes=requested) if args.connectors else poll(grant)
         identity = request("/v1/me", token=token)
-        if not verified_identity(identity, SCOPES):
+        if not verified_identity(identity, requested):
             raise SignInError("Mithril could not verify this account. No local settings were changed.")
+        model = None if args.connectors else select_model(request("/v1/models", token=token), args.model, current)
         persist(token, model)
-        print(f"Signed in to Mithril Fund. Model: {model}\nRun mithril to start a new conversation.")
+        if args.connectors:
+            print("Mithril connector access authorized for this Profile. Open Mithril to connect Linear.")
+        else:
+            suffix = "Continuing to your session." if continue_on_login else "Run mithril to start a new conversation."
+            print(f"Signed in to Mithril Fund. Model: {model}\n{suffix}")
         return 0
     except KeyboardInterrupt:
         print("\nSign-in cancelled. Run mithril account status to check this Profile.", file=sys.stderr)

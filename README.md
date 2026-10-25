@@ -5,15 +5,28 @@ Hermes Agent by Nous Research. Configuration and conversations use `~/.mithril`.
 
 This is a candidate runtime source snapshot for installation qualification.
 Public installer availability is announced at https://console.mithril.fund/agent.
+The Homebrew formula and shell installer select the same immutable runtime commit.
+See [releases](https://github.com/mithril-lang/mithril-agent-runtime/releases) for CLI distribution updates.
+The runtime provenance manifest binds each original file to its source revision.
+`mithril --version` reports the UTC-minute preview identity
+(`<base>-preview.YYYYMMDD.tHHmm`) so release recency is visible without comparing
+counter reservations.
+
+Upstream project: https://github.com/NousResearch/hermes-agent
+License: [MIT](LICENSE).
 
 ## Sign in to Mithril Fund
+
+The first interactive `mithril` launch asks you to sign in to Mithril Fund in
+your browser. Approve the displayed device code to continue into your session.
+The approval is saved only for the selected local Profile. Cancellation, denied
+approval, expiration, or a sign-in error stops the launch.
 
 After installation, run:
 
 ```sh
-mithril login
-mithril account status
 mithril
+mithril account status
 ```
 
 Approve the code shown in the terminal in your own browser. You do not need to
@@ -22,6 +35,8 @@ the displayed approval address on another device. `mithril logout` removes this
 Profile's local account credential. Revoke device access in the
 [Console account page](https://console.mithril.fund/account) when needed.
 Existing API keys, other providers and conversations are preserved.
+
+The first interactive launch also starts this device approval flow when needed.
 
 ## Runtime updates
 
@@ -36,5 +51,38 @@ to turn automatic updates off. See
 The runtime provenance manifest binds source files to their source revision and
 lists any distribution-owned runtime overrides separately.
 
-Upstream project: https://github.com/NousResearch/hermes-agent
-License: [MIT](LICENSE).
+Run `mithril login` to reconnect explicitly. Saved account credentials skip the
+startup prompt. Help, scripts, explicit alternative providers, managed Profiles,
+and the ordinary `hermes` command keep their existing startup behavior.
+
+`mithril logout` removes this Profile's local account credential. Revoke device
+access in the [Console account page](https://console.mithril.fund/account) when
+needed. Existing API keys, other providers and conversations are preserved.
+Use `mithril setup` for other providers, or `mithril -p work login` for an existing
+named local Profile. Explicit provider commands, including `mithril auth status
+openrouter`, retain their existing behavior.
+
+## Native Linear connection candidate
+
+This section describes an unqualified source candidate, not an available or
+verified hosted Linear connection. A runtime flag or local test does not
+provision the Mithril connector API, its OAuth provider, or an installed release.
+
+The candidate adds `mithril login --connectors` to request connector permissions
+for the current Profile without changing its inference model or provider.
+It requests `connectors:read` and `connectors:write` in addition to the existing
+`inference` and `workspace:read` scopes; it does not itself connect a Linear
+account, approve a Linear action, or grant access to another Profile.
+
+Before using a hosted connection, the original service owners must establish
+the Mithril-owned catalog, consent, account, policy and execution routes; qualify
+the exact runtime/API source and integrated main; and verify the installed
+runtime plus authenticated provider read-back. Signing in alone does not prove
+that `manage_connections` can connect Linear or that reads/writes work. Keep the
+candidate Draft until those existing gates are met. Local MCP servers use their
+own configuration and authorization and are separate from this hosted route.
+
+Current readiness and remaining contracts are tracked in
+[MITHRIL-450](https://linear.app/kotobalabs/issue/MITHRIL-450),
+[MITHRIL-58](https://linear.app/kotobalabs/issue/MITHRIL-58) and
+[MITHRIL-248](https://linear.app/kotobalabs/issue/MITHRIL-248).

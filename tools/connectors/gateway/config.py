@@ -96,6 +96,10 @@ def connectors_available(
         resolved_loader = config_loader or load_config
         if not resolved_loader().enabled:
             return False
+        from hermes_cli.mithril_account import account_token
+        if entitlement_check is None and account_token():
+            # The native API enforces connectors:read/write and the member policy.
+            return True
         if entitlement_check is None:
             from hermes_cli.anon_auth import is_guest_state
             from tools.managed_tool_gateway import _read_nous_provider_state

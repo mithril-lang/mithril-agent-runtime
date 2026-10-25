@@ -58,11 +58,15 @@ def _default_transport() -> Transport:
 
 
 def _default_endpoint_resolver() -> str:
+    from hermes_cli.mithril_account import ORIGIN, account_token
+    if account_token():
+        return ORIGIN
     return resolve_nous_portal_base_url()
 
 
 def _default_header_provider(_url: str) -> dict[str, str]:
-    token = read_nous_access_token()
+    from hermes_cli.mithril_account import account_token, native_connector_url
+    token = account_token() if native_connector_url(_url) else read_nous_access_token()
     return {"Authorization": f"Bearer {token}"} if isinstance(token, str) and token.strip() else {}
 
 

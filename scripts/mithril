@@ -2,7 +2,9 @@
 # Keep Mithril's profile at the launcher boundary and execute only its owned runtime.
 set -eu
 export HERMES_HOME="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
+export MITHRIL_AGENT_CLI_LAUNCHER=1
 export MITHRIL_AGENT=1
+export MITHRIL_INSTALL_HOME="$HERMES_HOME"
 script="$0"
 while [ -L "$script" ]; do
     script_dir="$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)"
@@ -13,20 +15,26 @@ while [ -L "$script" ]; do
     esac
 done
 script_dir="$(CDPATH= cd -- "$(dirname -- "$script")" && pwd -P)"
-if [ -x "$script_dir/../bin/hermes" ]; then
+hermes_launcher="$(dirname "$0")/hermes"
+if [ -L "$HERMES_HOME/agent-current" ]; then
+    export MITHRIL_RUNTIME_ROOT="$HERMES_HOME/agent-current"
+    runtime="$HERMES_HOME/agent-current/.hermes/bin/hermes"
+    [ -x "$runtime" ] || { printf '%s\n' 'Mithril CLI selection is incomplete; run mithril update --rollback' >&2; exit 1; }
+elif [ -x "$script_dir/../bin/hermes" ]; then
     # The OCI runtime exposes its owned launcher shim at bin/hermes; source and
     # installer checkouts keep it under .hermes/bin/hermes instead.
+    export MITHRIL_RUNTIME_ROOT="$(CDPATH= cd -- "$script_dir/.." && pwd -P)"
     runtime="$script_dir/../bin/hermes"
+elif [ -x "$hermes_launcher" ]; then
+    export MITHRIL_RUNTIME_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd -P)"
+    runtime="$hermes_launcher"
 elif [ -f "$script_dir/../hermes_bootstrap.py" ]; then
     runtime="$script_dir/../.hermes/bin/hermes"
 else
-    runtime="$HERMES_HOME/agent/.hermes/bin/hermes"
-fi
-if [ ! -x "$runtime" ]; then
-    printf '%s\n' 'Mithril Agent runtime is missing or incomplete. Install or repair it at https://console.mithril.fund/agent.' >&2
-    exit 127
+    runtime=hermes
 fi
 case "${1:-}" in
+    update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;
     login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
     auth)
         case "${2:-}" in
@@ -34,6 +42,7 @@ case "${1:-}" in
         esac;;
     -p|--profile)
         case "${3:-}" in
+            update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;
             login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
             auth)
                 case "${4:-}" in

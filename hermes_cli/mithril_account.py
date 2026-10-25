@@ -1,12 +1,13 @@
-"""Profile-scoped Mithril account token helpers for inference."""
+"""Profile-scoped Mithril identity for native connector clients and inference API requests."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import urlsplit, urlparse
 
-MITHRIL_API_ORIGIN = "https://api.mithril.fund"
+ORIGIN = "https://api.mithril.fund"
+MITHRIL_API_ORIGIN = ORIGIN
 MITHRIL_TOKEN_ENV = "MITHRIL_ACCOUNT_TOKEN"
 
 
@@ -22,6 +23,8 @@ def read_mithril_account_token() -> Optional[str]:
     try:
         value = get_secret(MITHRIL_TOKEN_ENV)
     except UnscopedSecretError:
+        # An active multiplexer without a bound Profile must fail closed; its process
+        # environment may belong to a different Profile.
         return None
     if isinstance(value, str) and value.strip():
         return value.strip()
@@ -36,6 +39,23 @@ def read_mithril_account_token() -> Optional[str]:
     except Exception:
         return None
     return value.strip() if isinstance(value, str) and value.strip() else None
+
+
+def account_token() -> Optional[str]:
+    """Profile-scoped token read used by the native connector clients."""
+    return read_mithril_account_token()
+
+
+def native_connector_url(url) -> bool:
+    """True when the URL is Mithril's canonical native connector origin."""
+    try:
+        parsed = urlsplit(str(url))
+        return (parsed.scheme == "https" and parsed.hostname == "api.mithril.fund"
+                and parsed.port in (None, 443) and not parsed.username and not parsed.password
+                and (parsed.path in ("", "/") or parsed.path == "/v1/connectors"
+                     or parsed.path.startswith(("/v1/connectors/", "/api/v1/connectors/"))))
+    except ValueError:
+        return False
 
 
 def mithril_inference_token_for_base_url(base_url: object) -> Optional[str]:

@@ -1,6 +1,80 @@
-version: 2.1
+parameters:
+  release_version:
+    type: string
+    default: ''
+  release_sequence:
+    type: integer
+    default: 0
+  release_previous_revision:
+    type: string
+    default: ''
 
 jobs:
+  validate-source:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Verify the runtime source inventory
+          command: python .circleci/validate-runtime-snapshot.py
+      - run:
+          name: Validate the Python dependency lock through PM
+          command: python -m pm.build_env --source . --check-lock
+      - run:
+          name: Check maintained Python source syntax
+          command: python -m compileall -q agent hermes_cli hermes_platform hermes_constants.py cli.py run_agent.py
+  mithril-account-auth:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Build a fresh locked test environment through PM
+          command: python -m pm.build_env --source . --out .venv --group dev --group test
+      - run:
+          name: Verify Mithril account routing and first-launch approval
+          command: >-
+            HERMES_PYTHON="$PWD/.venv/bin/python" PYTHONDONTWRITEBYTECODE=1
+            bash scripts/run_tests.sh -j 2
+            tests/test_mithril_account_token.py tests/test_mithril_first_login.py
+            tests/test_mithril_updates.py
+            tests/test_profile_skill_sync.py
+            tests/test_mithril_release_signer.py
+            tests/test_mithril_update_bootstrap.py
+      - run:
+          name: Verify Mithril chat input character limit recovery
+          command: >-
+            HERMES_PYTHON="$PWD/.venv/bin/python" PYTHONDONTWRITEBYTECODE=1
+            bash scripts/run_tests.sh -j 2
+            tests/test_chat_input_character_limit.py
+  mithril-distribution:
+    docker:
+      - image: cimg/python:3.14.7
+    steps:
+      - checkout
+      - run:
+          name: Verify Homebrew formula and shell installer
+          command: python -m unittest discover -s tests -p test_mithril_distribution.py -v
+  sign-mithril-release:
+    docker:
+      - image: cimg/python:3.14.7
+    environment:
+      RELEASE_VERSION: << pipeline.parameters.release_version >>
+      RELEASE_SEQUENCE: << pipeline.parameters.release_sequence >>
+      PREVIOUS_REVISION: << pipeline.parameters.release_previous_revision >>
+    steps:
+      - checkout
+      - run:
+          name: Build a locked signing environment through PM
+          command: python -m pm.build_env --source . --out .venv --group dev --group test
+      - run:
+          name: Sign the qualified main source and installer
+          command: .venv/bin/python scripts/build-mithril-release.py --version "$RELEASE_VERSION" --sequence "$RELEASE_SEQUENCE" --previous-revision "$PREVIOUS_REVISION" --out /tmp/mithril-release
+      - store_artifacts:
+          path: /tmp/mithril-release
+          destination: mithril-release
+
   validate-runtime-distribution:
     docker:
       - image: cimg/python:3.14.7
@@ -36,6 +110,26 @@ jobs:
           command: python3 .circleci/validate-runtime-snapshot.py
 
 workflows:
-  runtime-distribution-qualification:
+  mithril-agent-runtime:
+    when:
+      equal: ['', << pipeline.parameters.release_version >>]
     jobs:
+      - validate-source
+      - mithril-account-auth
+      - mithril-distribution
       - validate-runtime-distribution
+  mithril-cli-release:
+    when:
+      and:
+        - not:
+            equal: ['', << pipeline.parameters.release_version >>]
+        - equal: [main, << pipeline.git.branch >>]
+    jobs:
+      - validate-source
+      - mithril-account-auth
+      - mithril-distribution
+      - sign-mithril-release:
+          requires:
+            - validate-source
+            - mithril-account-auth
+            - mithril-distribution

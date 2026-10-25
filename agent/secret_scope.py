@@ -205,7 +205,8 @@ def get_secret(name: str, default: Optional[str] = None) -> Optional[str]:
     but falls through to ``os.environ`` otherwise — single-profile deployments
     inject credentials via the process env (systemd, ``op run``), so the scope
     must stay a ``.env`` overlay, not a blindfold (otherwise cron 401s). With no
-    scope: multiplex INACTIVE reads ``os.environ``; ACTIVE raises (fail closed).
+    scope: multiplex INACTIVE reads ``os.environ`` and may fall back to the current process
+    home's ``.env``; ACTIVE raises (fail closed).
     """
     if _is_global_env(name):
         return _environ_or(name, default)
@@ -225,7 +226,20 @@ def get_secret(name: str, default: Optional[str] = None) -> Optional[str]:
             f"profile's value. See website/docs/developer-guide/multiplexing-gateway.md "
             f"(Workstream A).",
         )
-    return _environ_or(name, default)
+    value = _environ_or(name, None)
+    if value:
+        return value
+    # A single-profile CLI process can outlive an edit to its .env, or be launched with an
+    # empty inherited variable. The current process home's .env remains the authoritative
+    # profile-local source in that case. Never do this for a routed profile: it must have an
+    # installed scope, and falling back to the launch home's file would cross profile boundaries.
+    if not serves_routed_profile():
+        try:
+            from hermes_constants import get_hermes_home
+            return load_env_file(Path(get_hermes_home()) / ".env").get(name, default)
+        except OSError:
+            return default
+    return default
 
 
 def get_secret_str(name: str, default: str = "") -> str:

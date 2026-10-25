@@ -2,9 +2,10 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='762c7e8cb0a7cb7f2866e72ccc9c773680e2afa3'
+revision='877871662866fec71a28867299825cf051f2a1a0'
+release_version='0.1.0-preview.20261025.t0515'
 branch='main'
-installer_sha256='0fbf2969c12b9ef9c90b81519814865faa9ee4e22056e2a9a4d0b1d5e59966e8'
+installer_sha256='eb542ee6e9d35055223fc2b2fa84ae69a787f2e78b2fde0d3d50de699ff21c25'
 repository='https://github.com/mithril-lang/mithril-agent-runtime.git'
 profile_home="${HERMES_HOME:-${HOME:?HOME is required}/.mithril}"
 install_dir=''
@@ -73,7 +74,7 @@ if [ ! -x "$runtime" ]; then
         digest=$(shasum -a 256 "$bootstrap" | awk '{print $1}')
     fi
     [ "$digest" = "$installer_sha256" ] || fail 'Installer digest differs; no runtime code was executed'
-    export HERMES_HOME="$profile_home" HERMES_INSTALL_DIR="$install_dir" HERMES_REPO_URL="$repository"
+    export HERMES_HOME="$profile_home" HERMES_INSTALL_DIR="$install_dir" HERMES_REPO_URL="$repository" MITHRIL_AGENT=1
     bash "$bootstrap" --branch "$branch" --commit "$revision" --dir "$install_dir" \
         --hermes-home "$profile_home" --non-interactive --skip-setup --skip-browser --skip-computer-use
 fi
@@ -90,25 +91,35 @@ staged="$bin_dir/.mithril-install.$$"
     printf '    export HERMES_HOME=%s\n' "$(quote "$profile_home")"
     printf '%s\n' 'fi'
     printf '%s\n' 'export MITHRIL_AGENT_CLI_LAUNCHER=1'
+    printf '%s\n' 'export MITHRIL_AGENT=1' 'export MITHRIL_INSTALL_HOME="$HERMES_HOME"'
+    printf 'runtime_root=%s\n' "$(quote "$install_dir")"
+    printf '%s\n' 'if [ -L "$HERMES_HOME/agent-current" ]; then' \
+        '    runtime_root="$HERMES_HOME/agent-current"' 'fi' \
+        'runtime="$runtime_root/.hermes/bin/hermes"' 'export MITHRIL_RUNTIME_ROOT="$runtime_root"'
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
-    printf '    exec python3 -I %s "$@"\n' "$(quote "$install_dir/scripts/mithril-runtime/session.py")"
+    printf '%s\n' '    exec python3 -I "$runtime_root/scripts/mithril-runtime/session.py" "$@"'
     printf '%s\n' 'fi'
+    printf 'release_version=%s\n' "$(quote "$release_version")"
     printf '%s\n' 'case "${1:-}" in' \
-        '    login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '    -V|--version) exec "$runtime" --run-module hermes_cli.mithril_updates version --fallback-version "$release_version";;' \
+        '    update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;' \
+        '    login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '    auth)' \
         '        case "${2:-}" in' \
-        '            login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '            login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '        esac;;' \
         '    -p|--profile)' \
         '        case "${3:-}" in' \
-        '            login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '            -V|--version) exec "$runtime" --run-module hermes_cli.mithril_updates -p "${2:-}" version --fallback-version "$release_version";;' \
+        '            update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;' \
+        '            login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '            auth)' \
         '                case "${4:-}" in' \
-        '                    login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '                    login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '                esac;;' \
         '        esac;;' \
         'esac'
-    printf 'exec %s "$@"\n' "$(quote "$runtime")"
+    printf '%s\n' 'exec "$runtime" "$@"'
 } > "$staged"
 chmod 755 "$staged"
 if [ -e "$bin_dir/mithril" ] || [ -L "$bin_dir/mithril" ]; then
@@ -116,4 +127,4 @@ if [ -e "$bin_dir/mithril" ] || [ -L "$bin_dir/mithril" ]; then
 fi
 mv "$staged" "$bin_dir/mithril"
 printf 'Mithril Agent is ready. Run %s/mithril\n' "$bin_dir"
-printf '%s\n' 'Sign in with mithril login, or configure another provider with mithril setup.'
+printf '%s\n' 'Run mithril to sign in and start a session, or configure another provider with mithril setup.'
