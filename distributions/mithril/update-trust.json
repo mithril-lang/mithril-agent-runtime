@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "repository": "mithril-lang/mithril-agent-runtime",
+  "channel": "preview",
+  "keys": {
+    "mithril-cli-preview-20261025": {
+      "public_key": "uabTZtGYNauTYF7KYhjVzu2SMMdPPy5sernPEi+F7qA=",
+      "revoked": false
+    }
+  }
+}

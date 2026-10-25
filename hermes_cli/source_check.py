@@ -350,6 +350,8 @@ def check_for_updates(*, install_root: Path | None = None, home: Path | None = N
     Only the default (running installation) may use HERMES_REVISION. An explicit
     target must never inherit the host process's embedded revision or stamp.
     """
+    if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
+        return {"supported": False, "behind": None, "commits": [], "reason": "mithril-distribution-updater"}
     from hermes_cli.config import get_project_root, require_readable_config_before_write
     from hermes_cli.steward import read_install_stamp
     from hermes_cli.update_channel import install_id, resolve_update_channel
