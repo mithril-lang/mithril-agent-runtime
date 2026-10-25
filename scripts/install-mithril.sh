@@ -2,7 +2,7 @@
 # Mithril's distribution boundary delegates runtime preparation to the pinned Hermes installer.
 set -eu
 
-revision='f8ff45e9852284d9d58e133c7fc73031a6938123'
+revision='877871662866fec71a28867299825cf051f2a1a0'
 release_version='0.1.0-preview.20261025.t0515'
 branch='main'
 installer_sha256='eb542ee6e9d35055223fc2b2fa84ae69a787f2e78b2fde0d3d50de699ff21c25'
