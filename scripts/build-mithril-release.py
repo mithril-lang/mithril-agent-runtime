@@ -64,6 +64,10 @@ def build(version, sequence, previous, out):
     data = installer.encode()
     provenance_bytes = (ROOT / ".mithril-runtime-provenance.json").read_bytes()
     provenance = json.loads(provenance_bytes)
+    out.mkdir(parents=True, exist_ok=False)
+    archive = out / "mithril-cli-runtime.tar.gz"
+    with archive.open("wb") as stream:
+        subprocess.run(["git", "-C", str(ROOT), "archive", "--format=tar.gz", "--prefix=mithril-cli-runtime/", revision], stdout=stream, check=True)
     now = datetime.now(timezone.utc).replace(microsecond=0)
     payload = {"schema": 1, "product": "mithril-cli", "repository": updates.REPOSITORY,
                "channel": "preview", "version": version, "sequence": sequence,
@@ -71,18 +75,16 @@ def build(version, sequence, previous, out):
                "issued_at": now.isoformat(), "expires_at": (now + timedelta(days=30)).isoformat(),
                "installer": {"url": f"https://github.com/{updates.REPOSITORY}/releases/download/v{version}/install-mithril.sh",
                              "size": len(data), "sha256": hashlib.sha256(data).hexdigest()},
+               "source_archive": {"url": f"https://github.com/{updates.REPOSITORY}/releases/download/v{version}/mithril-cli-runtime.tar.gz",
+                                  "size": archive.stat().st_size, "sha256": hashlib.sha256(archive.read_bytes()).hexdigest()},
                "provenance": {"source_repository": "mithril-lang/mithril-fund",
                               "source_revision": provenance["sourceRevision"],
                               "manifest_sha256": hashlib.sha256(provenance_bytes).hexdigest()}}
     envelope = {"signed": payload, "key_id": matching[0],
                 "signature": base64.b64encode(private.sign(updates.canonical(payload))).decode()}
     updates.verify(envelope, trust)
-    out.mkdir(parents=True, exist_ok=False)
     (out / "install-mithril.sh").write_bytes(data)
     (out / "mithril-update.json").write_bytes(updates.canonical(envelope) + b"\n")
-    archive = out / "mithril-cli-runtime.tar.gz"
-    with archive.open("wb") as stream:
-        subprocess.run(["git", "-C", str(ROOT), "archive", "--format=tar.gz", "--prefix=mithril-cli-runtime/", revision], stdout=stream, check=True)
     evidence = {"schema": 1, "provider": "circleci", "runtime_revision": revision,
                 "version": version, "key_id": matching[0],
                 "public_key_sha256": hashlib.sha256(base64.b64decode(public)).hexdigest(),

@@ -25,6 +25,8 @@ def release():
                "expires_at": "2026-11-01T00:00:00Z",
                "installer": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v0.1.0-preview.7/install-mithril.sh",
                              "size": 10, "sha256": "b" * 64},
+               "source_archive": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v0.1.0-preview.7/mithril-cli-runtime.tar.gz",
+                                  "size": 100, "sha256": "1" * 64},
                "provenance": {"source_repository": "mithril-lang/mithril-fund",
                               "source_revision": "c" * 40, "manifest_sha256": "d" * 64}}
     def sign(value):
@@ -45,7 +47,7 @@ def test_signature_and_monotonic_release_admission(release):
         update.verify(sign(dict(payload, runtime_revision="f" * 40)), trust, now=now, state=state)
 
 
-@pytest.mark.parametrize("case", ["tampered", "unknown-key", "revoked", "expired", "future", "wrong-owner", "wrong-artifact", "missing-provenance"])
+@pytest.mark.parametrize("case", ["tampered", "unknown-key", "revoked", "expired", "future", "wrong-owner", "wrong-artifact", "wrong-archive", "missing-provenance"])
 def test_untrusted_release_fails_closed(release, case):
     payload, trust, sign = release
     payload, trust = copy.deepcopy(payload), copy.deepcopy(trust)
@@ -53,6 +55,8 @@ def test_untrusted_release_fails_closed(release, case):
         payload["repository"] = "other/runtime"
     if case == "wrong-artifact":
         payload["installer"]["url"] = "https://evil.example/install.sh"
+    if case == "wrong-archive":
+        payload["source_archive"]["url"] = "https://evil.example/runtime.tar.gz"
     if case == "missing-provenance":
         payload.pop("provenance")
     if case == "expired":

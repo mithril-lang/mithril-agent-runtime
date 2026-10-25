@@ -124,6 +124,11 @@ def verify(envelope, trust, *, now=None, state=None):
             or not 0 < installer["size"] <= MAX_INSTALLER
             or not re.fullmatch(r"[0-9a-f]{64}", str(installer.get("sha256", "")))):
         raise UpdateError("Release installer identity is invalid")
+    archive = payload.get("source_archive", {})
+    if (archive.get("url") != expected.removesuffix("install-mithril.sh") + "mithril-cli-runtime.tar.gz"
+            or type(archive.get("size")) is not int or not 0 < archive["size"] <= 256 * 1024 * 1024
+            or not re.fullmatch(r"[0-9a-f]{64}", str(archive.get("sha256", "")))):
+        raise UpdateError("Release source archive identity is invalid")
     provenance = payload.get("provenance", {})
     if (provenance.get("source_repository") != "mithril-lang/mithril-fund"
             or not SHA.fullmatch(str(provenance.get("source_revision", "")))
