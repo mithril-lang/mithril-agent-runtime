@@ -73,7 +73,7 @@ if [ ! -x "$runtime" ]; then
         digest=$(shasum -a 256 "$bootstrap" | awk '{print $1}')
     fi
     [ "$digest" = "$installer_sha256" ] || fail 'Installer digest differs; no runtime code was executed'
-    export HERMES_HOME="$profile_home" HERMES_INSTALL_DIR="$install_dir" HERMES_REPO_URL="$repository"
+    export HERMES_HOME="$profile_home" HERMES_INSTALL_DIR="$install_dir" HERMES_REPO_URL="$repository" MITHRIL_AGENT=1
     bash "$bootstrap" --branch "$branch" --commit "$revision" --dir "$install_dir" \
         --hermes-home "$profile_home" --non-interactive --skip-setup --skip-browser --skip-computer-use
 fi
@@ -90,25 +90,32 @@ staged="$bin_dir/.mithril-install.$$"
     printf '    export HERMES_HOME=%s\n' "$(quote "$profile_home")"
     printf '%s\n' 'fi'
     printf '%s\n' 'export MITHRIL_AGENT_CLI_LAUNCHER=1'
+    printf '%s\n' 'export MITHRIL_AGENT=1' 'export MITHRIL_INSTALL_HOME="$HERMES_HOME"'
+    printf 'runtime_root=%s\n' "$(quote "$install_dir")"
+    printf '%s\n' 'if [ -L "$HERMES_HOME/agent-current" ]; then' \
+        '    runtime_root="$HERMES_HOME/agent-current"' 'fi' \
+        'runtime="$runtime_root/.hermes/bin/hermes"' 'export MITHRIL_RUNTIME_ROOT="$runtime_root"'
     printf '%s\n' 'if [ "${1:-}" = "session" ]; then' '    shift'
-    printf '    exec python3 -I %s "$@"\n' "$(quote "$install_dir/scripts/mithril-runtime/session.py")"
+    printf '%s\n' '    exec python3 -I "$runtime_root/scripts/mithril-runtime/session.py" "$@"'
     printf '%s\n' 'fi'
     printf '%s\n' 'case "${1:-}" in' \
-        '    login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '    update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;' \
+        '    login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '    auth)' \
         '        case "${2:-}" in' \
-        '            login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '            login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '        esac;;' \
         '    -p|--profile)' \
         '        case "${3:-}" in' \
-        '            login|logout|account) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '            update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;' \
+        '            login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '            auth)' \
         '                case "${4:-}" in' \
-        '                    login|logout|status) exec '"$(quote "$runtime")"' --run-module hermes_cli.mithril_auth "$@";;' \
+        '                    login|logout|status) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;' \
         '                esac;;' \
         '        esac;;' \
         'esac'
-    printf 'exec %s "$@"\n' "$(quote "$runtime")"
+    printf '%s\n' 'exec "$runtime" "$@"'
 } > "$staged"
 chmod 755 "$staged"
 if [ -e "$bin_dir/mithril" ] || [ -L "$bin_dir/mithril" ]; then

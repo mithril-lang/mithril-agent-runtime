@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 import json
 import logging
+import os
 import re
 import subprocess
 import urllib.error
@@ -74,6 +75,8 @@ def _resolve_channel(name: str, repository: str):
 
 def resolve_source_target(channel: str, git_cmd=None, cwd=None, *, repository=None) -> SourceTarget:
     """Resolve every subscription, including default labels, through R2."""
+    if os.environ.get("MITHRIL_AGENT_CLI_LAUNCHER") == "1" or os.environ.get("MITHRIL_AGENT") == "1":
+        raise ValueError("Use the signed Mithril distribution updater: mithril update")
     from hermes_cli.release_channels import ChannelNotFound, validate_name
 
     validate_name(channel)
