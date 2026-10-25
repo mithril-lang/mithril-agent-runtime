@@ -17,7 +17,7 @@ class MithrilDistributionTests(unittest.TestCase):
     def test_homebrew_and_shell_installer_pin_the_same_runtime_commit(self):
         formula = (ROOT / "Formula/mithril-agent.rb").read_text(encoding="utf-8")
         installer = (ROOT / "scripts/install-mithril.sh").read_text(encoding="utf-8")
-        formula_revision = re.search(r'revision:\s*"([0-9a-f]{40})"', formula)
+        formula_revision = re.search(r'(?:revision:|RUNTIME_REVISION\s*=)\s*"([0-9a-f]{40})"', formula)
         installer_revision = re.search(r"^revision='([0-9a-f]{40})'$", installer, re.MULTILINE)
         self.assertIsNotNone(formula_revision)
         self.assertIsNotNone(installer_revision)
