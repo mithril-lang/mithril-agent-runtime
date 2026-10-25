@@ -26,6 +26,7 @@ def git(*args):
 
 
 def build(version, sequence, previous, out):
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
     if os.environ.get("CIRCLECI") != "true" or os.environ.get("CIRCLE_BRANCH") != "main":
         raise ValueError("Release signing requires the CircleCI main workflow")
     if (os.environ.get("CIRCLE_PROJECT_USERNAME") != "mithril-lang"
@@ -37,8 +38,14 @@ def build(version, sequence, previous, out):
     remote_main = git("ls-remote", "origin", "refs/heads/main").decode().split()
     if not remote_main or remote_main[0] != revision:
         raise ValueError("Runtime main advanced; qualify the current source before signing")
-    if not updates.VERSION.fullmatch(version) or sequence < 1:
+    if sequence < 1:
         raise ValueError("Invalid preview release identity")
+    try:
+        release_minute = updates.release_minute(version)
+    except updates.UpdateError as exc:
+        raise ValueError("Invalid preview release identity") from exc
+    if release_minute > now:
+        raise ValueError("Preview version cannot use a future UTC release minute")
     if not previous or any(not updates.SHA.fullmatch(p) for p in previous) or revision in previous:
         raise ValueError("Release requires its qualified previous runtime revisions")
     schema_files = ("hermes_state_schema.py", "hermes_state_common.py")
@@ -63,6 +70,9 @@ def build(version, sequence, previous, out):
     installer, count = re.subn(r"(?m)^revision='[0-9a-f]{40}'$", f"revision='{revision}'", installer)
     if count != 1:
         raise ValueError("Installer runtime pin is ambiguous")
+    installer, count = re.subn(r"(?m)^release_version='[^']+'$", f"release_version='{version}'", installer)
+    if count != 1:
+        raise ValueError("Installer release version is ambiguous")
     bootstrap_sha = hashlib.sha256((ROOT / "scripts/install.sh").read_bytes()).hexdigest()
     installer, count = re.subn(r"(?m)^installer_sha256='[0-9a-f]{64}'$", f"installer_sha256='{bootstrap_sha}'", installer)
     if count != 1:
@@ -74,7 +84,6 @@ def build(version, sequence, previous, out):
     archive = out / "mithril-cli-runtime.tar.gz"
     with archive.open("wb") as stream:
         subprocess.run(["git", "-C", str(ROOT), "archive", "--format=tar.gz", "--prefix=mithril-cli-runtime/", revision], stdout=stream, check=True)
-    now = datetime.now(timezone.utc).replace(microsecond=0)
     payload = {"schema": 1, "product": "mithril-cli", "repository": updates.REPOSITORY,
                "channel": "preview", "version": version, "sequence": sequence,
                "runtime_revision": revision, "previous_revisions": previous,

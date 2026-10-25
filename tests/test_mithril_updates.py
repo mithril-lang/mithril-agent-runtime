@@ -12,6 +12,8 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from hermes_cli import mithril_updates as update
 
+RELEASE_VERSION = "0.1.0-preview.20261025.t0515"
+
 
 @pytest.fixture
 def release():
@@ -19,13 +21,13 @@ def release():
     public = key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
     trust = {"keys": {"test": {"public_key": base64.b64encode(public).decode(), "revoked": False}}}
     payload = {"schema": 1, "product": "mithril-cli", "repository": update.REPOSITORY,
-               "channel": "preview", "version": "0.1.0-preview.7", "sequence": 7,
-               "runtime_revision": "a" * 40, "issued_at": "2026-10-25T00:00:00Z",
+               "channel": "preview", "version": RELEASE_VERSION, "sequence": 7,
+               "runtime_revision": "a" * 40, "issued_at": "2026-10-25T05:15:00Z",
                "previous_revisions": ["e" * 40],
                "expires_at": "2026-11-01T00:00:00Z",
-               "installer": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v0.1.0-preview.7/install-mithril.sh",
+               "installer": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v{RELEASE_VERSION}/install-mithril.sh",
                              "size": 10, "sha256": "b" * 64},
-               "source_archive": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v0.1.0-preview.7/mithril-cli-runtime.tar.gz",
+               "source_archive": {"url": f"https://github.com/{update.REPOSITORY}/releases/download/v{RELEASE_VERSION}/mithril-cli-runtime.tar.gz",
                                   "size": 100, "sha256": "1" * 64},
                "provenance": {"source_repository": "mithril-lang/mithril-fund",
                               "source_revision": "c" * 40, "manifest_sha256": "d" * 64}}
@@ -45,6 +47,46 @@ def test_signature_and_monotonic_release_admission(release):
         update.verify(sign(changed), trust, now=now, state=state)
     with pytest.raises(update.UpdateError, match="replay"):
         update.verify(sign(dict(payload, runtime_revision="f" * 40)), trust, now=now, state=state)
+
+
+def test_release_version_is_a_real_utc_minute_not_after_signed_time(release):
+    payload, trust, sign = release
+    now = update._time("2026-10-25T12:00:00Z")
+    assert update.release_minute(RELEASE_VERSION).isoformat() == "2026-10-25T05:15:00+00:00"
+    for invalid in ("0.1.0-preview.8", "0.1.0-preview.20260230.t1200", "0.1.0-preview.20261025.t2460"):
+        with pytest.raises(update.UpdateError):
+            update.release_minute(invalid)
+    changed = dict(payload, issued_at="2026-10-25T05:14:59Z")
+    with pytest.raises(update.UpdateError, match="later"):
+        update.verify(sign(changed), trust, now=now)
+
+
+def test_installed_version_prefers_selected_signed_release(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    assert update.installed_version(home, RELEASE_VERSION) == (RELEASE_VERSION, "2026-10-25 05:15 UTC")
+    selected = "0.1.0-preview.20261025.t0610"
+    (home / "mithril-update.json").write_text(json.dumps({"current_version": selected, "pending": False}))
+    assert update.installed_version(home, RELEASE_VERSION) == (selected, "2026-10-25 06:10 UTC")
+
+
+def test_version_command_prints_mithril_identity_without_loading_profile(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("MITHRIL_INSTALL_HOME", str(tmp_path))
+    assert update.main(["version", "--fallback-version", RELEASE_VERSION]) == 0
+    assert capsys.readouterr().out.strip() == f"Mithril CLI v{RELEASE_VERSION} (2026-10-25 05:15 UTC)"
+
+
+def test_release_minutes_choose_recency_independent_of_counter_or_api_order():
+    versions = [
+        "0.1.0-preview.20261025.t0515",
+        "0.1.0-preview.20261024.t2359",
+        "0.2.0-preview.20261025.t0610",
+    ]
+    assert [v for v in sorted(versions, key=update.release_minute, reverse=True)] == [
+        "0.2.0-preview.20261025.t0610",
+        "0.1.0-preview.20261025.t0515",
+        "0.1.0-preview.20261024.t2359",
+    ]
 
 
 @pytest.mark.parametrize("case", ["tampered", "unknown-key", "revoked", "expired", "future", "wrong-owner", "wrong-artifact", "wrong-archive", "missing-provenance"])
@@ -102,7 +144,7 @@ def test_real_selection_retains_open_old_runtime_and_profile_then_rolls_back(tmp
     (home / "state.db").write_bytes(b"retained-conversations")
     (home / ".env").write_text("EXISTING_SECRET=preserved\n")
     state = {"highest_sequence": 7, "manifest_sha256": "accepted"}
-    target = {"runtime_revision": new["revision"], "previous_revisions": [old["revision"]]}
+    target = {"version": RELEASE_VERSION, "runtime_revision": new["revision"], "previous_revisions": [old["revision"]]}
     with (Path(old["path"]) / "source").open() as held:
         selected = update.apply(target, home, state, prepare_runtime=lambda *_: new)
         assert selected == Path(new["path"])
@@ -124,7 +166,8 @@ def test_preparation_failure_never_selects_partial_runtime(tmp_path, monkeypatch
     def failure(*_):
         raise update.UpdateError("partial install")
     with pytest.raises(update.UpdateError, match="partial"):
-        update.apply({"runtime_revision": "a" * 40, "previous_revisions": [old["revision"]]}, home, {}, prepare_runtime=failure)
+        update.apply({"version": RELEASE_VERSION, "runtime_revision": "a" * 40,
+                      "previous_revisions": [old["revision"]]}, home, {}, prepare_runtime=failure)
     assert not (home / "agent-current").exists()
     assert not (home / "mithril-update.json").exists()
 
@@ -141,7 +184,8 @@ def test_successive_updates_keep_one_version_store(tmp_path, monkeypatch):
         def prepared(target, install_home, store):
             stores.append(store)
             return version
-        update.apply({"runtime_revision": version["revision"], "previous_revisions": [previous["revision"]]}, home, state, prepare_runtime=prepared)
+        update.apply({"version": RELEASE_VERSION, "runtime_revision": version["revision"],
+                      "previous_revisions": [previous["revision"]]}, home, state, prepare_runtime=prepared)
         state = json.loads((home / "mithril-update.json").read_text())
         previous = version
     assert stores[0] == stores[1]
@@ -206,7 +250,7 @@ def test_profile_update_preferences_are_respected(monkeypatch, settings):
     monkeypatch.delenv("MITHRIL_UPDATE_REEXEC", raising=False)
     monkeypatch.setattr(config, "load_config_readonly", lambda: {"updates": settings})
     calls = []
-    monkeypatch.setattr(update, "run", lambda *a, **kw: calls.append((a, kw)) or {"version": "0.1.0-preview.7"})
+    monkeypatch.setattr(update, "run", lambda *a, **kw: calls.append((a, kw)) or {"version": RELEASE_VERSION})
     update.before_chat([])
     assert len(calls) == (0 if settings.get("check") is False else 1)
     if calls:

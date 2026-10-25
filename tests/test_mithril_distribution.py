@@ -14,6 +14,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class MithrilDistributionTests(unittest.TestCase):
+    def test_distribution_version_is_visible_and_utc_minute_sortable(self):
+        formula = (ROOT / "Formula/mithril-agent.rb").read_text(encoding="utf-8")
+        installer = (ROOT / "scripts/install-mithril.sh").read_text(encoding="utf-8")
+        launcher = (ROOT / "scripts/mithril-brew-launcher").read_text(encoding="utf-8")
+        expected = "0.1.0-preview.20261025.t0515"
+        self.assertIn(f'version "{expected}"', formula)
+        self.assertIn(f"release_version='{expected}'", installer)
+        self.assertIn(f"release_version='{expected}'", launcher)
+        self.assertIn('-V|--version) update_module version --fallback-version "$release_version"', launcher)
+        self.assertIn('-V|--version) update_module -p "${2:-}" version --fallback-version "$release_version"', launcher)
+
     def test_homebrew_and_shell_installer_pin_the_same_runtime_commit(self):
         formula = (ROOT / "Formula/mithril-agent.rb").read_text(encoding="utf-8")
         installer = (ROOT / "scripts/install-mithril.sh").read_text(encoding="utf-8")
