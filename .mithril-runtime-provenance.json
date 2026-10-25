@@ -49764,7 +49764,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "57c2d6915dca5099eb41394a311414679d6c6f8ea1373e8da93e547911c80e20",
+    "sha256": "0bb081120c9d1d7306147ef287a67087f0569a4bf1de77315913d56d1ac648f2",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49779,12 +49779,12 @@
       {
         "path": "Formula/mithril-agent.rb",
         "baseSha256": "4d908abffc64ab027c8263df977124ee1c056f08828f53e9fbe6fe739ded42ba",
-        "sha256": "d52939a70b122980572d5209f16dc13a73b5c8724af993f4a434c989498a6e96"
+        "sha256": "82a51565f5462827b868c048c5e6385e06452e6d65bd3856223b729fb984e72c"
       },
       {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "433274542639b1b3f8b5aa86e2ff26c35638a648a465b1267944f732f5342316"
+        "sha256": "7a050133a8060fc399a73804e2a0277aa6919f25460269a5c4ba1d4bb6814cb7"
       },
       {
         "path": "agent/auxiliary_client.py",
@@ -49809,7 +49809,7 @@
       {
         "path": "distributions/mithril/UPDATES.md",
         "baseSha256": null,
-        "sha256": "407095f4b4fa74a28074ddcb14b579f92aa2e8b920a93797293845a5761dcc98"
+        "sha256": "8980f9d5505f4323eac6e9ef8cc9cf9720ca1be4a1aa260afd0b370935b06dfd"
       },
       {
         "path": "distributions/mithril/update-trust.json",
@@ -49850,7 +49850,7 @@
       {
         "path": "hermes_cli/mithril_updates.py",
         "baseSha256": null,
-        "sha256": "5c57e4b0644bce7eaf10d2dbc98d01a2ef34194b8c20fbe497e4b5bbf69534a5"
+        "sha256": "1ef92c4408ad9f722ba8462820a62d5a3df7ab6b076a50665a8cddbdc1564574"
       },
       {
         "path": "hermes_cli/runtime_provider_custom.py",
@@ -49875,12 +49875,12 @@
       {
         "path": "scripts/build-mithril-release.py",
         "baseSha256": null,
-        "sha256": "f0a21408ca4e593971c8ad3dfe4af840c3ef68cbe78d58244a520296c0a1411a"
+        "sha256": "f1351dba4d0d6a71bd8531e9dc71fc1541337a6b4dcde9786aeeafcc795a7f63"
       },
       {
         "path": "scripts/install-mithril.sh",
         "baseSha256": "6aa67b1cf9a10c49015c2cfc533edf85d1e957d6d7710a5c25cb80767b46d9ca",
-        "sha256": "438357493525100f9acc558739a0558a00c5b9e22ef534c81f85abd497bb6063"
+        "sha256": "76e982cc6a6ec0bb45205fba74aa3d5e1863465b7899c8b7e0f46230df828d10"
       },
       {
         "path": "scripts/install.sh",
@@ -49895,7 +49895,7 @@
       {
         "path": "scripts/mithril-brew-launcher",
         "baseSha256": "b6af778c52399c0143a2acbb966351752e834961685cc0087fa5ef3d80094c6a",
-        "sha256": "0b7f37497fbfff9d4047d46b5e08d916693b8ef9e2aa797edfac1eac2bd496d4"
+        "sha256": "a488cb0c08bbbd706a561c19b4a5545c9403395d405b0eb4cf012c7545fa953e"
       },
       {
         "path": "scripts/mithril-update-bootstrap.py",
@@ -49937,7 +49937,7 @@
       {
         "path": "tests/test_mithril_distribution.py",
         "baseSha256": "28349d3f92c3264abf1deed517864cbc21b48a62331899a29b8f4917562af9dd",
-        "sha256": "c5bdc507a85b9389582570f9547a1665118e126a7762eaf140091797d1c89353"
+        "sha256": "87f112f56d11be6c88449c68cec0b332080a20515357048047dbf0188d1ebd9f"
       },
       {
         "path": "tests/test_mithril_first_login.py",
@@ -49953,7 +49953,7 @@
       {
         "path": "tests/test_mithril_release_signer.py",
         "baseSha256": null,
-        "sha256": "49146caba5d059ee00597f99100baafc7543071e36a36ca10c33d8c7a931d6f8"
+        "sha256": "499d8ee39747dab4294f8c9a45ba4a9f37f15ed1bb83acfb49b19f823a9f8910"
       },
       {
         "path": "tests/test_mithril_update_bootstrap.py",
@@ -49963,7 +49963,7 @@
       {
         "path": "tests/test_mithril_updates.py",
         "baseSha256": null,
-        "sha256": "fad55b06f1dd2fb51c8f6d0fb4002e5d9094c5704b92ed90d42f548115489063"
+        "sha256": "df53e650e8e52d44ae7a36322cf3bd8c4b59b068446f4d2ad7552c17201c2252"
       }
     ]
   }
