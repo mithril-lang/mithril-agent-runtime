@@ -199,7 +199,8 @@ def inspect_runtime(root, revision=None):
         raise UpdateError("Prepared runtime revision differs from the signed release")
     if not (root / ".hermes/bin/hermes").is_file():
         raise UpdateError("Prepared runtime has no CLI launcher")
-    return {"path": str(root), "revision": actual}
+    return {"path": str(root), "revision": actual,
+            "launcher_sha256": hashlib.sha256((root / ".hermes/bin/hermes").read_bytes()).hexdigest()}
 
 
 def _write(path, value):
@@ -242,11 +243,41 @@ def install_lock(home):
         yield
 
 
+def _preparation_environment(isolated):
+    env = {k: os.environ[k] for k in ("PATH", "TMPDIR", "LANG", "LC_ALL", "SSL_CERT_FILE", "SSL_CERT_DIR") if k in os.environ}
+    env.update(HOME=str(isolated), HERMES_HOME=str(isolated / ".mithril"), MITHRIL_AGENT="1")
+    return env
+
+
+def _verify_prepared(root, target, isolated):
+    checked = inspect_runtime(root, target["runtime_revision"])
+    manifest = (root / ".mithril-runtime-provenance.json").read_bytes()
+    if hashlib.sha256(manifest).hexdigest() != target["provenance"]["manifest_sha256"]:
+        raise UpdateError("Installed runtime provenance differs from the signed release")
+    if json.loads(manifest).get("sourceRevision") != target["provenance"]["source_revision"]:
+        raise UpdateError("Installed runtime has another canonical source")
+    subprocess.run([str(root / ".hermes/bin/hermes"), "--help"], check=True,
+                   env=_preparation_environment(isolated), stdout=subprocess.DEVNULL, timeout=90)
+    return checked
+
+
 def prepare(target, home, store):
     """Use the signed installer in a new HOME; never pass it live Profile data."""
     root = store / target["runtime_revision"]
+    ready_file = store / (target["runtime_revision"] + ".prepared.json")
     if root.exists():
-        raise UpdateError("A prepared or interrupted version already exists; preserve it for review")
+        if not ready_file.is_file():
+            raise UpdateError("An interrupted version already exists; preserve it for review")
+        ready = decode(ready_file.read_bytes())
+        if not isinstance(ready.get("preparation_home"), str) or not ready["preparation_home"]:
+            raise UpdateError("Retained preparation metadata is invalid")
+        isolated = Path(ready["preparation_home"]).resolve(strict=True)
+        if (not isolated.is_relative_to(store.resolve())
+                or ready.get("installer_sha256") != target["installer"]["sha256"]
+                or ready.get("provenance_sha256") != target["provenance"]["manifest_sha256"]
+                or ready.get("launcher_sha256") != hashlib.sha256((root / ".hermes/bin/hermes").read_bytes()).hexdigest()):
+            raise UpdateError("Retained version does not match its completed preparation")
+        return _verify_prepared(root, target, isolated)
     data = download(target["installer"]["url"], MAX_INSTALLER)
     if (len(data) != target["installer"]["size"]
             or hashlib.sha256(data).hexdigest() != target["installer"]["sha256"]):
@@ -264,18 +295,13 @@ def prepare(target, home, store):
                 (profile / name).symlink_to((home / name).resolve(), target_is_directory=True)
         installer = isolated / "install-mithril.sh"
         installer.write_bytes(data)
-        env = {k: os.environ[k] for k in ("PATH", "TMPDIR", "LANG", "LC_ALL", "SSL_CERT_FILE", "SSL_CERT_DIR") if k in os.environ}
-        env.update(HOME=str(isolated), HERMES_HOME=str(profile), MITHRIL_AGENT="1")
+        env = _preparation_environment(isolated)
         subprocess.run(["sh", str(installer), "--home", str(profile), "--dir", str(root),
                         "--bin-dir", str(isolated / "bin")], check=True, env=env, timeout=1800)
-        inspect_runtime(root, target["runtime_revision"])
-        manifest = (root / ".mithril-runtime-provenance.json").read_bytes()
-        if hashlib.sha256(manifest).hexdigest() != target["provenance"]["manifest_sha256"]:
-            raise UpdateError("Installed runtime provenance differs from the signed release")
-        if json.loads(manifest).get("sourceRevision") != target["provenance"]["source_revision"]:
-            raise UpdateError("Installed runtime has another canonical source")
-        subprocess.run([str(root / ".hermes/bin/hermes"), "--help"], check=True, env=env,
-                       stdout=subprocess.DEVNULL, timeout=90)
+        _verify_prepared(root, target, isolated)
+        _write(ready_file, {"preparation_home": str(isolated), "installer_sha256": target["installer"]["sha256"],
+                            "provenance_sha256": target["provenance"]["manifest_sha256"],
+                            "launcher_sha256": hashlib.sha256((root / ".hermes/bin/hermes").read_bytes()).hexdigest()})
     return inspect_runtime(root, target["runtime_revision"])
 
 
@@ -310,6 +336,8 @@ def rollback(home, state):
     if not isinstance(previous, dict):
         raise UpdateError("No previous CLI selection is recorded")
     checked = inspect_runtime(previous["path"], previous["revision"])
+    if checked["launcher_sha256"] != previous.get("launcher_sha256"):
+        raise UpdateError("The previous runtime launcher changed; preserve it for recovery")
     pointer = home / "agent-current"
     if pointer.exists() and not pointer.is_symlink():
         raise UpdateError("The CLI selection path is not an updater-owned symlink")

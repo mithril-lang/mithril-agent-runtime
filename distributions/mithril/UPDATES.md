@@ -72,6 +72,10 @@ reexecutes once with its original Profile arguments. No running Gateway is
 self-updated or restarted. Interrupted selection requires explicit rollback;
 failed preparations and their logs remain for review. Rollback preserves the
 highest accepted signed sequence, so it does not permit network replay.
+Completed retained preparations are verified and probed again before reuse;
+interrupted preparations and changed launchers are refused. The signer requires
+the previous and new runtime's state-schema inputs to match byte-for-byte. A
+schema-changing release needs its separate migration/rollback qualification.
 
 ## Owner release and recovery checklist
 

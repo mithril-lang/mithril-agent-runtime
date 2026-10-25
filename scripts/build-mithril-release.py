@@ -35,6 +35,11 @@ def build(version, sequence, previous, out):
         raise ValueError("Invalid preview release identity")
     if not previous or any(not updates.SHA.fullmatch(p) for p in previous) or revision in previous:
         raise ValueError("Release requires its qualified previous runtime revisions")
+    schema_files = ("hermes_state_schema.py", "hermes_state_common.py")
+    schema_hashes = {name: hashlib.sha256(git("show", revision + ":" + name)).hexdigest() for name in schema_files}
+    for prior in previous:
+        if any(hashlib.sha256(git("show", prior + ":" + name)).hexdigest() != schema_hashes[name] for name in schema_files):
+            raise ValueError("A state-schema change requires separate migration and rollback qualification")
     for name in ("CIRCLE_PIPELINE_ID", "CIRCLE_WORKFLOW_ID", "CIRCLE_WORKFLOW_JOB_ID"):
         if not re.fullmatch(r"[0-9a-f-]{36}", os.environ.get(name, "")):
             raise ValueError("CircleCI release job identity is missing")
@@ -85,6 +90,7 @@ def build(version, sequence, previous, out):
                 "workflow_id": os.environ["CIRCLE_WORKFLOW_ID"],
                 "job_id": os.environ["CIRCLE_WORKFLOW_JOB_ID"],
                 "bootstrap_sha256": bootstrap_sha}
+    evidence["unchanged_state_schema_sha256"] = schema_hashes
     (out / "release-evidence.json").write_bytes(updates.canonical(evidence) + b"\n")
     sums = [f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}" for p in sorted(out.iterdir())]
     (out / "SHA256SUMS").write_text("\n".join(sums) + "\n")

@@ -79,7 +79,8 @@ def checkout(path, value):
     git("config", "user.name", "Fixture")
     git("remote", "add", "origin", f"https://github.com/{update.REPOSITORY}.git")
     (path / "source").write_text(value)
-    git("add", "source")
+    (path / ".mithril-runtime-provenance.json").write_text(json.dumps({"sourceRevision": "c" * 40}))
+    git("add", "source", ".mithril-runtime-provenance.json")
     git("commit", "-m", value)
     launcher = path / ".hermes/bin/hermes"
     launcher.parent.mkdir(parents=True)
@@ -151,6 +152,27 @@ def test_installer_digest_failure_executes_nothing(tmp_path, monkeypatch, releas
     with pytest.raises(update.UpdateError, match="hash or length"):
         update.prepare(payload, tmp_path, tmp_path / "versions")
     assert not (tmp_path / "versions").exists()
+
+
+def test_completed_retained_version_can_be_reselected_without_reinstall(tmp_path, monkeypatch):
+    store = tmp_path / "versions"
+    store.mkdir()
+    original = checkout(tmp_path / "runtime", "prepared")
+    root = store / original["revision"]
+    Path(original["path"]).rename(root)
+    isolated = store / "prepare-retained"
+    (isolated / ".mithril").mkdir(parents=True)
+    manifest_hash = hashlib.sha256((root / ".mithril-runtime-provenance.json").read_bytes()).hexdigest()
+    target = {"runtime_revision": original["revision"], "installer": {"sha256": "b" * 64},
+              "provenance": {"manifest_sha256": manifest_hash, "source_revision": "c" * 40}}
+    (store / (original["revision"] + ".prepared.json")).write_text(json.dumps({
+        "preparation_home": str(isolated), "installer_sha256": "b" * 64, "provenance_sha256": manifest_hash,
+        "launcher_sha256": hashlib.sha256((root / ".hermes/bin/hermes").read_bytes()).hexdigest()}))
+    monkeypatch.setattr(update, "download", lambda *_: pytest.fail("a verified retained version was downloaded again"))
+    assert update.prepare(target, tmp_path, store)["revision"] == original["revision"]
+    (root / ".hermes/bin/hermes").write_text("#!/bin/sh\nexit 99\n")
+    with pytest.raises(update.UpdateError, match="completed preparation"):
+        update.prepare(target, tmp_path, store)
 
 
 def test_unprovisioned_root_makes_no_network_request(monkeypatch, tmp_path):
