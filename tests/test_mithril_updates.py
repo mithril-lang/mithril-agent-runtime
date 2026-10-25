@@ -124,6 +124,24 @@ def test_preparation_failure_never_selects_partial_runtime(tmp_path, monkeypatch
     assert not (home / "mithril-update.json").exists()
 
 
+def test_successive_updates_keep_one_version_store(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    home.mkdir()
+    old = checkout(tmp_path / "old", "old")
+    versions = [checkout(tmp_path / "next", "next"), checkout(tmp_path / "last", "last")]
+    monkeypatch.setattr(update, "SOURCE", Path(old["path"]))
+    stores = []
+    state, previous = {}, old
+    for version in versions:
+        def prepared(target, install_home, store):
+            stores.append(store)
+            return version
+        update.apply({"runtime_revision": version["revision"], "previous_revisions": [previous["revision"]]}, home, state, prepare_runtime=prepared)
+        state = json.loads((home / "mithril-update.json").read_text())
+        previous = version
+    assert stores[0] == stores[1]
+
+
 def test_installer_digest_failure_executes_nothing(tmp_path, monkeypatch, release):
     payload, _, _ = release
     monkeypatch.setattr(update, "download", lambda *_: b"partial")
