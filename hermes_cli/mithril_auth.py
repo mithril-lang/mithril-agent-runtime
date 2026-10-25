@@ -288,7 +288,7 @@ def main(argv=None, *, continue_on_login=False, profile_selected=False):
         identity = request("/v1/me", token=token)
         if not verified_identity(identity, requested):
             raise SignInError("Mithril could not verify this account. No local settings were changed.")
-        model = select_model(request("/v1/models", token=token), args.model, current)
+        model = None if args.connectors else select_model(request("/v1/models", token=token), args.model, current)
         persist(token, model)
         if args.connectors:
             print("Mithril connector access authorized for this Profile. Open Mithril to connect Linear.")
