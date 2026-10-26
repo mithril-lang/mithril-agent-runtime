@@ -1,3 +1,5 @@
+version: 2.1
+
 parameters:
   release_version:
     type: string
@@ -40,6 +42,7 @@ jobs:
             tests/test_mithril_account_token.py tests/test_mithril_first_login.py
             tests/test_mithril_updates.py
             tests/test_profile_skill_sync.py
+            tests/test_profile_dependency_cache.py
             tests/test_mithril_release_signer.py
             tests/test_mithril_update_bootstrap.py
       - run:

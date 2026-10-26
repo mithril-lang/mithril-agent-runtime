@@ -5,11 +5,18 @@ Plugin admission owns writes; discovery never edits a profile's selection.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from pathlib import Path
+import sys
+import tempfile
 from typing import Any, Optional
 import logging
 
 LOG = logging.getLogger(__name__)
+_SELECTION_CACHE_SCHEMA = 1
+_SELECTION_CACHE_LIMIT = 16 * 1024 * 1024
 
 
 def _profiles_root() -> Path:
@@ -19,21 +26,24 @@ def _profiles_root() -> Path:
     return dependency_home_root() / "profiles"
 
 
-def read_home_selection(home: Path) -> Optional[dict[str, Any]]:
-    """The plugin/memory selection a home's config.yaml declares (None: no config yet).
-
-    The public reader for anything that must agree with what PM installs for that home.
-    An unreadable selection raises rather than shrinking the next dependency generation;
-    empty YAML is an explicit empty configuration, as in the CLI loader.
-    """
+def _read_config_bytes(home: Path) -> bytes | None:
     config_path = home / "config.yaml"
     try:
-        text = config_path.read_text(encoding="utf-8-sig")
+        return config_path.read_bytes()
     except FileNotFoundError:
         return None
-    except (OSError, UnicodeError) as exc:
+    except OSError as exc:
         raise ValueError(f"could not read plugin selection: {config_path}") from exc
 
+
+def _parse_home_selection(home: Path, data: bytes | None) -> Optional[dict[str, Any]]:
+    if data is None:
+        return None
+    config_path = home / "config.yaml"
+    try:
+        text = data.decode("utf-8-sig")
+    except UnicodeError as exc:
+        raise ValueError(f"could not read plugin selection: {config_path}") from exc
     # Missing YAML support is a broken runtime, not an empty plugin selection.
     import utils
     from ruamel.yaml.error import YAMLError
@@ -59,6 +69,92 @@ def read_home_selection(home: Path) -> Optional[dict[str, Any]]:
     if provider is not None and not isinstance(provider, str):
         raise ValueError(f"memory.provider must be a name: {config_path}")
     return config
+
+
+def read_home_selection(home: Path) -> Optional[dict[str, Any]]:
+    """Read the complete selection; direct readers always parse current config bytes."""
+    return _parse_home_selection(home, _read_config_bytes(home))
+
+
+def _selection_cache_path() -> Path:
+    from pm.environments import install_state_dir
+    from pm.paths import repo_root
+
+    return install_state_dir(repo_root()) / "profile-selection-cache.json"
+
+
+def _selection_cache_identity() -> str:
+    # Invalidate after parser changes or a venv generation changes YAML versions.
+    from pm.paths import repo_root
+
+    digest = hashlib.sha256()
+    for path in (Path(__file__), repo_root() / "utils.py"):
+        digest.update(path.read_bytes())
+    digest.update(sys.prefix.encode())
+    return digest.hexdigest()
+
+
+def _cached_selection_valid(value: Any) -> bool:
+    if not isinstance(value, dict) or set(value) != {"plugins", "memory"}:
+        return False
+    plugins, memory = value["plugins"], value["memory"]
+    return (isinstance(plugins, dict) and set(plugins) == {"enabled", "disabled"}
+            and all(isinstance(plugins[key], list) and all(isinstance(name, str) for name in plugins[key])
+                    for key in ("enabled", "disabled"))
+            and isinstance(memory, dict) and set(memory) == {"provider"}
+            and (memory["provider"] is None or isinstance(memory["provider"], str)))
+
+
+def _project_selection(config: dict[str, Any] | None) -> dict[str, Any]:
+    config = config or {}
+    plugins = config.get("plugins") or {}
+    memory = config.get("memory") or {}
+    return {"plugins": {"enabled": list(plugins.get("enabled") or []),
+                        "disabled": list(plugins.get("disabled") or [])},
+            "memory": {"provider": memory.get("provider")}}
+
+
+def _load_selection_cache(path: Path, identity: str) -> dict[str, Any]:
+    try:
+        if path.stat().st_size > _SELECTION_CACHE_LIMIT:
+            return {}
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError):
+        return {}
+    if (not isinstance(payload, dict) or payload.get("schema") != _SELECTION_CACHE_SCHEMA
+            or payload.get("implementation") != identity or not isinstance(payload.get("entries"), dict)):
+        return {}
+    return payload["entries"]
+
+
+def _write_selection_cache(path: Path, identity: str, entries: dict[str, Any]) -> None:
+    # Optional accelerator: a failed write must never change dependency selection.
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        fd, temporary = tempfile.mkstemp(prefix=".profile-selection-cache-", dir=path.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                json.dump({"schema": _SELECTION_CACHE_SCHEMA, "implementation": identity,
+                           "entries": entries}, stream, sort_keys=True, separators=(",", ":"))
+            os.replace(temporary, path)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+    except OSError as exc:
+        LOG.debug("Could not save profile selection cache: %s", exc)
+
+
+def _selection_from_cache(home: Path, old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    data = _read_config_bytes(home)
+    digest = hashlib.sha256(data).hexdigest() if data is not None else None
+    key = str(home)
+    entry = old.get(key)
+    if (isinstance(entry, dict) and entry.get("digest") == digest
+            and _cached_selection_valid(entry.get("selection"))):
+        new[key] = entry
+        return entry["selection"]
+    selection = _project_selection(_parse_home_selection(home, data))
+    new[key] = {"digest": digest, "selection": selection}
+    return selection
 
 
 def _enabled_from_config(config: dict[str, Any]) -> list[str]:
@@ -128,10 +224,14 @@ def enabled_plugins_ordered(*, proposed_home=None, enabled=None, disabled=None,
     the active environment or disabling an existing provider."""
     out: dict[Path, list[str]] = {}
     homes = dependency_homes()
+    cache_path = _selection_cache_path()
+    identity = _selection_cache_identity()
+    old_cache = _load_selection_cache(cache_path, identity)
+    new_cache: dict[str, Any] = {}
     for home in homes:
         # ONE parse per home feeds both queries (enabled + provider).
         try:
-            config = read_home_selection(home)
+            config = _selection_from_cache(home, old_cache, new_cache)
         except ValueError as exc:
             if not skip_invalid_secondary or home == homes[0]:
                 raise
@@ -146,6 +246,8 @@ def enabled_plugins_ordered(*, proposed_home=None, enabled=None, disabled=None,
             names.append(provider)
         if names:
             out[home / "plugins"] = names
+    if new_cache != old_cache:
+        _write_selection_cache(cache_path, identity, new_cache)
     return out
 
 
