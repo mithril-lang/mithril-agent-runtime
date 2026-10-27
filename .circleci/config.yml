@@ -33,7 +33,7 @@ jobs:
       - checkout
       - run:
           name: Build a fresh locked test environment through PM
-          command: python -m pm.build_env --source . --out .venv --group dev --group test
+          command: python -m pm.build_env --source . --out .venv --group dev --group test --extra google-chat
       - run:
           name: Verify Mithril account routing and first-launch approval
           command: >-
@@ -50,7 +50,7 @@ jobs:
           command: >-
             HERMES_PYTHON="$PWD/.venv/bin/python" PYTHONDONTWRITEBYTECODE=1
             bash scripts/run_tests.sh -j 2
-            tests/test_chat_input_character_limit.py
+            tests/test_chat_input_character_limit.py tests/test_google_chat_credentials.py
   mithril-distribution:
     docker:
       - image: cimg/python:3.14.7

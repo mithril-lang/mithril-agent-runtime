@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "711ec681fffbc0c3304ad37aca4fdc743132fab0dd8534956bb0cbcfb6689e35",
+    "sha256": "ad6f39318b4030b84fad96f191cda1bb391b98a873cf6cf369bbdcea800a4892",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "a99922ea5f34de032962118898a46d20b4e11274190e7103d568bae40f361f5a"
+        "sha256": "bf1cd08d2ef44efade4a0ac720ff48e6cac01004d6cc2080590d76b5fb76e851"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49851,6 +49851,11 @@
         "path": "distributions/mithril/update-trust.json",
         "baseSha256": null,
         "sha256": "09f796b3c78b1ed055e17f8d75a742424b739828dd43854542c0b1d5ba0a406f"
+      },
+      {
+        "path": "docs/operations/google-chat-keyless.md",
+        "baseSha256": null,
+        "sha256": "ed8aff05270ca984bdf940d90ce7b74b123e8382329ee7661741a4103d807196"
       },
       {
         "path": "hermes_cli/banner.py",
@@ -49907,6 +49912,11 @@
         "path": "hermes_cli/update_cmd_maint.py",
         "baseSha256": "046e79ffb25abeed1260612c6b861a2447dbad8e2f3b111a63655fbb64133241",
         "sha256": "30cae5a7e2a90d527c0930d54a40074e454bb5f5164c8d9db96c9ff77ed4cc59"
+      },
+      {
+        "path": "plugins/platforms/google_chat/adapter.py",
+        "baseSha256": "e36d203bac2c64da9ef7dc2d1b8cc40551ce1702273994de0246b364a9117b2e",
+        "sha256": "c52cc972b6a954fb3799a1a1d144512bf2edd590d0493ac79bcddd6a81f29a46"
       },
       {
         "path": "pm/artifact_mirror.py",
@@ -49974,6 +49984,11 @@
         "path": "tests/test_chat_input_character_limit.py",
         "baseSha256": null,
         "sha256": "ac131b249b9fe9b1800849c4104474b3fd48662601623814964e71f3df6064e1"
+      },
+      {
+        "path": "tests/test_google_chat_credentials.py",
+        "baseSha256": null,
+        "sha256": "9ebd5a21f56b70727591f70b4194162f0bd543c52b9d8bafe61794c826b3c1a0"
       },
       {
         "path": "tests/test_mithril_account_token.py",
