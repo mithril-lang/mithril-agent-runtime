@@ -33,7 +33,7 @@ jobs:
       - checkout
       - run:
           name: Build a fresh locked test environment through PM
-          command: python -m pm.build_env --source . --out .venv --group dev --group test
+          command: python -m pm.build_env --source . --out .venv --group dev --group test --extra google-chat
       - run:
           name: Verify Mithril account routing and first-launch approval
           command: >-
