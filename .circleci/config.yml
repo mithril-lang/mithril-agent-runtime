@@ -33,7 +33,10 @@ jobs:
       - checkout
       - run:
           name: Build a fresh locked test environment through PM
-          command: python -m pm.build_env --source . --out .venv --group dev --group test --extra google-chat
+          command: python -m pm.build_env --source . --out .venv --group dev --group test --extra google --extra google-chat
+      - run:
+          name: Verify Google Chat runtime dependencies are importable
+          command: .venv/bin/python -c "from plugins.platforms.google_chat.adapter import check_google_chat_requirements; assert check_google_chat_requirements()"
       - run:
           name: Verify Mithril account routing and first-launch approval
           command: >-

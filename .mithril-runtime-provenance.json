@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "383aac428afa6b7134b52c79c352c5d1400c23eaee485c2b7f7a99a0ff80141d",
+    "sha256": "fa8c9c8b3b66ef6ca5dd71fc7cf7799c35c265633d1013191a2560aff581de8e",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "85b3c4aa62f861ab92780b4bd95de9fb04597cdd4ad187fe6005ad455930fddb"
+        "sha256": "abc19b99c49f800cf64e90131a86213a23638277694f42457d159c8f5ae4318e"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49855,7 +49855,7 @@
       {
         "path": "docs/operations/google-chat-keyless.md",
         "baseSha256": null,
-        "sha256": "33b97411cc8a3d1002a06113a8f70b37847e8e671df3a66200ac55447d36ce1b"
+        "sha256": "f31b9c3f111c4b041de7f288c192e237c6b78774dadcf74e3412d47a557a54e8"
       },
       {
         "path": "gateway/google_chat_api_bridge.py",
