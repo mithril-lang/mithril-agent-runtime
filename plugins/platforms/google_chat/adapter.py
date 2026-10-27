@@ -255,9 +255,11 @@ class _SACredentialError(Exception):
 
 
 def _load_sa_credentials_from(sa_value: Optional[str]) -> Any:
-    """Build SA credentials from a path / inline JSON, or fall back to ADC.
-    Raises ``_SACredentialError`` with kind in {inline_invalid, not_found,
-    file_invalid, adc_foreign, adc_no_auth, adc_failed}."""
+    """Build credentials from an explicit JSON file / inline SA JSON, or ADC.
+
+    An explicit file may be a service-account key or a keyless impersonated
+    credential created by gcloud. It never falls back to another profile's ADC.
+    """
     if sa_value:
         if sa_value.lstrip().startswith("{"):
             try:
@@ -270,9 +272,18 @@ def _load_sa_credentials_from(sa_value: Optional[str]) -> Any:
             try:
                 with open(sa_value, "r", encoding="utf-8-sig") as fh:
                     info = json.load(fh)
-            except json.JSONDecodeError as exc:
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                 raise _SACredentialError("file_invalid", exc) from exc
-        return service_account.Credentials.from_service_account_info(info, scopes=_CHAT_SCOPES)
+        if sa_value.lstrip().startswith("{"):
+            return service_account.Credentials.from_service_account_info(info, scopes=_CHAT_SCOPES)
+        try:
+            import google.auth as google_auth
+            credentials, _project = google_auth.load_credentials_from_dict(info, scopes=_CHAT_SCOPES)
+        except ImportError as exc:
+            raise _SACredentialError("adc_no_auth", exc) from exc
+        except Exception as exc:
+            raise _SACredentialError("file_invalid", exc) from exc
+        return credentials
     # No explicit SA — ADC (Cloud Run / GCE workload identity, or gcloud ADC login).
     if _adc_would_borrow_foreign_credentials():
         raise _SACredentialError("adc_foreign")
@@ -342,8 +353,8 @@ class _ThreadCountStore:
 
 _SA_ERROR_MESSAGES = {
     "inline_invalid": "Inline SA JSON is not valid JSON: {exc}",
-    "not_found": "Service Account JSON file not found at configured path.",
-    "file_invalid": "Service Account JSON file is not valid JSON: {exc}",
+    "not_found": "Google Chat credential file not found at configured path.",
+    "file_invalid": "Google Chat credential file is invalid or unsupported.",
     "adc_foreign": ("Google Chat ADC skipped for this profile: service-account credentials are set in the process "
                     "environment but not in this profile's secret scope. Set GOOGLE_CHAT_SERVICE_ACCOUNT_JSON in this "
                     "profile's .env."),
@@ -375,7 +386,8 @@ def _create_kwargs(chat_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
 class GoogleChatAdapter(BasePlatformAdapter):
     """Google Chat bot adapter: Pub/Sub pull (or HTTP callbacks) + Chat REST API. Env vars
     are documented in gateway/config.py (GOOGLE_CHAT_PROJECT_ID, GOOGLE_CHAT_SUBSCRIPTION_NAME,
-    GOOGLE_CHAT_SERVICE_ACCOUNT_JSON + optional allowlist/home-channel/flow-control keys)."""
+    GOOGLE_CHAT_SERVICE_ACCOUNT_JSON + optional allowlist/home-channel/flow-control keys).
+    The credential path accepts a service-account key or a keyless impersonated ADC file."""
 
     MAX_MESSAGE_LENGTH = _MAX_TEXT_LENGTH
     # Pub/Sub supervisor configuration.
@@ -448,12 +460,11 @@ class GoogleChatAdapter(BasePlatformAdapter):
 
     # -- configuration -------------------------------------------------------
     def _load_sa_credentials(self) -> Any:
-        """SA credentials: ``extra['service_account_json']`` → GOOGLE_APPLICATION_CREDENTIALS → ADC.
+        """Chat credentials: ``extra['service_account_json']`` → GOOGLE_APPLICATION_CREDENTIALS → ADC.
 
-        Priority: 1. Explicit ``extra['service_account_json']`` (path or inline JSON) 2. 3. Application
-        Default Credentials via ``google.auth.default()`` — works on Cloud Run / GCE / GKE with a workload
-        identity attached, or locally via ``gcloud auth application-default login``. Lets operators run the
-        gateway in GCP without managing SA key files. Pattern lifted from PR #14965.
+        An explicit file may be a service-account key or an impersonated ADC file.
+        With no explicit file, ``google.auth.default()`` uses the gateway's own
+        workload identity or local ADC, subject to the multiplex isolation guard.
         """
         sa_path = self.config.extra.get("service_account_json") or _get_scoped_secret("GOOGLE_APPLICATION_CREDENTIALS")
         try:
@@ -1613,9 +1624,10 @@ Walkthrough:
   1. Create or select a GCP project; enable Google Chat API + Cloud Pub/Sub API.
   2. Create a Service Account (no project-level IAM role needed).
   3. Create a Pub/Sub topic (e.g. hermes-chat-events) and a Pull subscription.
-  4. On the TOPIC: add chat-api-push@system.gserviceaccount.com as Pub/Sub Publisher.
+  4. On the TOPIC: grant Pub/Sub Publisher to the Chat service identity shown in
+     your project's Google Chat API configuration.
   5. On the SUBSCRIPTION: grant your Service Account Pub/Sub Subscriber.
-  6. Download the Service Account JSON key.
+  6. Use a private Service Account JSON key, or a keyless impersonated ADC file.
   7. Google Chat API console → Configuration: connection = Cloud Pub/Sub,
      point at the topic, enable 1:1 + group, restrict visibility.
   8. Install the bot in a space (fires ADDED_TO_SPACE and resolves its user_id).
@@ -1636,7 +1648,8 @@ def interactive_setup() -> None:
     for question, env_name, required_label, password in (
         ("GCP project ID (e.g. my-project)", "GOOGLE_CHAT_PROJECT_ID", "Project ID", False),
         ("Pub/Sub subscription (projects/<proj>/subscriptions/<sub>)", "GOOGLE_CHAT_SUBSCRIPTION_NAME", "Subscription", False),
-        ("Path to Service Account JSON (or inline JSON)", "GOOGLE_CHAT_SERVICE_ACCOUNT_JSON", None, True),
+        ("Path to Chat credential JSON (SA key or impersonated ADC; inline SA JSON also works)",
+         "GOOGLE_CHAT_SERVICE_ACCOUNT_JSON", None, True),
     ):
         value = prompt(question, default=get_env_value(env_name) or "", password=password)
         if not value:
@@ -1674,8 +1687,8 @@ _GCHAT_THREAD_ID_RE = re.compile(r"^spaces/[A-Za-z0-9_-]+/threads/[A-Za-z0-9_-]+
 # Detail suffixes for ``_standalone_error`` keyed by ``_SACredentialError.kind``.
 _STANDALONE_SA_ERRORS = {
     "inline_invalid": "inline SA JSON is invalid: {exc}",
-    "not_found": "SA JSON file not found at {path}",
-    "file_invalid": "SA JSON file is invalid: {exc}",
+    "not_found": "Google Chat credential file not found at {path}",
+    "file_invalid": "Google Chat credential file is invalid or unsupported",
     "adc_foreign": ("ADC skipped for this profile: service-account credentials are set in the process environment but "
                     "not in this profile's secret scope"),
     "adc_no_auth": "no SA credentials configured and google-auth is not installed for ADC fallback",

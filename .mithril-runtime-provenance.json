@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "711ec681fffbc0c3304ad37aca4fdc743132fab0dd8534956bb0cbcfb6689e35",
+    "sha256": "1fc14047cdcde8fb47ea0e3aef9dbe04bf6753ad2016dc63eda0ae82281a20c9",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49907,6 +49907,11 @@
         "path": "hermes_cli/update_cmd_maint.py",
         "baseSha256": "046e79ffb25abeed1260612c6b861a2447dbad8e2f3b111a63655fbb64133241",
         "sha256": "30cae5a7e2a90d527c0930d54a40074e454bb5f5164c8d9db96c9ff77ed4cc59"
+      },
+      {
+        "path": "plugins/platforms/google_chat/adapter.py",
+        "baseSha256": "e36d203bac2c64da9ef7dc2d1b8cc40551ce1702273994de0246b364a9117b2e",
+        "sha256": "c52cc972b6a954fb3799a1a1d144512bf2edd590d0493ac79bcddd6a81f29a46"
       },
       {
         "path": "pm/artifact_mirror.py",
