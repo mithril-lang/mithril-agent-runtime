@@ -63,6 +63,26 @@ def _response_text(payload: dict) -> str:
     return content.strip()
 
 
+def _approved_inbound(msg: dict, envelope: dict, allowed_email: str) -> bool:
+    """Reject other spaces before the adapter downloads any attachment."""
+    space = envelope.get("space") or msg.get("space") or {}
+    space_type = str(space.get("type") or space.get("spaceType") or "").upper()
+    sender = msg.get("sender") or {}
+    return (space_type in {"DIRECT_MESSAGE", "DM"}
+            and str(sender.get("email") or "").strip().lower() == allowed_email)
+
+
+class PersonalGoogleChatAdapter(GoogleChatAdapter):
+    def __init__(self, config: PlatformConfig, allowed_email: str):
+        super().__init__(config)
+        self._bridge_allowed_email = allowed_email
+
+    async def _dispatch_message(self, msg: dict, envelope: dict) -> None:
+        if not _approved_inbound(msg, envelope, self._bridge_allowed_email):
+            return
+        await super()._dispatch_message(msg, envelope)
+
+
 async def _answer(event, *, allowed_email: str, api_key: str, client: httpx.AsyncClient) -> str | None:
     source = event.source
     if source is None or source.chat_type != "dm":
@@ -96,11 +116,11 @@ async def run() -> None:
     subscription = _required_env("GOOGLE_CHAT_SUBSCRIPTION_NAME")
     credential_path = _required_env("GOOGLE_CHAT_SERVICE_ACCOUNT_JSON")
     api_key = _api_key_from_file(Path(_required_env("GOOGLE_CHAT_BRIDGE_API_ENV_FILE")))
-    adapter = GoogleChatAdapter(PlatformConfig(enabled=True, typing_indicator=False, extra={
+    adapter = PersonalGoogleChatAdapter(PlatformConfig(enabled=True, typing_indicator=False, extra={
         "project_id": project_id,
         "subscription_name": subscription,
         "service_account_json": credential_path,
-    }))
+    }), allowed_email)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for signum in (signal.SIGINT, signal.SIGTERM):

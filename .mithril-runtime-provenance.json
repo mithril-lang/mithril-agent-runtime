@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "22dd70ce06f3a41903291f75aeb4c154aa9b91c39fcea1a3eaf2a8546362cec4",
+    "sha256": "383aac428afa6b7134b52c79c352c5d1400c23eaee485c2b7f7a99a0ff80141d",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49860,7 +49860,7 @@
       {
         "path": "gateway/google_chat_api_bridge.py",
         "baseSha256": null,
-        "sha256": "07ee2f737f125f2e60db12cc41911f3ce677d193027141a525e9f9cb4c153040"
+        "sha256": "ca674f031a2aa84cc371c82d6bb43695ffa789b60c4b541774998f78f0db2686"
       },
       {
         "path": "hermes_cli/banner.py",
@@ -49993,7 +49993,7 @@
       {
         "path": "tests/test_google_chat_api_bridge.py",
         "baseSha256": null,
-        "sha256": "7d07e47a2cbc8484e814e65fe298889657dcce6a17feff6648b28ed1e1ef3001"
+        "sha256": "7bd8732bec0c474ccea0b21b9b9f4882fc25dedd3edca9c7eda074aa25f99cd3"
       },
       {
         "path": "tests/test_google_chat_credentials.py",

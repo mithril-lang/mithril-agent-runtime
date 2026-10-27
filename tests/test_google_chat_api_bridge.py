@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from gateway.google_chat_api_bridge import _answer, _api_key_from_file, _session_id
+from gateway.google_chat_api_bridge import _answer, _api_key_from_file, _approved_inbound, _session_id
 
 
 def _event(email="j@kotobalabs.com", chat_type="dm", text="ping"):
@@ -47,3 +47,10 @@ def test_bridge_requires_private_local_gateway_credential_file(tmp_path):
         _api_key_from_file(path)
     path.chmod(0o600)
     assert _api_key_from_file(path) == "example-test-secret-123"
+
+
+def test_unapproved_space_or_sender_is_rejected_before_attachment_fetch():
+    msg = {"sender": {"email": "j@kotobalabs.com"}, "attachment": [{"name": "private"}]}
+    assert _approved_inbound(msg, {"space": {"spaceType": "DIRECT_MESSAGE"}}, "j@kotobalabs.com")
+    assert not _approved_inbound(msg, {"space": {"spaceType": "SPACE"}}, "j@kotobalabs.com")
+    assert not _approved_inbound(msg, {"space": {"spaceType": "DIRECT_MESSAGE"}}, "other@example.com")
