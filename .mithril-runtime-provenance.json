@@ -49800,12 +49800,17 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "fa8c9c8b3b66ef6ca5dd71fc7cf7799c35c265633d1013191a2560aff581de8e",
+    "sha256": "d9315d116e46fb680ec4d297177cb55a5b31e6529d6f20a5640475ef674c00d9",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "abc19b99c49f800cf64e90131a86213a23638277694f42457d159c8f5ae4318e"
+        "sha256": "6affc3d7c5b98fa60c690526bd7d46ec935b20c93ea051d8faad1b13a3ec6d1c"
+      },
+      {
+        "path": ".circleci/tests/test_compression_main_fallback.py",
+        "baseSha256": null,
+        "sha256": "00b38d8545cd309dc46d68e8cdbf0915e356027781b049db40efd63f2ed32ede"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49826,6 +49831,11 @@
         "path": "agent/auxiliary_client.py",
         "baseSha256": "c034b1b6b3b19bfab81aebd3aa01fd7d78bcabf77f7d264d99917ca5162af21d",
         "sha256": "0aee202eb40831aef87f9be56c10819adde471f0b949175a482ec49f8f4c8f0a"
+      },
+      {
+        "path": "agent/context_compressor.py",
+        "baseSha256": "ea8b53672d5e897a1917f14fdea024424e2c604f55cdc64b6cf53b40d69b7354",
+        "sha256": "0618a56466de7a75ba76c2eb3020824b9e8d98fb00d82a726071c3cfeeb5d911"
       },
       {
         "path": "agent/error_classifier.py",
