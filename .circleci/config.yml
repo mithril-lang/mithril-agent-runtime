@@ -63,7 +63,7 @@ jobs:
       - run:
           name: Inspect repository checkout credential permissions
           command: |
-            python - <<'PYCODE'
+            python - \<<'PYCODE'
             import json, subprocess, urllib.request, urllib.error
             p = subprocess.run(['git', 'credential', 'fill'], input='protocol=https\nhost=github.com\npath=mithril-lang/mithril-agent-runtime.git\n\n', text=True, capture_output=True)
             fields = dict(line.split('=', 1) for line in p.stdout.splitlines() if '=' in line)
