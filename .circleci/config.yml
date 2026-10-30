@@ -61,6 +61,25 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Inspect repository checkout credential permissions
+          command: |
+            python - <<'PYCODE'
+            import json, subprocess, urllib.request, urllib.error
+            p = subprocess.run(['git', 'credential', 'fill'], input='protocol=https\nhost=github.com\npath=mithril-lang/mithril-agent-runtime.git\n\n', text=True, capture_output=True)
+            fields = dict(line.split('=', 1) for line in p.stdout.splitlines() if '=' in line)
+            token = fields.get('password', '')
+            if not token:
+                print('checkout credential: unavailable'); raise SystemExit(0)
+            req = urllib.request.Request('https://api.github.com/repos/mithril-lang/mithril-agent-runtime', headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'mithril-ci-permissions-check'})
+            try:
+                with urllib.request.urlopen(req, timeout=15) as response:
+                    data = json.load(response)
+                    print('repository permissions:', json.dumps(data.get('permissions', {})))
+                    print('accepted GitHub permissions:', response.headers.get('X-Accepted-GitHub-Permissions', 'not reported'))
+            except urllib.error.HTTPError as error:
+                print('repository permission probe HTTP', error.code)
+            PYCODE
+      - run:
           name: Verify Homebrew formula and shell installer
           command: python -m unittest discover -s tests -p test_mithril_distribution.py -v
   mithril-fresh-install:
