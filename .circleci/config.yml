@@ -114,6 +114,7 @@ jobs:
             .circleci/tests/test_mithril_account.py
             .circleci/tests/test_mithril_startup.py
             .circleci/tests/test_mithril_runtime_export.py
+            .circleci/tests/test_compression_main_fallback.py
       - run:
           name: Validate launchers and Homebrew formula
           command: |

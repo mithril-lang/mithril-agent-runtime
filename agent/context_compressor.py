@@ -3816,7 +3816,17 @@ Summary generation was unavailable, so this is a best-effort deterministic fallb
             # NO max_tokens: Anthropic/NIM wires forward it and a hard cap truncates summaries
             # (thinking models burn it on reasoning). Timeout comes from call_llm config.
         }
-        if self.summary_model:
+        if getattr(self, "_summary_model_fallen_back", False):
+            # The compression task config otherwise wins again over main_runtime,
+            # retrying the same failing auxiliary endpoint and possibly its key.
+            # Resolve without task-specific routing so the actual main route is used.
+            from agent.auxiliary_client import _effective_aux_timeout
+            call_kwargs.update(
+                task=None, provider=self.provider or "auto", model=self.model,
+                base_url=self.base_url, api_key=self.api_key, api_mode=self.api_mode,
+                timeout=_effective_aux_timeout("compression", None),
+            )
+        elif self.summary_model:
             call_kwargs["model"] = self.summary_model
         # Pinned route (stall fallback) overrides task routing so the retry leaves the stalled backend.
         call_kwargs.update(_pinned_summary_call_kwargs())
