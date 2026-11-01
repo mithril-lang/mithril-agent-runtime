@@ -1919,12 +1919,25 @@ async def _discover_gateway_mcp_tools(config: object) -> None:
         if not getattr(config, "multiplex_profiles", False):
             await loop.run_in_executor(None, copy_context().run, discover_mcp_tools)
             return
+        def discover_profile(profile_home):
+            # Secret hydration and terminal-policy setup can block on external helpers.
+            # Bind the complete profile scope in the worker, never on the gateway loop.
+            with _profile_runtime_scope(Path(profile_home)):
+                discover_mcp_tools()
+
         for profile_name, profile_home in _multiplex_profile_homes(config):
             try:
-                with _profile_runtime_scope(Path(profile_home)):
-                    await loop.run_in_executor(None, copy_context().run, discover_mcp_tools)
+                await loop.run_in_executor(
+                    None, copy_context().run, discover_profile, profile_home)
             except Exception:
                 logger.warning("MCP tool discovery failed for profile '%s'", profile_name, exc_info=True)
+
+
+def _start_gateway_mcp_discovery(runner):
+    """Retain MCP warm-up in the gateway's normal supervised shutdown lifecycle."""
+    runner._spawn_supervised(
+        lambda: _discover_gateway_mcp_tools(runner.config),
+        "startup MCP tool discovery", restart=False)
 
 
 def _platform_has_bot_credential(platform: "Platform", platform_config: "PlatformConfig") -> bool:
@@ -5950,16 +5963,6 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     _best_effort(_start_keepalive, "Nous auth keepalive did not start: %s")
     _ensure_windows_gateway_venv_imports()
 
-    # discover_mcp_tools() blocks up to 120s; on the loop thread it would freeze platform heartbeats.
-    try:
-        # MCP tool discovery — run in an executor so the asyncio event loop stays responsive even when a
-        # configured MCP server is slow or unreachable.  discover_mcp_tools() uses a blocking 120s wait
-        # internally; calling it from the loop thread would freeze platform heartbeats (Discord shard,
-        # Telegram polling) until it returned. See #16856.
-        await _discover_gateway_mcp_tools(runner.config)
-    except Exception as e:
-        logger.debug("MCP tool discovery failed: %s", e)
-
     try:
         success = await runner.start()
     except BaseException:
@@ -5997,6 +6000,10 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
 
     cron_stop, cron_provider, cron_thread, housekeeping_thread = (
         _start_gateway_start_cron_and_housekeeping(runner))
+
+    # MCP discovery is optional warm-up, not a readiness gate. A large multiplexed
+    # fleet or an unreachable MCP must not postpone cron and its heartbeat.
+    _start_gateway_mcp_discovery(runner)
 
     # READY only once adapters, cron and housekeeping run; missing systemd state just disables watchdog.
     runner._start_systemd_watchdog()

@@ -49800,17 +49800,22 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "d9315d116e46fb680ec4d297177cb55a5b31e6529d6f20a5640475ef674c00d9",
+    "sha256": "9b24bd489e0c70858fbe2328651b458ac22a40cd2c7bd4b3624e708f9fb35f32",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "6affc3d7c5b98fa60c690526bd7d46ec935b20c93ea051d8faad1b13a3ec6d1c"
+        "sha256": "563749ced5f845deb380370124732eb20edb4698a3450a87bbf4174d0b1204e9"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
         "baseSha256": null,
         "sha256": "00b38d8545cd309dc46d68e8cdbf0915e356027781b049db40efd63f2ed32ede"
+      },
+      {
+        "path": ".circleci/tests/test_gateway_cron_startup.py",
+        "baseSha256": null,
+        "sha256": "ca7ea7969559d2eb95ceebbc570c2981404c5defd3ccc63c5dc96fc64bb68331"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49871,6 +49876,11 @@
         "path": "gateway/google_chat_api_bridge.py",
         "baseSha256": null,
         "sha256": "ca674f031a2aa84cc371c82d6bb43695ffa789b60c4b541774998f78f0db2686"
+      },
+      {
+        "path": "gateway/run.py",
+        "baseSha256": "c1184c3dd38d42a08cfec0a29538382ab33fe03d948faa02d607d17148aa601a",
+        "sha256": "e3daef0fe277473b4a547422f74a6a0c3d20f8300e0f75467e686bf6a8a34017"
       },
       {
         "path": "hermes_cli/banner.py",
