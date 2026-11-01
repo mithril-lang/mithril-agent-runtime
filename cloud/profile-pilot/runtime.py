@@ -30,7 +30,9 @@ except ImportError:  # The pinned older trial image predates the YAML adapter.
     import yaml
 from hermes_cli import profile_placement as placement
 
-HOME = Path("/opt/data/profiles") / os.environ["PILOT_PROFILE"]
+# Each VM is one host. Its assigned profile must be that host's default root,
+# outside the shared-host profiles/ catalog (which would select an empty parent).
+HOME = Path("/opt/data/placed") / os.environ["PILOT_PROFILE"]
 TOKEN = os.environ["PILOT_CONTROL_KEY"]
 CIPHER = AESGCM(bytes.fromhex(os.environ["PILOT_TRANSFER_KEY"]))
 STORE = os.environ["PILOT_ORIGIN"] + "/_store/" + HOME.name
@@ -53,6 +55,7 @@ def restore_archive(data):
 def adapt_paths():
     """Map this profile's own workspace, retaining the source contract in its capsule."""
     prefixes = ["/Users/junkawasaki/." + alias + "/profiles/" + HOME.name for alias in ("hermes", "mithril")]
+    prefixes.append("/opt/data/profiles/" + HOME.name)  # Upgrade the initial pilot checkpoint.
     changed = []
     for path in HOME.rglob("*"):
         if not path.is_file() or path.suffix not in {".json", ".yaml", ".yml", ".md", ".py", ".sh"}:
@@ -73,7 +76,7 @@ def adapt_paths():
     # encrypted source capsule; report their absence instead of running a fallback.
     disabled = list((config.get("mcp_servers") or {}).keys())
     config["mcp_servers"] = {}
-    config.setdefault("gateway", {})["multiplex_profiles"] = False
+    config.setdefault("gateway", {}).pop("multiplex_profiles", None)
     config.setdefault("platforms", {})["api_server"] = {"enabled": True}
     path.write_text(yaml.safe_dump(config, sort_keys=False))
     (HOME / "workspace").mkdir(exist_ok=True)
@@ -110,6 +113,8 @@ class Runtime:
         HOME.mkdir(mode=0o700, parents=True, exist_ok=True)
         restore_archive(base64.b64decode(data["archive"], validate=True))
         placement._write(HOME / placement.STATE, data["record"])
+        if (HOME / "config.yaml").exists():
+            self.adaptation = adapt_paths()
         self.checkpoint_digest = digest
 
     async def checkpoint(self):
@@ -151,12 +156,8 @@ class Runtime:
             self.gateway_ready = False
             with placement.execution(HOME):
                 with (HOME / "pilot-gateway.log").open("ab", buffering=0) as log:
-                    # This VM hosts exactly one placed profile. Explicitly opt
-                    # into its dedicated gateway; the ordinary named-profile
-                    # refusal assumes a shared host multiplexer. Placement is
-                    # still checked before launch and at every turn/cron entry.
                     self.child = await asyncio.create_subprocess_exec(
-                        "/opt/hermes/scripts/mithril", "gateway", "run", "--force", "--no-supervise", "--external-supervisor",
+                        "/opt/hermes/scripts/mithril", "gateway", "run", "--no-supervise", "--external-supervisor",
                         cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
         async with ClientSession(timeout=ClientTimeout(total=3)) as client:
             for _ in range(180):
