@@ -151,7 +151,7 @@ class Runtime:
             with placement.execution(HOME):
                 with (HOME / "pilot-gateway.log").open("ab", buffering=0) as log:
                     self.child = await asyncio.create_subprocess_exec(
-                        "/opt/hermes/.venv/bin/hermes", "gateway", "run", "--external-supervisor",
+                        "/opt/hermes/scripts/mithril", "gateway", "run", "--no-supervise", "--external-supervisor",
                         cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
         async with ClientSession(timeout=ClientTimeout(total=3)) as client:
             for _ in range(180):
@@ -285,7 +285,7 @@ class Runtime:
                     if job_id not in {j["id"] for j in self.state()["jobs"]}:
                         return web.Response(status=404)
                     with placement.execution(HOME):
-                        child = await asyncio.create_subprocess_exec("/opt/hermes/.venv/bin/hermes", "cron", "run", job_id, env=self.child_env(), cwd=HOME / "workspace", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+                        child = await asyncio.create_subprocess_exec("/opt/hermes/scripts/mithril", "cron", "run", job_id, env=self.child_env(), cwd=HOME / "workspace", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
                         await child.wait()
                     await self.checkpoint()
                     job = next(j for j in self.state()["jobs"] if j["id"] == job_id)

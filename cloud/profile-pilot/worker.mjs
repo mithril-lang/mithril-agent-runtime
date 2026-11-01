@@ -98,6 +98,26 @@ export class ProfileContainer extends DurableObject {
 
   async fetch(request) {
     const path = new URL(request.url).pathname;
+    if (path === '/diagnostics' && request.method === 'GET') {
+      await this.ensure();
+      const name = await this.ctx.storage.get('profile');
+      // A fixed, read-only diagnostic; never expose a general exec surface.
+      const code = `import json,os,re; from pathlib import Path
+home=Path('/opt/data/profiles')/${JSON.stringify(name)}
+path=home/'pilot-gateway.log'
+text=path.read_bytes()[-32768:].decode(errors='replace') if path.exists() else ''
+values=list(os.environ.values())
+env=home/'.env'
+if env.exists(): values += [line.split('=',1)[1].strip().strip('"').strip("'") for line in env.read_text().splitlines() if '=' in line and not line.lstrip().startswith('#')]
+for value in sorted(values,key=len,reverse=True):
+ if len(value)>=8: text=text.replace(value,'[redacted]')
+text=re.sub(r'(?i)(bearer\\s+|(?:token|api[_-]?key|secret|password)[=:\\s]+)[^\\s,;]+',r'\\1[redacted]',text)
+print(json.dumps({'gateway_log_tail':text}))`;
+      const process = await this.ctx.container.exec(['/opt/hermes/.venv/bin/python', '-c', code], {user: '0:0'});
+      const result = await process.output();
+      if (result.exitCode !== 0) return new Response('Diagnostics unavailable', {status: 503, headers});
+      return new Response(result.stdout, {headers: {...headers, 'Content-Type': 'application/json'}});
+    }
     if (path === '/control-state') {
       return Response.json({profile: await this.ctx.storage.get('profile'), location: 'container:' + this.ctx.id.toString(), container_running: this.ctx.container?.running ?? false, alarm: await this.ctx.storage.get('last_alarm') ?? null}, {headers});
     }
@@ -158,7 +178,7 @@ export default {
       return new Response('Method not allowed', {status: 405, headers});
     }
     if (!operator) return new Response('Unauthorized', {status: 401, headers});
-    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
+    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
     if (!route || !names.has(route[1])) return new Response('Not found', {status: 404, headers});
     const owner = env.PROFILES.getByName('scheduled-profile-pilot-v1:' + route[1]);
     await owner.bind(route[1]);
