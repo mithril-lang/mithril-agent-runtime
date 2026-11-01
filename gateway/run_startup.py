@@ -1329,6 +1329,22 @@ class GatewayStartupMixin:
         self._request_clean_exit(reason)
         self._startup_restore_in_progress = False
 
+    async def _start_secondary_profiles_after_primary(self, connected_count, skipped_platforms):
+        """A primary-ready gateway may initialize the remaining fleet while cron runs."""
+        aborted, _ = await self._start_secondary_profiles(connected_count, skipped_platforms)
+        if aborted:
+            # A later fatal profile-policy error must still stop the complete gateway.
+            await self.stop()
+
+    async def _start_or_defer_secondary_profiles(self, connected_count, skipped_platforms):
+        if not connected_count:
+            # A secondary-only host must retain the original connection/fatal-error verdict.
+            return await self._start_secondary_profiles(connected_count, skipped_platforms)
+        self._spawn_supervised(
+            lambda: self._start_secondary_profiles_after_primary(connected_count, skipped_platforms),
+            "secondary profile startup", restart=False)
+        return False, connected_count
+
     async def _start_secondary_profiles(
         self, connected_count: int, _multiplex_skipped_platforms: list
     ) -> Tuple[bool, int]:
@@ -1614,7 +1630,7 @@ class GatewayStartupMixin:
         )
         if await self._abort_startup_if_shutdown_requested():
             return True
-        _aborted, connected_count = await self._start_secondary_profiles(
+        _aborted, connected_count = await self._start_or_defer_secondary_profiles(
             connected_count, _multiplex_skipped_platforms
         )
         if _aborted:
