@@ -110,12 +110,17 @@ def status(home):
 @contextlib.contextmanager
 def execution(home):
     home = Path(home).resolve()
-    row = read(home)
-    if row is None:
+    # Legacy Windows profiles are unchanged; enrolled placement is POSIX-only.
+    if os.name != "posix" and read(home) is None:
         yield
         return
     with lock(home):
         row = read(home)
+        # Hold the lease even before enrollment: otherwise an already-running
+        # unregistered job could be invisible to the enrollment/freeze barrier.
+        if row is None:
+            yield
+            return
         ticket = _ticket.get()
         nested = ticket is not None and ticket["live"] and ticket["home"] == home and ticket["owner"] == _owner(row)
         if row["owner"] != location() or (row["phase"] != "active" and not (nested and row["phase"] == "draining")):

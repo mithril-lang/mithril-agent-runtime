@@ -28,11 +28,12 @@ jobs:
           name: Verify runtime override provenance
           command: python .circleci/validate-runtime-snapshot.py
       - run:
-          name: Install the pinned transfer cipher
-          command: python -m pip install --disable-pip-version-check cryptography==50.0.1
+          name: Build the locked runtime test environment
+          command: python -m pm.build_env --source . --out .venv --group dev --group test
+          no_output_timeout: 20m
       - run:
-          name: Verify scheduled handoff, WAL recovery and runtime fencing
-          command: python .circleci/tests/test_profile_placement.py
+          name: Verify scheduled handoff, WAL recovery and real entrypoint fencing
+          command: .venv/bin/python .circleci/tests/test_profile_placement.py
   gateway-cron-startup-regression:
     docker:
       - image: cimg/python:3.14.7

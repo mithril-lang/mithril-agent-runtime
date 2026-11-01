@@ -129,6 +129,22 @@ class PlacementTests(unittest.TestCase):
         with self.assertRaises(p.PlacementError):
             with p.execution(self.a): pass
 
+    def test_real_agent_and_cron_entrypoints_refuse_the_former_owner(self):
+        from hermes_constants import set_hermes_home_override, reset_hermes_home_override
+        from run_agent import AIAgent
+        from cron.scheduler import run_one_job
+        from cron.scheduler_tick import tick
+        self.transfer()
+        token = set_hermes_home_override(str(self.a))
+        before = (self.a / "cron/jobs.json").read_bytes()
+        try:
+            with self.assertRaises(p.PlacementError): AIAgent(model="test-model")
+            with self.assertRaises(p.PlacementError): run_one_job({"id": "daily", "no_agent": True})
+            self.assertEqual(tick(sync=True), 0)
+            self.assertEqual((self.a / "cron/jobs.json").read_bytes(), before)
+        finally:
+            reset_hermes_home_override(token)
+
     def test_script_and_tick_admission_share_the_same_fence_a_b_a(self):
         from hermes_constants import set_hermes_home_override, reset_hermes_home_override
         calls = []
