@@ -160,7 +160,12 @@ class Runtime:
                         "/opt/hermes/scripts/mithril", "gateway", "run", "--no-supervise", "--external-supervisor",
                         cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
         async with ClientSession(timeout=ClientTimeout(total=3)) as client:
+            deadline = asyncio.get_running_loop().time() + 180
             for _ in range(180):
+                if self.draining:
+                    raise placement.PlacementError("Gateway startup is draining for a controlled restart")
+                if asyncio.get_running_loop().time() >= deadline:
+                    break
                 if self.child.returncode is not None:
                     raise RuntimeError("Profile gateway exited before readiness")
                 try:
