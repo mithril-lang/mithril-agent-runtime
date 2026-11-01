@@ -1,5 +1,6 @@
 """In-process tick admission and dispatch; job execution stays in scheduler.py."""
 
+from hermes_cli.profile_placement import guard_tick
 import concurrent.futures
 import contextlib
 
@@ -15,6 +16,7 @@ def tick(verbose=True, adapters=None, loop=None, sync=True, *, can_dispatch=None
         return _tick_admitted(verbose, adapters, loop, sync, can_dispatch=can_dispatch)
 
 
+@guard_tick
 def _tick_admitted(
     verbose: bool = True, adapters=None, loop=None, sync: bool = True, *, can_dispatch=None):
     """Check and run all due jobs. File-locked so only one tick runs at a time (gateway ticker vs
