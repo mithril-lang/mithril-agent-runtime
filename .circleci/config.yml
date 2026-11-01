@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  scheduled_profile_pilot_validation:
+    type: boolean
+    default: false
   gateway_cron_repair_validation:
     type: boolean
     default: false
@@ -15,6 +18,21 @@ parameters:
     default: ''
 
 jobs:
+  scheduled-profile-placement:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Verify runtime override provenance
+          command: python .circleci/validate-runtime-snapshot.py
+      - run:
+          name: Install the pinned transfer cipher
+          command: python -m pip install --disable-pip-version-check cryptography==50.0.1
+      - run:
+          name: Verify scheduled handoff, WAL recovery and runtime fencing
+          command: python .circleci/tests/test_profile_placement.py
   gateway-cron-startup-regression:
     docker:
       - image: cimg/python:3.14.7
@@ -145,6 +163,10 @@ jobs:
           command: python3 .circleci/validate-runtime-snapshot.py
 
 workflows:
+  scheduled-profile-pilot-validation:
+    when: << pipeline.parameters.scheduled_profile_pilot_validation >>
+    jobs:
+      - scheduled-profile-placement
   gateway-cron-repair-validation:
     when: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
@@ -153,6 +175,7 @@ workflows:
     when:
       and:
         - equal: ['', << pipeline.parameters.release_version >>]
+        - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
         - not: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
       - validate-source

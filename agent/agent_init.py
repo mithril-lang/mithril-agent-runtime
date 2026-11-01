@@ -9,6 +9,7 @@ Symbols that tests patch on ``run_agent.*`` (``OpenAI``, ``get_tool_definitions`
 
 from __future__ import annotations
 
+from hermes_cli.profile_placement import guard_turn
 import logging
 import os
 import re
@@ -2388,6 +2389,7 @@ _CALLBACK_PARAMS = (
 
 
 @execution_turn
+@guard_turn
 def init_agent(
     agent, base_url: str = None, api_key: str = None, provider: str = None, api_mode: str = None,
     acp_command: str = None, acp_args: list[str] | None = None, command: str = None,

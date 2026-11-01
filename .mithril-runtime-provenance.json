@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "798f2713a89360ef5034249de704f4e883eabb0600e5ef1aa2673839812aae29",
+    "sha256": "17e999f97abdb96dc5399050c6ef31cbc1998f4f365f84f001a6b39ff87e0fab",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "563749ced5f845deb380370124732eb20edb4698a3450a87bbf4174d0b1204e9"
+        "sha256": "6ef315a4b1c5111b053c077f0dc3747535bb397e916f394ef14e9f5233040a29"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -49823,6 +49823,11 @@
         "sha256": "11f35583c87605b4491d3a596d33963ea8ad213aad43ad31b4da17eb86bbc267"
       },
       {
+        "path": ".circleci/tests/test_profile_placement.py",
+        "baseSha256": null,
+        "sha256": "22fa5c8ca4221a2b0bca2ee124d2a25816ad8203b5c34a19b7b3b63f76fbc039"
+      },
+      {
         "path": ".circleci/validate-runtime-snapshot.py",
         "baseSha256": null,
         "sha256": "cff9a55ba49c3bf13315acff22cdb895f3c92368b30678eb3a54258d9c70075f"
@@ -49836,6 +49841,11 @@
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
         "sha256": "2fcdfc7590addba1a8adf71f20cad68a77fb183462747192103ece8bddd461bd"
+      },
+      {
+        "path": "agent/agent_init.py",
+        "baseSha256": "227bfc3127e60e292456777db2388a683a00d8c8a45a6e55c8fa82a9d1102e82",
+        "sha256": "c897a6fc3c452e910e038a3760fecfc662130ce354a006d24677cfc99c2a3777"
       },
       {
         "path": "agent/auxiliary_client.py",
@@ -49858,9 +49868,24 @@
         "sha256": "8485f3d895a1d7d152fcb461f55c3f17c5fd3acfc76f30e9d8f7f30299eae4e6"
       },
       {
+        "path": "agent/turn_facade.py",
+        "baseSha256": "e01fc4e8c28d16d60ae7c62f0efd68a0247194d819b87cd53d678c3105acc795",
+        "sha256": "676e7833029bad28c7ee7083e4059681e6c5c5ffc39c0a576845869a225392eb"
+      },
+      {
         "path": "agent/turn_overflow.py",
         "baseSha256": "2daa47807026fdf16f0bc857c9ed18aa7d81fb74d17d1ecf3e5f26bdb2ffa4cf",
         "sha256": "91dadc0f61b5c0722a8016d436137c80f18ea12c424d4548cd209418f92e3c5c"
+      },
+      {
+        "path": "cron/scheduler.py",
+        "baseSha256": "9af9717cc8e5d36aa3737d932bc6ecb35d68621ac37d107033b38152b96a4c82",
+        "sha256": "72dfea372b68e36ffb1c3af4061c374950051c9c152ed8a5702ad08cc787199e"
+      },
+      {
+        "path": "cron/scheduler_tick.py",
+        "baseSha256": "a1f908f141d6d3d14abd132d8f247ed76e87fb04b1a62059c129442099e620cd",
+        "sha256": "8c7acce66c8bb8a4d6c4be37edd91ff6fc717a0488f56b4ab7ac21f120f21f14"
       },
       {
         "path": "distributions/mithril/UPDATES.md",
@@ -49932,6 +49957,11 @@
         "path": "hermes_cli/mithril_updates.py",
         "baseSha256": null,
         "sha256": "1ef92c4408ad9f722ba8462820a62d5a3df7ab6b076a50665a8cddbdc1564574"
+      },
+      {
+        "path": "hermes_cli/profile_placement.py",
+        "baseSha256": null,
+        "sha256": "80b4af24b5ec778cc4e2dfbc21cfa725b5ea96af3ff8df3a7d8e82ddfd28c6d2"
       },
       {
         "path": "hermes_cli/runtime_provider_custom.py",

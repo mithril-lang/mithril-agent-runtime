@@ -2,6 +2,7 @@
 A file lock (~/.hermes/cron/.tick.lock) keeps overlapping processes to one tick at a time.
 """
 
+from hermes_cli.profile_placement import guard_job
 import atexit
 import concurrent.futures
 import contextlib
@@ -2706,6 +2707,7 @@ def _run_with_fire_claim_heartbeat(job: dict, run) -> bool:
         heartbeat_thread.join(timeout=1.0)
 
 
+@guard_job
 def run_one_job(
     job: dict, *, adapters=None, loop=None, verbose: bool = False,
     extra_prompt: Optional[str] = None, cancel_event: Optional[_CancelEventLike] = None,
