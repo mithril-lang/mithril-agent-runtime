@@ -14,7 +14,8 @@ def inject(root, candidates, function, decorator):
             continue
         source = path.read_text()
         tree = ast.parse(source)
-        found = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == function]
+        scope = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "AIAgent"), tree) if function == "__init__" else tree
+        found = [node for node in ast.walk(scope) if isinstance(node, ast.FunctionDef) and node.name == function]
         if len(found) != 1:
             continue
         node = found[0]

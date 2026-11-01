@@ -65,7 +65,9 @@ def _write(path, value):
 
 
 def read(home):
-    path = Path(home) / STATE
+    home = Path(home)
+    tombstone = home.is_file()
+    path = home if tombstone else home / STATE
     if not path.exists():
         return None
     try:
@@ -74,6 +76,8 @@ def read(home):
         assert re.fullmatch(r"[a-f0-9]{32}", row["identity"])
         assert isinstance(row["generation"], int) and not isinstance(row["generation"], bool)
         assert row["generation"] >= 0 and isinstance(row["owner"], str)
+        if tombstone:
+            assert row.get("kind") == "mithril-profile-moved" and row["phase"] == "moved"
         return row
     except (ValueError, KeyError, AssertionError, TypeError):
         raise PlacementError("Invalid profile placement record") from None
@@ -225,8 +229,9 @@ def snapshot(home):
             source = p
             if p.suffix in {".db", ".sqlite", ".sqlite3"}:
                 source = Path(scratch) / uuid.uuid4().hex
-                with sqlite3.connect(f"file:{p}?mode=ro", uri=True, timeout=10) as db, sqlite3.connect(source) as copy:
+                with contextlib.closing(sqlite3.connect(f"file:{p}?mode=ro", uri=True, timeout=10)) as db, contextlib.closing(sqlite3.connect(source)) as copy:
                     db.backup(copy)
+                    copy.commit()
                     if copy.execute("PRAGMA integrity_check").fetchone() != ("ok",):
                         raise PlacementError("Profile database failed integrity check")
             total += source.stat().st_size
@@ -266,9 +271,40 @@ def release(home, operation, digest):
         row = read(home)
         if not row or row["phase"] not in {"frozen", "moved"} or row.get("operation") != operation or row.get("sha256") != digest:
             raise PlacementError("Release does not match the staged transfer")
+        if home.is_file():
+            retained = read(Path(row["retained"]))
+            if not retained or retained.get("operation") != operation or retained.get("sha256") != digest:
+                raise PlacementError("Retained source journal is unavailable; do not create a new transfer")
+            return retained["release"]
         row["phase"] = "moved"
         _write(home / STATE, row)
         return row["release"]
+
+
+def retire_source(home, retained_parent, *, quiesce):
+    """Keep original data privately and make older launchers reject the moved profile."""
+    home, retained_parent = Path(home), Path(retained_parent)
+    with lock(home, exclusive=True, control=True), lock(home, exclusive=True):
+        row = read(home)
+        if not row or row["phase"] != "moved" or row["owner"] != location():
+            raise PlacementError("Only a durably released source can leave the local catalog")
+        if home.is_file():
+            return status(home)
+        quiesce()
+        retained_parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        retained = retained_parent / home.name
+        if retained.exists():
+            raise PlacementError("A retained source already exists")
+        home.rename(retained)
+        fd = os.open(retained_parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        tombstone = {k: row[k] for k in ("phase", "identity", "generation", "owner", "operation", "target", "sha256")}
+        tombstone.update(kind="mithril-profile-moved", retained=str(retained))
+        _write(home, tombstone)
+        return status(home)
 
 
 def stage(home, capsule, key):

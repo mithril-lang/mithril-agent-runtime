@@ -39,7 +39,8 @@ class PlacementTests(unittest.TestCase):
 
     def tearDown(self):
         self.identity.stop()
-        self.db.close()
+        if self.db is not None:
+            self.db.close()
         self.temporary.cleanup()
 
     def transfer(self):
@@ -104,6 +105,19 @@ class PlacementTests(unittest.TestCase):
         with patch.object(p, "location", return_value="container:copy"):
             with self.assertRaises(p.PlacementError):
                 with p.execution(self.a): pass
+
+    def test_retired_source_keeps_data_but_is_not_a_legacy_profile_directory(self):
+        self.transfer()
+        self.db.close()
+        self.db = None
+        retained = self.root / "retained" / self.operation
+        p.retire_source(self.a, retained, quiesce=lambda: None)
+        self.assertFalse(self.a.is_dir())
+        self.assertTrue((retained / self.a.name / "state.db").is_file())
+        with self.assertRaises(p.PlacementError):
+            with p.execution(self.a): pass
+        with self.assertRaises(p.PlacementError): p.enroll(self.a)
+        self.assertEqual(p.status(self.a)["phase"], "moved")
 
     def test_release_proof_is_not_exposed_by_status_or_freeze(self):
         result = p.freeze(self.a, self.operation, "container:destination")

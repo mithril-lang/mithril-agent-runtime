@@ -29,7 +29,7 @@ jobs:
           command: python .circleci/validate-runtime-snapshot.py
       - run:
           name: Build the locked runtime test environment
-          command: python -m pm.build_env --source . --out .venv --group dev --group test
+          command: python -m pm.build_env --source . --out .venv --group dev --group test --extra slack
           no_output_timeout: 20m
       - run:
           name: Verify scheduled handoff, WAL recovery and real entrypoint fencing
