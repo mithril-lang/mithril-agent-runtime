@@ -77,7 +77,7 @@ def read(home):
         assert isinstance(row["generation"], int) and not isinstance(row["generation"], bool)
         assert row["generation"] >= 0 and isinstance(row["owner"], str)
         if tombstone:
-            assert row.get("kind") == "mithril-profile-moved" and row["phase"] == "moved"
+            assert row.get("kind") in {"mithril-profile-moved", "mithril-profile-placement"} and row["phase"] in {"frozen", "moved"}
         return row
     except (ValueError, KeyError, AssertionError, TypeError):
         raise PlacementError("Invalid profile placement record") from None
@@ -269,13 +269,17 @@ def release(home, operation, digest):
     home = Path(home)
     with lock(home, exclusive=True, control=True), lock(home, exclusive=True):
         row = read(home)
+        if row and home.is_file():
+            retained = Path(row["retained"])
+            actual = read(retained)
+            if not actual or actual["identity"] != row["identity"] or actual.get("operation") != operation:
+                raise PlacementError("Retained source journal does not match the catalog fence")
+            proof = release(retained, operation, digest)
+            row.update(phase="moved", sha256=digest)
+            _write(home, row)
+            return proof
         if not row or row["phase"] not in {"frozen", "moved"} or row.get("operation") != operation or row.get("sha256") != digest:
             raise PlacementError("Release does not match the staged transfer")
-        if home.is_file():
-            retained = read(Path(row["retained"]))
-            if not retained or retained.get("operation") != operation or retained.get("sha256") != digest:
-                raise PlacementError("Retained source journal is unavailable; do not create a new transfer")
-            return retained["release"]
         row["phase"] = "moved"
         _write(home / STATE, row)
         return row["release"]
@@ -286,8 +290,8 @@ def retire_source(home, retained_parent, *, quiesce):
     home, retained_parent = Path(home), Path(retained_parent)
     with lock(home, exclusive=True, control=True), lock(home, exclusive=True):
         row = read(home)
-        if not row or row["phase"] != "moved" or row["owner"] != location():
-            raise PlacementError("Only a durably released source can leave the local catalog")
+        if not row or row["phase"] not in {"frozen", "moved"} or row["owner"] != location():
+            raise PlacementError("Only a fully drained source can leave the local catalog")
         if home.is_file():
             return status(home)
         quiesce()
@@ -301,8 +305,8 @@ def retire_source(home, retained_parent, *, quiesce):
             os.fsync(fd)
         finally:
             os.close(fd)
-        tombstone = {k: row[k] for k in ("phase", "identity", "generation", "owner", "operation", "target", "sha256")}
-        tombstone.update(kind="mithril-profile-moved", retained=str(retained))
+        tombstone = {k: row[k] for k in ("phase", "identity", "generation", "owner", "operation", "target", "sha256") if k in row}
+        tombstone.update(kind="mithril-profile-placement", retained=str(retained))
         _write(home, tombstone)
         return status(home)
 

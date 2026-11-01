@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from aiohttp import web
+from aiohttp import web, ClientSession
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -76,6 +76,24 @@ class CheckpointTests(unittest.IsolatedAsyncioTestCase):
                 with sqlite3.connect(home / "state.db") as db:
                     self.assertEqual(db.execute("PRAGMA integrity_check").fetchone(), ("ok",))
                     self.assertEqual(db.execute("SELECT body FROM history").fetchone(), ("restart-history-marker",))
+                control_app = web.Application()
+                control_app.router.add_route("*", "/{path:.*}", recovered.handle)
+                control_runner = web.AppRunner(control_app)
+                await control_runner.setup()
+                control_site = web.TCPSite(control_runner, "127.0.0.1", 0)
+                await control_site.start()
+                control_port = control_site._server.sockets[0].getsockname()[1]
+                try:
+                    async with ClientSession() as client:
+                        async with client.post(f"http://127.0.0.1:{control_port}/prepare-restart", json={}) as response:
+                            self.assertEqual(response.status, 401)
+                        async with client.post(f"http://127.0.0.1:{control_port}/prepare-restart", headers={"Authorization": "Bearer test-only-token"}, json={}) as response:
+                            self.assertEqual(response.status, 200)
+                            self.assertTrue((await response.json())["drained"])
+                        async with client.post(f"http://127.0.0.1:{control_port}/cron-run", headers={"Authorization": "Bearer test-only-token"}, json={"job_id": "same-job"}) as response:
+                            self.assertEqual(response.status, 409)
+                finally:
+                    await control_runner.cleanup()
                 stored["body"] = stored["body"][:-1] + bytes([stored["body"][-1] ^ 1])
                 with self.assertRaises(RuntimeError):
                     await recovered.restore()

@@ -129,6 +129,24 @@ class PlacementTests(unittest.TestCase):
             with self.assertRaises(p.PlacementError):
                 p.activate(self.b, self.operation, "wrong-proof")
 
+    def test_legacy_catalog_is_fenced_before_the_destination_can_activate(self):
+        p.freeze(self.a, self.operation, "container:destination")
+        self.db.close()
+        self.db = None
+        retained_parent = self.root / "retained" / self.operation
+        p.retire_source(self.a, retained_parent, quiesce=lambda: None)
+        self.assertFalse(self.a.is_dir())
+        capsule = p.export(retained_parent / self.a.name, self.operation, self.key)
+        with patch.object(p, "location", return_value="container:destination"):
+            p.stage(self.b, capsule, self.key)
+            with self.assertRaises(p.PlacementError):
+                with p.execution(self.b): pass
+        proof = p.release(self.a, self.operation, capsule["sha256"])
+        self.assertEqual(p.status(self.a)["phase"], "moved")
+        with patch.object(p, "location", return_value="container:destination"):
+            p.activate(self.b, self.operation, proof)
+            with p.execution(self.b): pass
+
     def test_snapshot_change_and_conflicting_retry_fail_closed(self):
         p.freeze(self.a, self.operation, "container:destination")
         p.export(self.a, self.operation, self.key)

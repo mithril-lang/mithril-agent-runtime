@@ -5,6 +5,7 @@ overlay adds placement admission before the image's agent or scheduler starts.
 """
 import asyncio
 import base64
+from contextlib import closing
 from datetime import datetime, timezone, timedelta
 import hashlib
 import io
@@ -21,9 +22,12 @@ import time
 
 from aiohttp import ClientSession, ClientTimeout, web
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-import yaml
 
 sys.path.insert(0, "/opt/hermes")
+try:
+    import hermes_yaml as yaml
+except ImportError:  # The pinned older trial image predates the YAML adapter.
+    import yaml
 from hermes_cli import profile_placement as placement
 
 HOME = Path("/opt/data/profiles") / os.environ["PILOT_PROFILE"]
@@ -80,6 +84,10 @@ class Runtime:
     def __init__(self):
         self.child = None
         self.lock = asyncio.Lock()
+        self.start_lock = asyncio.Lock()
+        self.draining = False
+        self.gateway_ready = False
+        self.boot_id = secrets.token_hex(16)
         self.checkpoint_digest = None
         self.started = time.time()
         self.adaptation = None
@@ -128,15 +136,23 @@ class Runtime:
         return env
 
     async def start(self):
+        async with self.start_lock:
+            await self.start_impl()
+
+    async def start_impl(self):
+        if self.draining:
+            raise placement.PlacementError("Runtime is draining for a controlled restart")
         if placement.status(HOME)["phase"] != "active":
             return
-        if self.child is not None and self.child.returncode is None:
+        if self.child is not None and self.child.returncode is None and self.gateway_ready:
             return
-        with placement.execution(HOME):
-            log = (HOME / "pilot-gateway.log").open("ab", buffering=0)
-            self.child = await asyncio.create_subprocess_exec(
-                "/opt/hermes/.venv/bin/hermes", "gateway", "run", "--external-supervisor",
-                cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
+        if self.child is None or self.child.returncode is not None:
+            self.gateway_ready = False
+            with placement.execution(HOME):
+                with (HOME / "pilot-gateway.log").open("ab", buffering=0) as log:
+                    self.child = await asyncio.create_subprocess_exec(
+                        "/opt/hermes/.venv/bin/hermes", "gateway", "run", "--external-supervisor",
+                        cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
         async with ClientSession(timeout=ClientTimeout(total=3)) as client:
             for _ in range(180):
                 if self.child.returncode is not None:
@@ -144,6 +160,7 @@ class Runtime:
                 try:
                     async with client.get("http://127.0.0.1:7861/health") as response:
                         if response.status == 200:
+                            self.gateway_ready = True
                             return
                 except Exception:
                     pass
@@ -162,19 +179,41 @@ class Runtime:
             if job["enabled"] and job["next_run_at"]:
                 next_due.append(int(datetime.fromisoformat(job["next_run_at"]).timestamp() * 1000))
         record = placement.status(HOME)
+        history = {}
+        if (HOME / "state.db").exists():
+            with closing(sqlite3.connect(f"file:{HOME / 'state.db'}?mode=ro", uri=True, timeout=3)) as db:
+                history["integrity"] = db.execute("PRAGMA quick_check").fetchone()[0]
+                tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                for table in ("sessions", "messages"):
+                    if table in tables:
+                        history[table] = db.execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+        process_rss = {}
+        for label, pid in [("controller", os.getpid()), ("gateway", self.child.pid if self.child is not None and self.child.returncode is None else None)]:
+            if pid is not None:
+                for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+                    if line.startswith("VmRSS:"):
+                        process_rss[label + "_rss_kib"] = int(line.split()[1])
         return {"profile": HOME.name, "placement": record, "location": placement.location(), "checkpoint": self.checkpoint_digest,
+                "boot_id": self.boot_id, "draining": self.draining, "gateway_ready": self.gateway_ready,
                 "gateway_pid": self.child.pid if self.child is not None and self.child.returncode is None else None,
                 "jobs": jobs, "next_due_ms": min(next_due) if next_due and record["phase"] == "active" else None,
                 "uptime_seconds": round(time.time() - self.started, 2), "controller_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-                "overlay": json.loads(Path("/tmp/pilot-overlay.json").read_text()), "adaptation": self.adaptation}
+                "overlay": json.loads(Path("/tmp/pilot-overlay.json").read_text()), "adaptation": self.adaptation, "history": history, "process_memory": process_rss}
 
     async def handle(self, request):
         if request.path == "/health":
             return web.json_response({"ready": True})
         if not secrets.compare_digest(request.headers.get("Authorization", ""), "Bearer " + TOKEN):
             return web.Response(status=401)
+        preparing_restart = request.path == "/prepare-restart" and request.method == "POST"
+        if preparing_restart:
+            self.draining = True
+        elif self.draining and request.method != "GET":
+            return web.json_response({"error": "Runtime is draining"}, status=409)
         async with self.lock:
             try:
+                if self.draining and not preparing_restart and request.method != "GET":
+                    return web.json_response({"error": "Runtime is draining"}, status=409)
                 body = await request.json() if request.method == "POST" else {}
                 if request.path == "/status":
                     return web.json_response(self.state())
@@ -190,6 +229,15 @@ class Runtime:
                     return web.json_response(self.state())
                 if request.path == "/checkpoint":
                     return web.json_response({"checkpoint": await self.checkpoint()})
+                if preparing_restart:
+                    if self.child is not None and self.child.returncode is None:
+                        self.child.send_signal(signal.SIGTERM)
+                        try:
+                            await asyncio.wait_for(asyncio.shield(self.child.wait()), 300)
+                        except asyncio.TimeoutError:
+                            return web.json_response({"error": "Admitted work did not drain; container preserved"}, status=503)
+                    self.gateway_ready = False
+                    return web.json_response({"checkpoint": await self.checkpoint(), "boot_id": self.boot_id, "drained": True})
                 if request.path == "/chat":
                     await self.start()
                     with placement.execution(HOME):
@@ -211,13 +259,16 @@ class Runtime:
                     nonce = body["nonce"]
                     if not isinstance(nonce, str) or not nonce.isalnum() or len(nonce) > 64:
                         raise ValueError("Invalid smoke nonce")
+                    marker = HOME / "workspace/pilot-cron-marker.txt"
+                    if marker.exists() and marker.read_text() == nonce:
+                        return web.json_response({"completed": True, "job_id": None})
                     # Use the actual public cron store and ordinary gateway ticker.
                     code = "from pathlib import Path; import json; from cron.jobs import create_job,load_jobs; "
                     code += "name=" + repr("placement-smoke:" + nonce) + "; "
                     code += "script=Path(" + repr(str(HOME / "scripts/pilot-smoke.py")) + "); script.parent.mkdir(exist_ok=True); "
                     script = "from pathlib import Path\nPath(" + repr(str(HOME / "workspace/pilot-cron-marker.txt")) + ").write_text(" + repr(nonce) + ")\nprint(" + repr(nonce) + ")\n"
                     code += "script.write_text(" + repr(script) + "); rows=load_jobs(); existing=next((j for j in rows if j.get('name')==name),None); "
-                    due = (datetime.now(timezone.utc) + timedelta(seconds=15)).isoformat()
+                    due = (datetime.now(timezone.utc) + timedelta(seconds=90)).isoformat()
                     code += "job=existing or create_job(prompt='',schedule=" + repr(due) + ",name=name,script=str(script),no_agent=True,deliver='local'); print(json.dumps({'job_id':job['id']}))"
                     child = await asyncio.create_subprocess_exec(PYTHON, "-c", code, env=self.child_env(), cwd="/opt/hermes", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
                     stdout, stderr = await asyncio.wait_for(child.communicate(), 60)
@@ -228,6 +279,17 @@ class Runtime:
                 if request.path == "/cron-result":
                     marker = HOME / "workspace/pilot-cron-marker.txt"
                     return web.json_response({"marker": marker.read_text() if marker.exists() else None, "state": self.state()})
+                if request.path == "/cron-run":
+                    await self.start()
+                    job_id = body["job_id"]
+                    if job_id not in {j["id"] for j in self.state()["jobs"]}:
+                        return web.Response(status=404)
+                    with placement.execution(HOME):
+                        child = await asyncio.create_subprocess_exec("/opt/hermes/.venv/bin/hermes", "cron", "run", job_id, env=self.child_env(), cwd=HOME / "workspace", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+                        await child.wait()
+                    await self.checkpoint()
+                    job = next(j for j in self.state()["jobs"] if j["id"] == job_id)
+                    return web.json_response({"cli_exit_code": child.returncode, "job": job, "checkpoint": self.checkpoint_digest})
                 if request.path == "/tick":
                     await self.start()
                     with placement.execution(HOME):
