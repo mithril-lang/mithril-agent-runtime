@@ -26,6 +26,9 @@ class CheckpointTests(unittest.IsolatedAsyncioTestCase):
             spec = importlib.util.spec_from_file_location("pilot_runtime", ROOT / "cloud/profile-pilot/runtime.py")
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
+        from hermes_constants import get_default_hermes_root
+        self.assertEqual(get_default_hermes_root(home=module.HOME), module.HOME,
+                         "The isolated gateway must resolve its own assigned profile as the host root")
         stored = {}
         async def store(request):
             if request.headers.get("Authorization") != "Bearer test-only-token":
