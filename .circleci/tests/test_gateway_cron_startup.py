@@ -163,4 +163,5 @@ class GatewayCronStartupTests(unittest.IsolatedAsyncioTestCase):
 
 
 if __name__ == "__main__":
+    from test_gateway_primary_ready import PrimaryReadyStartupTests
     unittest.main(verbosity=2)

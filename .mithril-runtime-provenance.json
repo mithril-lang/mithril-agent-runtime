@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "9b24bd489e0c70858fbe2328651b458ac22a40cd2c7bd4b3624e708f9fb35f32",
+    "sha256": "e7863a722723888eda9380af2e9b1d545fb657108b8ee2c55cf89896589eeaa2",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49815,7 +49815,12 @@
       {
         "path": ".circleci/tests/test_gateway_cron_startup.py",
         "baseSha256": null,
-        "sha256": "ca7ea7969559d2eb95ceebbc570c2981404c5defd3ccc63c5dc96fc64bb68331"
+        "sha256": "84d7467e801c05863164931027457abc7c13174e09037d9f2b2bb30dea69715c"
+      },
+      {
+        "path": ".circleci/tests/test_gateway_primary_ready.py",
+        "baseSha256": null,
+        "sha256": "14ab40ed6dd0a7aa458c861a2f5f32d403c610d2e12220c834ad58f252aab475"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49881,6 +49886,16 @@
         "path": "gateway/run.py",
         "baseSha256": "c1184c3dd38d42a08cfec0a29538382ab33fe03d948faa02d607d17148aa601a",
         "sha256": "e3daef0fe277473b4a547422f74a6a0c3d20f8300e0f75467e686bf6a8a34017"
+      },
+      {
+        "path": "gateway/run_adapters.py",
+        "baseSha256": "b5d538ac7339edd08640f21b25ad636e4a58b12167bd70f553ca4c360e552e97",
+        "sha256": "3487aa2a1a2353de72f80012444de04048a9e2882761c797d003862c574895a2"
+      },
+      {
+        "path": "gateway/run_startup.py",
+        "baseSha256": "c6f959d546fa2b3b8d6b8b395d076905772e8d23f4248f856d4bdbb3ddc639d3",
+        "sha256": "2ea73ff90e2b251610986d2a2c901628c2b00d0a665ac5a585bb5b42643cbced"
       },
       {
         "path": "hermes_cli/banner.py",
