@@ -22,6 +22,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Verify runtime override provenance
+          command: python .circleci/validate-runtime-snapshot.py
+      - run:
           name: Verify startup responsiveness and profile isolation
           command: python .circleci/tests/test_gateway_cron_startup.py
   validate-source:
