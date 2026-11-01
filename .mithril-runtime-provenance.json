@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "2eee60e025009c5e9f22b7a3cbedf015b2ffe7b4a78f00249dbbcd5b29487561",
+    "sha256": "798f2713a89360ef5034249de704f4e883eabb0600e5ef1aa2673839812aae29",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49820,7 +49820,7 @@
       {
         "path": ".circleci/tests/test_gateway_primary_ready.py",
         "baseSha256": null,
-        "sha256": "276dfb3da83ed4b1abc4b9a5a3df33f8171d856752a175f1acb2f764ff35ce22"
+        "sha256": "11f35583c87605b4491d3a596d33963ea8ad213aad43ad31b4da17eb86bbc267"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49895,7 +49895,7 @@
       {
         "path": "gateway/run_startup.py",
         "baseSha256": "c6f959d546fa2b3b8d6b8b395d076905772e8d23f4248f856d4bdbb3ddc639d3",
-        "sha256": "2ea73ff90e2b251610986d2a2c901628c2b00d0a665ac5a585bb5b42643cbced"
+        "sha256": "d280e16c7d55913759e426e5ce0078a04df343c3eeebd500adf71b602370f199"
       },
       {
         "path": "hermes_cli/banner.py",

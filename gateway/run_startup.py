@@ -1334,7 +1334,7 @@ class GatewayStartupMixin:
         aborted, _ = await self._start_secondary_profiles(connected_count, skipped_platforms)
         if aborted:
             # A later fatal profile-policy error must still stop the complete gateway.
-            await self.stop()
+            await asyncio.shield(self.stop())
 
     async def _start_or_defer_secondary_profiles(self, connected_count, skipped_platforms):
         if not connected_count:
@@ -1488,6 +1488,16 @@ class GatewayStartupMixin:
             for name in (".update_pending.json", ".update_pending.claimed.json")
         ):
             self._schedule_update_notification_watch()
+
+    async def _start_finish_wiring_after_primary(self, connected_count):
+        """Keep restore gating intact without postponing the independent cron scheduler."""
+        try:
+            await self._start_finish_wiring(connected_count)
+        except Exception:
+            logger.exception("Post-connect startup failed; stopping the gateway")
+            self._exit_with_failure = True
+            self._exit_reason = "Post-connect startup failed"
+            await asyncio.shield(self.stop())
 
     async def _start_finish_wiring(self, connected_count: int) -> None:
         """Post-connect wiring: services, boot notifications, startup restore, recovered watchers."""
@@ -1649,7 +1659,10 @@ class GatewayStartupMixin:
         # so ``gateway status`` / /api/status / the health snapshot surface it, instead of only a log
         # line next to "Gateway running with N platform(s)".
         self._update_runtime_status(self._serving_state())
-        await self._start_finish_wiring(connected_count)
+        # Chat restore keeps its own inbound gate, but must not gate cron readiness.
+        self._spawn_supervised(
+            lambda: self._start_finish_wiring_after_primary(connected_count),
+            "post-connect startup", restart=False)
         self._start_spawn_background_watchers()
         from hermes_cli.observability.shared_metrics_startup import record_process_ready
         record_process_ready("gateway_boot", background=True)

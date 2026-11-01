@@ -28,11 +28,12 @@ def methods(path, names):
 class PrimaryReadyStartupTests(unittest.IsolatedAsyncioTestCase):
     async def test_primary_ready_is_nonblocking_but_secondary_only_keeps_verdict(self):
         ns = methods("gateway/run_startup.py", {
-            "_start_or_defer_secondary_profiles", "_start_secondary_profiles_after_primary"})
+            "_start_or_defer_secondary_profiles", "_start_secondary_profiles_after_primary", "_start_finish_wiring_after_primary"})
 
         class Runner:
             _start_or_defer_secondary_profiles = ns["_start_or_defer_secondary_profiles"]
             _start_secondary_profiles_after_primary = ns["_start_secondary_profiles_after_primary"]
+            _start_finish_wiring_after_primary = ns["_start_finish_wiring_after_primary"]
 
             def __init__(self, fatal=False):
                 self.started, self.finish = asyncio.Event(), asyncio.Event()
@@ -46,6 +47,12 @@ class PrimaryReadyStartupTests(unittest.IsolatedAsyncioTestCase):
             def _spawn_supervised(self, factory, name, *, restart):
                 self.task = asyncio.create_task(factory())
                 return self.task
+
+            async def _start_finish_wiring(self, count):
+                self.started.set()
+                await self.finish.wait()
+                if self.fatal:
+                    raise RuntimeError("restore failed")
 
             async def stop(self):
                 self.stopped = True
@@ -71,6 +78,43 @@ class PrimaryReadyStartupTests(unittest.IsolatedAsyncioTestCase):
         await fatal._start_or_defer_secondary_profiles(1, [])
         await fatal.task
         self.assertTrue(fatal.stopped)
+
+        restore = Runner()
+        restore_task = asyncio.create_task(restore._start_finish_wiring_after_primary(1))
+        await asyncio.wait_for(restore.started.wait(), 2)
+        self.assertFalse(restore_task.done())
+        restore.finish.set()
+        await restore_task
+        broken_restore = Runner(fatal=True)
+        broken_restore.finish.set()
+        with self.assertLogs("profile-startup-test", level="ERROR"):
+            await broken_restore._start_finish_wiring_after_primary(1)
+        self.assertTrue(broken_restore.stopped)
+        self.assertTrue(broken_restore._exit_with_failure)
+
+    async def test_fatal_background_startup_preserves_shutdown_when_parent_is_cancelled(self):
+        ns = methods("gateway/run_startup.py", {"_start_finish_wiring_after_primary"})
+        started, release, done = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+        class Runner:
+            async def _start_finish_wiring(self, count):
+                raise RuntimeError("restore failed")
+
+            async def stop(self):
+                started.set()
+                await release.wait()
+                done.set()
+
+        runner = Runner()
+        with self.assertLogs("profile-startup-test", level="ERROR"):
+            parent = asyncio.create_task(ns["_start_finish_wiring_after_primary"](runner, 1))
+            await asyncio.wait_for(started.wait(), 2)
+            parent.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await parent
+            release.set()
+            await asyncio.wait_for(done.wait(), 2)
+        self.assertTrue(runner._exit_with_failure)
 
     async def test_profile_plugin_discovery_runs_off_loop_with_owner_scope(self):
         ns = methods("gateway/run_adapters.py", {"_load_secondary_profile_config"})
