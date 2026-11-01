@@ -20,6 +20,34 @@ from hermes_cli import profile_placement as placement
 
 
 class CheckpointTests(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_mithril_alias_uses_only_the_profiles_existing_token(self):
+        with patch.dict(os.environ, {"PILOT_PROFILE": "alias-test", "PILOT_CONTROL_KEY": "test-only-token", "PILOT_TRANSFER_KEY": secrets.token_hex(32), "PILOT_ORIGIN": "http://127.0.0.1", "MITHRIL_API_TOKEN": "mf_foreign_launch_token"}):
+            spec = importlib.util.spec_from_file_location("alias_runtime", ROOT / "cloud/profile-pilot/runtime.py")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            with tempfile.TemporaryDirectory() as temporary:
+                homes = [Path(temporary) / name for name in ("a", "b")]
+                route = {"base_url": "https://api.mithril.fund/v1", "key_env": "MITHRIL_API_KEY"}
+                config = {"model": route, "providers": {"mithril-inference": route}}
+                for home in homes:
+                    home.mkdir()
+                    (home / "config.yaml").write_text(json.dumps(config))
+                own = "MITHRIL_API_KEY=\nMITHRIL_API_TOKEN=mf_profile_a_token\n"
+                (homes[0] / ".env").write_text(own)
+                (homes[1] / ".env").write_text("MITHRIL_API_KEY=\n")
+                module.HOME = homes[0]
+                report = module.adapt_paths()
+                loaded = module.yaml.safe_load((homes[0] / "config.yaml").read_text())
+                self.assertEqual(loaded["model"]["key_env"], "MITHRIL_API_TOKEN")
+                self.assertEqual(loaded["providers"]["mithril-inference"]["key_env"], "MITHRIL_API_TOKEN")
+                self.assertEqual((homes[0] / ".env").read_text(), own)
+                self.assertNotIn("mf_profile_a_token", json.dumps(report))
+                module.HOME = homes[1]
+                report = module.adapt_paths()
+                loaded = module.yaml.safe_load((homes[1] / "config.yaml").read_text())
+                self.assertEqual(loaded["model"]["key_env"], "MITHRIL_API_KEY")
+                self.assertEqual(report["own_token_aliases"], [])
+
     async def test_encrypted_checkpoint_readback_and_restart_restore(self):
         key = secrets.token_hex(32)
         with patch.dict(os.environ, {"PILOT_PROFILE": "test-profile", "PILOT_CONTROL_KEY": "test-only-token", "PILOT_TRANSFER_KEY": key, "PILOT_ORIGIN": "http://127.0.0.1"}):

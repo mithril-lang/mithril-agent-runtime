@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "2220c33fe7d562b76944c76edc4cd1820bbaefa83ba30352b74aa4a622a09b2f",
+    "sha256": "c594a4d3b22ccb6c51e0adf5c99fee54b29dd5e32796cf1a8fa59e6c41b04860",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49825,7 +49825,7 @@
       {
         "path": ".circleci/tests/test_profile_checkpoint.py",
         "baseSha256": null,
-        "sha256": "1277abb99de1bb2babfd2a202f159a075a9221c1dbe806f7b334af9bccf47b2c"
+        "sha256": "d7f189836c726e725a517997a80f8087e9cb8954dd844872dbf4a46c013782b0"
       },
       {
         "path": ".circleci/tests/test_profile_overlay.py",
@@ -49905,12 +49905,12 @@
       {
         "path": "cloud/profile-pilot/overlay.mjs",
         "baseSha256": null,
-        "sha256": "0e837373e0e6f1be01391bab60a1463eb7cd87f277575203c7655f430f97d77c"
+        "sha256": "d459ad9242bc33c897b794746e1609dad9d881f4e8f7cf683701ff8be32299d9"
       },
       {
         "path": "cloud/profile-pilot/runtime.py",
         "baseSha256": null,
-        "sha256": "2f72d5e67016739ac2d6692abd3215950d78d1e5670f92de33272db35f08c217"
+        "sha256": "d0facdb3967efd1a260ea8e9ba26f6753dcc9b9b08b63ada36d5b4199fe6c077"
       },
       {
         "path": "cloud/profile-pilot/worker.mjs",

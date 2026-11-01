@@ -29,6 +29,8 @@ try:
 except ImportError:  # The pinned older trial image predates the YAML adapter.
     import yaml
 from hermes_cli import profile_placement as placement
+from hermes_cli.config import atomic_config_write
+from dotenv import dotenv_values
 
 # Each VM is one host. Its assigned profile must be that host's default root,
 # outside the shared-host profiles/ catalog (which would select an empty parent).
@@ -78,9 +80,21 @@ def adapt_paths():
     config["mcp_servers"] = {}
     config.setdefault("gateway", {}).pop("multiplex_profiles", None)
     config.setdefault("platforms", {})["api_server"] = {"enabled": True}
-    path.write_text(yaml.safe_dump(config, sort_keys=False))
+    # Some source profiles declare an empty legacy key alias while retaining
+    # their own valid Mithril token. Bind only that profile's explicit token;
+    # never borrow the launch environment or another profile's credential.
+    own = dotenv_values(HOME / ".env", interpolate=False)
+    aliases = []
+    if not own.get("MITHRIL_API_KEY") and str(own.get("MITHRIL_API_TOKEN") or "").startswith("mf_"):
+        routes = [("model", config.get("model"))]
+        routes += [("providers." + key, value) for key, value in (config.get("providers") or {}).items()]
+        for label, route in routes:
+            if isinstance(route, dict) and str(route.get("base_url", "")).rstrip("/") == "https://api.mithril.fund/v1" and route.get("key_env") == "MITHRIL_API_KEY":
+                route["key_env"] = "MITHRIL_API_TOKEN"
+                aliases.append(label)
+    atomic_config_write(path, config)
     (HOME / "workspace").mkdir(exist_ok=True)
-    return {"rewritten_files": changed, "mac_mcp_servers_not_started": disabled}
+    return {"rewritten_files": changed, "mac_mcp_servers_not_started": disabled, "own_token_aliases": aliases}
 
 
 class Runtime:
