@@ -33,7 +33,10 @@ jobs:
           no_output_timeout: 20m
       - run:
           name: Verify scheduled handoff, WAL recovery and real entrypoint fencing
-          command: .venv/bin/python .circleci/tests/test_profile_placement.py
+          command: |
+            .venv/bin/python .circleci/tests/test_profile_placement.py
+            .venv/bin/python .circleci/tests/test_profile_overlay.py
+            .venv/bin/python .circleci/tests/test_profile_checkpoint.py
   gateway-cron-startup-regression:
     docker:
       - image: cimg/python:3.14.7

@@ -142,10 +142,11 @@ def guard_turn(fn):
         with execution(home):
             row = read(home)
             owner = _owner(row) if row else None
-            if fn.__name__ != "init_agent" and getattr(agent, "_placement_owner", None) != owner:
+            initializing = fn.__name__ in {"init_agent", "__init__"}
+            if not initializing and getattr(agent, "_placement_owner", None) != owner:
                 raise PlacementError("Cached agent belongs to an earlier placement generation")
             result = fn(agent, *args, **kwargs)
-            if fn.__name__ == "init_agent":
+            if initializing:
                 agent._placement_owner = owner
             return result
     return call

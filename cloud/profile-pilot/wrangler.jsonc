@@ -1,0 +1,19 @@
+{
+  "name": "mithril-profile-pilot-20261101",
+  "account_id": "62e1fda53188460698f8c66d3aef59c6",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": { "ORIGIN": "https://mithril-profile-pilot-20261101.cloud-kotoba.workers.dev" },
+  "durable_objects": { "bindings": [{ "name": "PROFILES", "class_name": "ProfileContainer" }] },
+  "exports": { "ProfileContainer": { "type": "durable-object", "storage": "sqlite" } },
+  "containers": [{
+    "class_name": "ProfileContainer",
+    "scheduling_policy": "default",
+    "image": "registry.cloudflare.com/62e1fda53188460698f8c66d3aef59c6/gwqual@sha256:9d80b7baae8a27cff8391f1e0163d194016266ac016cc065af7e0039e247f8af",
+    "instance_type": "standard-1",
+    "max_instances": 10
+  }],
+  "r2_buckets": [{ "binding": "STATE", "bucket_name": "mithril-hermes-gateway-trial-state" }]
+}
