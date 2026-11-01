@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 
 from hermes_cli.steward import UPDATE_MECHANISMS
+from hermes_cli.branding import cli_name, product_name
 
 
 def _project_root() -> Path:
@@ -61,7 +62,7 @@ def check_runtime(project_root: Path) -> str | None:
         return None
     steward = sealed_steward(Path(project_root))
     remedy = (f"this {steward}-managed install must rebuild the artifact to fix"
-              if steward else "run `hermes pm install`")
+              if steward else f"run `{cli_name()} pm install`")
     return f"install out of sync ({'; '.join(problems)}) — {remedy}"
 
 
@@ -251,7 +252,7 @@ def prepare_launch(project_root: Path, argv: list[str]) -> Path | None:
     if not current or pending.is_file():
         lock = UpdateLock()
         if not lock.acquire():
-            raise RuntimeError("an update is still running; wait for it to exit, then relaunch Hermes")
+            raise RuntimeError(f"an update is still running; wait for it to exit, then relaunch {product_name()}")
         try:
             # The tail imports the application, whose entry point runs this very function:
             # under the launching process's own claim (its pid is our ancestor) we ARE that
@@ -272,7 +273,7 @@ def prepare_launch(project_root: Path, argv: list[str]) -> Path | None:
             lock.release()
     python = resolve_store_python(root)
     if python is None:
-        raise RuntimeError("source update has no managed Python; run `hermes pm install`")
+        raise RuntimeError(f"source update has no managed Python; run `{cli_name()} pm install`")
     # Lexical identity, never resolve(): PM spells the store path through
     # HERMES_HOME (which may carry '..') while sys.executable arrives
     # normalized, so a raw compare re-execs every child forever (#122513). A
@@ -296,11 +297,11 @@ def _finish_source_update(root: Path, *, current: bool, pending: Path) -> None:
         # Current post-sync verification children can boot under a live updater.
         legacy_markers = (root / ".update-incomplete", root / ".lazy-refresh-incomplete")
         if any(_marker_owner_is_live(marker) for marker in legacy_markers):
-            raise RuntimeError("an update is still running; wait for it to exit, then relaunch Hermes")
-        print("hermes: completing source-update dependencies...", file=sys.stderr, flush=True)
+            raise RuntimeError(f"an update is still running; wait for it to exit, then relaunch {product_name()}")
+        print(f"{cli_name()}: completing source-update dependencies...", file=sys.stderr, flush=True)
         _sync_source_dependencies(root, arm=True)
     else:
-        print("hermes: finishing an interrupted source update...", file=sys.stderr, flush=True)
+        print(f"{cli_name()}: finishing an interrupted source update...", file=sys.stderr, flush=True)
     # Sync commits the dependency generation, but a source update also owes
     # the product builds and the post-build maintenance -- the tail every
     # install and finished update shares (hermes_cli/source_completion.py).
@@ -322,7 +323,7 @@ def _finish_source_update(root: Path, *, current: bool, pending: Path) -> None:
     )
     if code != 0:
         raise RuntimeError(
-            "source update completion failed; run `hermes update` to finish it"
+            f"source update completion failed; run `{cli_name()} update` to finish it"
         )
     clear_completion(root)
 
@@ -336,7 +337,7 @@ def _sync_source_dependencies(root: Path, *, arm: bool) -> None:
     from pm.extras import legacy_selection
 
     if not arm:
-        print("hermes: preparing dependencies for this update...", file=sys.stderr, flush=True)
+        print(f"{cli_name()}: preparing dependencies for this update...", file=sys.stderr, flush=True)
     refuse_foreign_owned_venv(root)
     if arm:
         # Owed from before the sync commits: a crash between the commit and the

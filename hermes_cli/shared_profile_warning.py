@@ -5,6 +5,7 @@ from pathlib import Path
 
 from hermes_cli.process_identity import install_id, ledger_entries
 from hermes_constants import hermes_home_key
+from hermes_cli.branding import product_name
 
 
 def shared_profile_warning(*, home: Path | None = None, project_root: Path | None = None) -> str:
@@ -17,7 +18,7 @@ def shared_profile_warning(*, home: Path | None = None, project_root: Path | Non
         for entry in ledger_entries(all_installs=True, verified_only=True)
     ):
         return (
-            "Another Hermes installation is using this profile. Both installations share "
+            f"Another {product_name()} installation is using this profile. Both installations share "
             "its settings and data, so changes can conflict. You can continue, or close "
             "the other installation before making changes."
         )

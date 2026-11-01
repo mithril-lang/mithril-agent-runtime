@@ -16,6 +16,7 @@ from typing import Callable
 import uuid
 
 from pm.package import InstallError
+from hermes_cli.branding import cli_name, product_name
 
 
 def runtime_environment() -> dict[str, str]:
@@ -155,11 +156,11 @@ def prepare_runtime(uv: Path, python: Path, root: Path, *, offline: bool = False
                 return _python(environment)
         if not bootstrap:
             raise InstallError("pm-runtime", "not installed or outdated and lazy installs are disabled",
-                               "run `hermes pm install` to prepare the independent PM runtime")
+                               f"run `{cli_name()} pm install` to prepare the independent PM runtime")
         generation = Path("generations") / uuid.uuid4().hex
         environment = root / generation
         try:
-            print("Preparing the isolated Hermes runtime…", file=sys.stderr, flush=True)
+            print(f"Preparing the isolated {product_name()} runtime…", file=sys.stderr, flush=True)
             executable = stage_runtime(uv, python, environment, project=project, offline=offline, cache=cache)
             (environment / ".lease-managed").touch()
             _write(environment / "pm-runtime.json", {"inputs": identity})
@@ -229,7 +230,7 @@ def runtime_python(*, bootstrap: bool = True, cache: Path | None = None) -> Path
     if tools is None:
         if not bootstrap:
             raise InstallError("pm-runtime", "not installed and lazy installs are disabled",
-                               "run `hermes pm install` to prepare the independent PM runtime")
+                               f"run `{cli_name()} pm install` to prepare the independent PM runtime")
         from pm.lock import Lockfile
         from pm.paths import lockfile_path, store_root
         from pm.registry import get_package
