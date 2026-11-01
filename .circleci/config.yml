@@ -83,6 +83,7 @@ jobs:
             tests/test_mithril_updates.py
             tests/test_profile_skill_sync.py
             tests/test_profile_dependency_cache.py
+            tests/test_startup_branding.py
             tests/test_mithril_release_signer.py
             tests/test_mithril_update_bootstrap.py
       - run:

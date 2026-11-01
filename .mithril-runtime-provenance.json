@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "3f2b8eb066f604b9b56332a9ad6308b8bd6a748d220caa53c968a1c2d06dc39a",
+    "sha256": "0bb1d5a6df7f7ec5cd8dee5b265315c00711b8013ac77a13d609a89574f76162",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "7a671d28eb7566b69c3d3aa7756a32125a104a272e3d8bc06b7986e7a85ff13f"
+        "sha256": "98466a2bbf3743aa3c001c6c2595667d4ea6ed1512fe626d532829703a4a92ed"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -49968,9 +49968,19 @@
         "sha256": "d280e16c7d55913759e426e5ce0078a04df343c3eeebd500adf71b602370f199"
       },
       {
+        "path": "hermes_bootstrap.py",
+        "baseSha256": "89bb25daf729f1342166594517480112aba3e27a62e613d2057e3daba1848efc",
+        "sha256": "e3347ecd26bab1f34d6c1f8fb349ab0846724be8e27a06757fd54d99cf437804"
+      },
+      {
         "path": "hermes_cli/banner.py",
         "baseSha256": "c50ba5f5e8aeec6751df313712bf427d0df989c78689d57e6c0c1910c2edb145",
         "sha256": "e91cb4724ede6333b9ea74708c4d5ede41fadb56fad57cc88a87ee2dce686fc8"
+      },
+      {
+        "path": "hermes_cli/branding.py",
+        "baseSha256": null,
+        "sha256": "5f9ea5d094f5cf327d50b1b3ca9937d1e8f1e2def6869df01a6839be7f116c5d"
       },
       {
         "path": "hermes_cli/main.py",
@@ -50014,6 +50024,11 @@
         "sha256": "30d2f14d5b340d90c90f3e3bd725784ec11aabbde3c87f122bd939b02575d4c0"
       },
       {
+        "path": "hermes_cli/shared_profile_warning.py",
+        "baseSha256": "6b5f8c1ed82f4d0aefd5c5aa98d1334cda3cf0942e5de3e021831372ec3ae5ff",
+        "sha256": "f5d828e62970fdfd050ea06acf693cce673b77708ddabcdc14582b98f1117aad"
+      },
+      {
         "path": "hermes_cli/source_check.py",
         "baseSha256": "ea04925028cb0c3bc796b2736bff61b80edc36569bc3a9d4809d4ca6d54157cc",
         "sha256": "27747aa38464f0716bdaf872716eb35b56e8c4cf0a940777b75b5a6705c161d9"
@@ -50024,9 +50039,19 @@
         "sha256": "091c46749f8ed906c0b9508c98bc5f4c2ab0dd0a99e82e04b1cd5466992a3b77"
       },
       {
+        "path": "hermes_cli/tool_availability_notices.py",
+        "baseSha256": "6d861b62321b0112145c8db9a19448f73da8faf166ee5bcb7cdbaf0912c430bb",
+        "sha256": "c7a91c3fa22112c888b2a0a94377467735d8e3f30ef45618b75f12690dd24656"
+      },
+      {
         "path": "hermes_cli/update_cmd_maint.py",
         "baseSha256": "046e79ffb25abeed1260612c6b861a2447dbad8e2f3b111a63655fbb64133241",
-        "sha256": "30cae5a7e2a90d527c0930d54a40074e454bb5f5164c8d9db96c9ff77ed4cc59"
+        "sha256": "48f38bf5ec75bde62349528d6190fd1f3fa219b6acaa9db70f44903b68f4cc42"
+      },
+      {
+        "path": "hermes_cli/venv_sync.py",
+        "baseSha256": "be02186b734d2c2ba12768adce2d9939f9389532cc8ae5c3f546759a1c94d14b",
+        "sha256": "29e19ad53af4857ef6db142e7a7430677328e4239a69bbb4440411d394474c1a"
       },
       {
         "path": "plugins/platforms/google_chat/adapter.py",
@@ -50042,6 +50067,11 @@
         "path": "pm/plugins_state.py",
         "baseSha256": "e4300eac3c00155b85cf6aba3c7b40faea05c67dde99385ff254a1345bebb5af",
         "sha256": "0b45d334397fffd2fc99e61a4936df26194c3c98cd49fcc5cc2b62ef6c191afb"
+      },
+      {
+        "path": "pm/runtime.py",
+        "baseSha256": "cf4d72299606c3f4735595b45f13a5155edbcbbca9c05d0fcda280e43253c17b",
+        "sha256": "f1bb5bf56eb3e6e81c042ea20c68d60e4827e5d66abf944e5f2e3340f2097668"
       },
       {
         "path": "scripts/build-mithril-release.py",
@@ -50155,6 +50185,11 @@
         "path": "tests/test_profile_skill_sync.py",
         "baseSha256": null,
         "sha256": "f69520d330bea796d9fd6cfb32a4bc6122e81e952966e7f8d6ecc1b0272856e2"
+      },
+      {
+        "path": "tests/test_startup_branding.py",
+        "baseSha256": null,
+        "sha256": "0430c48b14a08065df8ddde1f4cfa38108c77dd5365a5232c8d4c9e852abff3f"
       },
       {
         "path": "tools/skills_sync.py",
