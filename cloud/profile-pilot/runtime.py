@@ -151,8 +151,12 @@ class Runtime:
             self.gateway_ready = False
             with placement.execution(HOME):
                 with (HOME / "pilot-gateway.log").open("ab", buffering=0) as log:
+                    # This VM hosts exactly one placed profile. Explicitly opt
+                    # into its dedicated gateway; the ordinary named-profile
+                    # refusal assumes a shared host multiplexer. Placement is
+                    # still checked before launch and at every turn/cron entry.
                     self.child = await asyncio.create_subprocess_exec(
-                        "/opt/hermes/scripts/mithril", "gateway", "run", "--no-supervise", "--external-supervisor",
+                        "/opt/hermes/scripts/mithril", "gateway", "run", "--force", "--no-supervise", "--external-supervisor",
                         cwd=HOME / "workspace", env=self.child_env(), stdout=log, stderr=log)
         async with ClientSession(timeout=ClientTimeout(total=3)) as client:
             for _ in range(180):
