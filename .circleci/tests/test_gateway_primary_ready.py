@@ -19,7 +19,7 @@ def methods(path, names):
     selected = [node for node in ast.walk(tree)
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                 and node.name in names]
-    namespace = {"asyncio": asyncio, "logger": logging.getLogger("profile-startup-test"),
+    namespace = {"asyncio": asyncio, "logging": logging, "logger": logging.getLogger("profile-startup-test"),
                  "Dict": dict, "Path": Path}
     exec(compile(ast.Module(body=selected, type_ignores=[]), path, "exec"), namespace)
     return namespace

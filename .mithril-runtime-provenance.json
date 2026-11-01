@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "e7863a722723888eda9380af2e9b1d545fb657108b8ee2c55cf89896589eeaa2",
+    "sha256": "2eee60e025009c5e9f22b7a3cbedf015b2ffe7b4a78f00249dbbcd5b29487561",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49820,7 +49820,7 @@
       {
         "path": ".circleci/tests/test_gateway_primary_ready.py",
         "baseSha256": null,
-        "sha256": "14ab40ed6dd0a7aa458c861a2f5f32d403c610d2e12220c834ad58f252aab475"
+        "sha256": "276dfb3da83ed4b1abc4b9a5a3df33f8171d856752a175f1acb2f764ff35ce22"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
