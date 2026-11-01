@@ -34,7 +34,11 @@ export class ProfileContainer extends DurableObject {
     const c = this.ctx.container;
     const name = await this.ctx.storage.get('profile');
     if (!name || !c) throw new Error('Pilot container is not configured');
-    if (!c.running) {
+    // `running` becomes true before startup succeeds. Inspect the actual
+    // instance before trusting a previous failed allocation's startup intent.
+    const instance = await c.inspect();
+    if (!instance) {
+      if (c.running) await c.destroy(); // inspect() confirmed that no process is running.
       c.start({ enableInternet: true, entrypoint: ['/opt/hermes/.venv/bin/python', '-u', '-c', entry], env: {
         PILOT_PROFILE: name, PILOT_CONTROL_KEY: await this.token(),
         PILOT_TRANSFER_KEY: await derive(this.env.TRANSFER_KEY, 'profile-transfer:' + name), PILOT_ORIGIN: this.env.ORIGIN,
@@ -52,7 +56,9 @@ export class ProfileContainer extends DurableObject {
       }
     }
     await c.setInactivityTimeout(10 * 60 * 1000);
+    const deadline = Date.now() + 90000;
     for (let n = 0; n < 180; n++) {
+      if (Date.now() >= deadline || !(await c.inspect())) break;
       try {
         const response = await c.getTcpPort(7860).fetch('http://container/health', {signal: AbortSignal.timeout(2000)});
         if (response.ok) { await response.body?.cancel(); return; }
