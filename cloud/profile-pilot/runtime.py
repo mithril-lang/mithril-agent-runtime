@@ -91,6 +91,7 @@ class Runtime:
         self.checkpoint_digest = None
         self.started = time.time()
         self.adaptation = None
+        self.start_failure = None
 
     async def restore(self):
         async with ClientSession(timeout=ClientTimeout(total=90)) as client:
@@ -196,6 +197,7 @@ class Runtime:
         return {"profile": HOME.name, "placement": record, "location": placement.location(), "checkpoint": self.checkpoint_digest,
                 "boot_id": self.boot_id, "draining": self.draining, "gateway_ready": self.gateway_ready,
                 "gateway_pid": self.child.pid if self.child is not None and self.child.returncode is None else None,
+                "gateway_exit_code": self.child.returncode if self.child is not None else None, "start_failure": self.start_failure,
                 "jobs": jobs, "next_due_ms": min(next_due) if next_due and record["phase"] == "active" else None,
                 "uptime_seconds": round(time.time() - self.started, 2), "controller_maxrss": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 "overlay": json.loads(Path("/tmp/pilot-overlay.json").read_text()), "adaptation": self.adaptation, "history": history, "process_memory": process_rss}
@@ -314,7 +316,13 @@ async def main():
     await runner.setup()
     await web.TCPSite(runner, "0.0.0.0", 7860).start()
     if placement.status(HOME)["phase"] == "active":
-        await runtime.start()
+        try:
+            await runtime.start()
+        except Exception as error:
+            # Preserve the authenticated control plane and startup log when a
+            # restored child cannot start. Never change placement or fall back.
+            runtime.start_failure = type(error).__name__
+            print("Restored gateway startup failed:", runtime.start_failure, flush=True)
     while True:
         await asyncio.sleep(60)
 
