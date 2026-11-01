@@ -103,7 +103,8 @@ export class ProfileContainer extends DurableObject {
       const name = await this.ctx.storage.get('profile');
       // A fixed, read-only diagnostic; never expose a general exec surface.
       const code = `import json,os,re; from pathlib import Path
-home=Path('/opt/data/profiles')/${JSON.stringify(name)}
+home=Path('/opt/data/placed')/${JSON.stringify(name)}
+if not home.exists(): home=Path('/opt/data/profiles')/${JSON.stringify(name)}
 path=home/'pilot-gateway.log'
 text=path.read_bytes()[-32768:].decode(errors='replace') if path.exists() else ''
 values=list(os.environ.values())
