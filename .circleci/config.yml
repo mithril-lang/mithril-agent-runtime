@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  gateway_cron_repair_validation:
+    type: boolean
+    default: false
   release_version:
     type: string
     default: ''
@@ -12,6 +15,15 @@ parameters:
     default: ''
 
 jobs:
+  gateway-cron-startup-regression:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Verify startup responsiveness and profile isolation
+          command: python .circleci/tests/test_gateway_cron_startup.py
   validate-source:
     docker:
       - image: cimg/python:3.14.7
@@ -130,9 +142,15 @@ jobs:
           command: python3 .circleci/validate-runtime-snapshot.py
 
 workflows:
+  gateway-cron-repair-validation:
+    when: << pipeline.parameters.gateway_cron_repair_validation >>
+    jobs:
+      - gateway-cron-startup-regression
   mithril-agent-runtime:
     when:
-      equal: ['', << pipeline.parameters.release_version >>]
+      and:
+        - equal: ['', << pipeline.parameters.release_version >>]
+        - not: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
       - validate-source
       - mithril-account-auth
