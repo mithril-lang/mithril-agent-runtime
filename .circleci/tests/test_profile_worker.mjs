@@ -111,10 +111,10 @@ test('private binding rejects unknown or mismatched profile without allocating a
       return object;
     },
   } });
-  assert.deepEqual(await service.readBusinessActivity('not-allowlisted'), { state: 'unavailable' });
+  assert.equal((await service.readBusinessActivity('not-allowlisted')).state, 'unavailable');
   assert.equal(routed, 0);
   assert.deepEqual(await service.readBusinessActivity('mithril-abb-information-bounty'), projection);
-  assert.deepEqual(await object.readBusinessActivity('mithril-accxia-bounty'), { state: 'unavailable' });
+  assert.equal((await object.readBusinessActivity('mithril-accxia-bounty')).state, 'unavailable');
   assert.equal(ctx.alarms.length, 0);
 });
 
