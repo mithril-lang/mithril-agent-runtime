@@ -76,6 +76,16 @@ class BusinessActivityTests(unittest.TestCase):
         self.assertEqual(result["value"]["result"], "unknown")
         self.assertIsNone(result["value"]["lastRunAt"])
 
+    def test_activity_binding_requires_current_active_container_owner(self):
+        identity = "a" * 32
+        record = {"phase": "active", "owner": "container:one", "identity": identity, "generation": 2}
+        self.assertEqual(self.runtime.activity_binding(record, "container:one"),
+                         {"profileIdentity": identity, "generation": 2})
+        self.assertIsNone(self.runtime.activity_binding(record, "container:other"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "phase": "moved"}, "container:one"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "identity": "not-a-valid-identity"}, "container:one"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "generation": True}, "container:one"))
+
     def test_future_completed_timestamp_is_unknown(self):
         job = {"id": "e01760b1c7a3", "enabled": True, "last_status": "ok",
                "last_run_at": "2026-11-02T18:09:26+09:00", "next_run_at": None}
