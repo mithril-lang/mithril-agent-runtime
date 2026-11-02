@@ -76,11 +76,18 @@ class BusinessActivityTests(unittest.TestCase):
         self.assertEqual(result["value"]["result"], "unknown")
         self.assertIsNone(result["value"]["lastRunAt"])
 
+    def test_future_completed_timestamp_is_unknown(self):
+        job = {"id": "e01760b1c7a3", "enabled": True, "last_status": "ok",
+               "last_run_at": "2026-11-02T18:09:26+09:00", "next_run_at": None}
+        result = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1)
+        self.assertEqual(result["value"]["result"], "unknown")
+        self.assertIsNone(result["value"]["lastRunAt"])
+
     def test_disabled_job_has_no_next_due_and_errors_stay_distinct(self):
         job = {"id": "e01760b1c7a3", "enabled": False, "last_status": "error",
                "last_run_at": "2026-11-02T18:09:26+09:00",
                "next_run_at": "2026-11-03T00:07:00+09:00"}
-        value = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1)["value"]
+        value = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1793620000000)["value"]
         self.assertEqual(value["result"], "error")
         self.assertIsNone(value["nextRunAt"])
 
