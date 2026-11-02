@@ -356,7 +356,13 @@ class Runtime:
                         child = await asyncio.create_subprocess_exec(PYTHON, "-c", "from cron.scheduler import tick; tick(verbose=False,sync=True)", env=self.child_env(), cwd="/opt/hermes", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
                         await child.wait()
                     await self.checkpoint()
-                    return web.json_response({"exit_code": child.returncode, "business_activity": business_activity(HOME.name, self.state()["jobs"], int(time.time() * 1000))})
+                    # Reporting must not turn an acknowledged tick into an
+                    # alarm retry if the diagnostic read fails.
+                    try:
+                        activity = business_activity(HOME.name, self.state()["jobs"], int(time.time() * 1000))
+                    except Exception:
+                        activity = {"state": "unavailable"}
+                    return web.json_response({"exit_code": child.returncode, "business_activity": activity})
                 return web.Response(status=404)
             except Exception as error:
                 # Never return provider errors, archives, keys or process environment.
