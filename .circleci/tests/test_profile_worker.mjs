@@ -32,6 +32,9 @@ const projection = {
   value: { result: 'ok', lastRunAt: 900, nextRunAt: 2000 },
 };
 
+const binding = { profileIdentity: 'a'.repeat(32), generation: 1 };
+const snapshot = { state: 'observed', binding, businessActivity: projection };
+
 function fixture({ failCache = false } = {}) {
   const values = new Map([['profile', 'mithril-abb-information-bounty']]);
   const alarms = [];
@@ -40,7 +43,7 @@ function fixture({ failCache = false } = {}) {
     storage: {
       async get(key) { return values.get(key); },
       async put(key, value) {
-        if (key === 'business_activity' && failCache) throw Error('synthetic storage failure');
+        if (key === 'activity_snapshot' && failCache) throw Error('synthetic storage failure');
         values.set(key, value);
       },
       async setAlarm(value) { alarms.push(value); },
@@ -52,11 +55,11 @@ function fixture({ failCache = false } = {}) {
 test('activity reads the prior observation without starting a container', async () => {
   const { ProfileContainer } = await loadWorker();
   const ctx = fixture();
-  ctx.values.set('business_activity', projection);
+  ctx.values.set('activity_snapshot', snapshot);
   const object = new ProfileContainer(ctx, {});
   const response = await object.fetch(new Request('https://unit.invalid/activity'));
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { business_activity: projection });
+  assert.deepEqual(await response.json(), { business_activity: snapshot });
   assert.equal(response.headers.get('cache-control'), 'private, no-store');
 });
 
@@ -77,13 +80,13 @@ test('a failed observation write cannot retry the business tick', async () => {
   const object = new ProfileContainer(ctx, {});
   let calls = 0, arms = 0;
   object.token = async () => 'synthetic';
-  object.call = async () => { calls++; return Response.json({ exit_code: 0, business_activity: projection }); };
+  object.call = async () => { calls++; return Response.json({ exit_code: 0, business_activity: projection, activity_binding: binding }); };
   object.arm = async () => { arms++; };
   await object.alarm();
   assert.equal(calls, 1);
   assert.equal(arms, 1);
   assert.equal(ctx.alarms.length, 0);
-  assert.equal(ctx.values.has('business_activity'), false);
+  assert.equal(ctx.values.has('activity_snapshot'), false);
 });
 
 test('unrecognized or extra fields never enter the observation cache', async () => {
@@ -91,17 +94,17 @@ test('unrecognized or extra fields never enter the observation cache', async () 
   const ctx = fixture();
   const object = new ProfileContainer(ctx, {});
   object.token = async () => 'synthetic';
-  object.call = async () => Response.json({ exit_code: 0, business_activity: { ...projection, prompt: 'private' } });
+  object.call = async () => Response.json({ exit_code: 0, business_activity: { ...projection, prompt: 'private' }, activity_binding: binding });
   object.arm = async () => {};
   await object.alarm();
-  assert.equal(ctx.values.has('business_activity'), false);
+  assert.equal(ctx.values.get('activity_snapshot').state, 'unavailable');
   assert.equal(ctx.alarms.length, 0);
 });
 
 test('private binding rejects unknown or mismatched profile without allocating a container', async () => {
   const { ProfileContainer, PilotActivityService } = await loadWorker();
   const ctx = fixture();
-  ctx.values.set('business_activity', projection);
+  ctx.values.set('activity_snapshot', snapshot);
   const object = new ProfileContainer(ctx, {});
   let routed = 0;
   const service = new PilotActivityService({}, { PROFILES: {
@@ -113,7 +116,7 @@ test('private binding rejects unknown or mismatched profile without allocating a
   } });
   assert.equal((await service.readBusinessActivity('not-allowlisted')).state, 'unavailable');
   assert.equal(routed, 0);
-  assert.deepEqual(await service.readBusinessActivity('mithril-abb-information-bounty'), projection);
+  assert.deepEqual(await service.readBusinessActivity('mithril-abb-information-bounty'), snapshot);
   assert.equal((await object.readBusinessActivity('mithril-accxia-bounty')).state, 'unavailable');
   assert.equal(ctx.alarms.length, 0);
 });
@@ -123,9 +126,9 @@ test('a successful tick caches exactly the independently observed business resul
   const ctx = fixture();
   const object = new ProfileContainer(ctx, {});
   object.token = async () => 'synthetic';
-  object.call = async () => Response.json({ exit_code: 0, business_activity: projection });
+  object.call = async () => Response.json({ exit_code: 0, business_activity: projection, activity_binding: binding });
   object.arm = async () => {};
   await object.alarm();
-  assert.deepEqual(ctx.values.get('business_activity'), projection);
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.values.get('activity_snapshot'))), snapshot);
   assert.equal(ctx.alarms.length, 0);
 });
