@@ -62,10 +62,6 @@ def set_consent(enabled, home=None):
 def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None,
            home=None, token_reader=None, opener=None):
     # No token lookup, queue, disk event or network request without the active Profile choice.
-    if token_reader is None:
-        from agent.secret_scope import serves_routed_profile
-        if serves_routed_profile():
-            return {"state":"profile-consent-required", "indexingVerified":False}
     consent = read_consent(home)
     if not consent or os.environ.get("MITHRIL_AGENT") != "1":
         return {"state":"disabled", "indexingVerified":False}
@@ -75,6 +71,10 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
         raise ValueError("Campaign reference must be an opaque SHA-256")
     if evidence_digest is not None and not re.fullmatch(r"[a-f0-9]{64}", evidence_digest):
         raise ValueError("Evidence digest must be SHA-256")
+    if token_reader is None:
+        from agent.secret_scope import serves_routed_profile
+        if serves_routed_profile():
+            return {"state":"profile-consent-required", "indexingVerified":False}
     if token_reader is None:
         from hermes_cli.mithril_account import read_mithril_account_token
         token_reader = read_mithril_account_token
