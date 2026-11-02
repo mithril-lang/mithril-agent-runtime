@@ -24,7 +24,9 @@ function validBusinessActivity(value) {
       !keys(value.value, ['result', 'lastRunAt', 'nextRunAt'])) return false;
   const time = v => v === null || (Number.isSafeInteger(v) && v >= 0 && v <= 253402300799999);
   return ['ok', 'error', 'unknown'].includes(value.value.result) &&
-    time(value.value.lastRunAt) && time(value.value.nextRunAt);
+    time(value.value.lastRunAt) && time(value.value.nextRunAt) &&
+    (value.value.lastRunAt === null || value.value.lastRunAt <= value.observedAt) &&
+    (value.value.result === 'unknown' || value.value.lastRunAt !== null);
 }
 const headers = { 'Cache-Control': 'private, no-store' };
 const entry = "import os,time; from pathlib import Path\nwhile not Path('/tmp/pilot-ready').exists(): time.sleep(.1)\nos.execv('/opt/hermes/.venv/bin/python',['python','-u','/tmp/pilot-runtime.py'])";
