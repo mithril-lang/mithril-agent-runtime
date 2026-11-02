@@ -133,6 +133,20 @@ def business_activity(name, jobs, observed_at):
     }}
 
 
+def activity_binding(record, location):
+    """Export only the active immutable identity for an authorized server-side join."""
+    if not isinstance(record, dict) or record.get("phase") != "active" or record.get("owner") != location:
+        return None
+    identity = record.get("identity")
+    generation = record.get("generation")
+    if (not isinstance(location, str) or not location.startswith("container:") or
+            not isinstance(identity, str) or len(identity) != 32 or
+            any(char not in "0123456789abcdef" for char in identity) or
+            type(generation) is not int or not 0 <= generation <= 9007199254740991):
+        return None
+    return {"profileIdentity": identity, "generation": generation}
+
+
 class Runtime:
     def __init__(self):
         self.child = None
@@ -361,10 +375,13 @@ class Runtime:
                     # Reporting must not turn an acknowledged tick into an
                     # alarm retry if the diagnostic read fails.
                     try:
-                        activity = business_activity(HOME.name, self.state()["jobs"], int(time.time() * 1000))
+                        status = self.state()
+                        binding = activity_binding(status["placement"], status["location"])
+                        activity = business_activity(HOME.name, status["jobs"], int(time.time() * 1000)) if binding else {"state": "unavailable"}
                     except Exception:
+                        binding = None
                         activity = {"state": "unavailable"}
-                    return web.json_response({"exit_code": child.returncode, "business_activity": activity})
+                    return web.json_response({"exit_code": child.returncode, "business_activity": activity, "activity_binding": binding})
                 return web.Response(status=404)
             except Exception as error:
                 # Never return provider errors, archives, keys or process environment.
