@@ -28,6 +28,15 @@ function validBusinessActivity(value) {
     (value.value.lastRunAt === null || value.value.lastRunAt <= value.observedAt) &&
     (value.value.result === 'unknown' || value.value.lastRunAt !== null);
 }
+
+function validActivityBinding(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === 2 && Object.hasOwn(value, 'profileIdentity') &&
+    Object.hasOwn(value, 'generation') &&
+    typeof value.profileIdentity === 'string' && /^[a-f0-9]{32}$/.test(value.profileIdentity) &&
+    Number.isSafeInteger(value.generation) && value.generation >= 0;
+}
+
 const headers = { 'Cache-Control': 'private, no-store' };
 const entry = "import os,time; from pathlib import Path\nwhile not Path('/tmp/pilot-ready').exists(): time.sleep(.1)\nos.execv('/opt/hermes/.venv/bin/python',['python','-u','/tmp/pilot-runtime.py'])";
 
@@ -44,8 +53,11 @@ export class ProfileContainer extends DurableObject {
     // Never create a binding or start a container during a read.
     if (!names.has(expectedName) || await this.ctx.storage.get('profile') !== expectedName)
       return {state: 'unavailable'};
-    const value = await this.ctx.storage.get('business_activity');
-    return validBusinessActivity(value) ? value : {state: 'unavailable'};
+    const snapshot = await this.ctx.storage.get('activity_snapshot');
+    if (!snapshot || snapshot.state !== 'observed' ||
+        !validActivityBinding(snapshot.binding) || !validBusinessActivity(snapshot.businessActivity))
+      return {state: 'unavailable'};
+    return snapshot;
   }
 
   async ensure() {
@@ -122,10 +134,11 @@ export class ProfileContainer extends DurableObject {
       await this.ctx.storage.put('last_alarm', {...before, finished_at: Date.now(), exit_code: result.exit_code});
       await this.arm();
       // Reporting is best-effort: failure must never replay the business tick.
-      if (validBusinessActivity(result.business_activity)) {
-        try { await this.ctx.storage.put('business_activity', result.business_activity); }
-        catch { /* The previous observation will age out. */ }
-      }
+      const snapshot = validActivityBinding(result.activity_binding) && validBusinessActivity(result.business_activity)
+        ? {state: 'observed', binding: result.activity_binding, businessActivity: result.business_activity}
+        : {state: 'unavailable'};
+      try { await this.ctx.storage.put('activity_snapshot', snapshot); }
+      catch { /* The previous observation will age out. */ }
     } catch {
       await this.ctx.storage.setAlarm(Date.now() + 60000);
     }
