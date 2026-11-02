@@ -87,7 +87,8 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
     if evidence_digest: event["evidenceDigest"]=evidence_digest
     payload=json.dumps({"policy":POLICY,"consented":True,"event":event},separators=(",",":")).encode()
     request=urllib.request.Request(ENDPOINT,data=payload,method="POST",
-        headers={"Authorization":"Bearer "+token,"Content-Type":"application/json"})
+        headers={"Authorization":"Bearer "+token,"Content-Type":"application/json",
+                 "User-Agent":"MithrilCLI/0.1 (analytics metadata)","Accept":"application/json"})
     result={"state":"unknown","eventId":event["id"],"indexingVerified":False}
     # One bounded attempt. A timeout is unknown, never retried or counted as a conversion.
     try:

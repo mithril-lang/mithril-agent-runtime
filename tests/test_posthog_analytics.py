@@ -42,6 +42,7 @@ class Analytics(unittest.TestCase):
         self.assertEqual("accepted",result["state"]);self.assertFalse(result["indexingVerified"])
         request=opener.calls[0]
         self.assertEqual(analytics.ENDPOINT,request.full_url)
+        self.assertEqual('MithrilCLI/0.1 (analytics metadata)',request.get_header('User-agent'))
         payload=json.loads(request.data)
         self.assertEqual("cli",payload["event"]["client"])
         self.assertNotIn(str(self.home),request.data.decode())
