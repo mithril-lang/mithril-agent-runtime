@@ -12,12 +12,13 @@ async function loadWorker() {
   class DurableObject {
     constructor(ctx, env) { this.ctx = ctx; this.env = env; }
   }
+  class WorkerEntrypoint { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }
   const worker = new vm.SourceTextModule(
     await readFile('cloud/profile-pilot/worker.mjs', 'utf8'), { context },
   );
   await worker.link(async (specifier) => {
     if (specifier === 'cloudflare:workers')
-      return new vm.SyntheticModule(['DurableObject'], function () { this.setExport('DurableObject', DurableObject); }, { context });
+      return new vm.SyntheticModule(['DurableObject', 'WorkerEntrypoint'], function () { this.setExport('DurableObject', DurableObject); this.setExport('WorkerEntrypoint', WorkerEntrypoint); }, { context });
     if (specifier === './overlay.mjs')
       return new vm.SyntheticModule(['default'], function () { this.setExport('default', {}); }, { context });
     throw Error('Unexpected import');
@@ -94,5 +95,37 @@ test('unrecognized or extra fields never enter the observation cache', async () 
   object.arm = async () => {};
   await object.alarm();
   assert.equal(ctx.values.has('business_activity'), false);
+  assert.equal(ctx.alarms.length, 0);
+});
+
+test('private binding rejects unknown or mismatched profile without allocating a container', async () => {
+  const { ProfileContainer, PilotActivityService } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('business_activity', projection);
+  const object = new ProfileContainer(ctx, {});
+  let routed = 0;
+  const service = new PilotActivityService({}, { PROFILES: {
+    getByName(name) {
+      routed++;
+      assert.equal(name, 'scheduled-profile-pilot-v1:mithril-abb-information-bounty');
+      return object;
+    },
+  } });
+  assert.deepEqual(await service.readBusinessActivity('not-allowlisted'), { state: 'unavailable' });
+  assert.equal(routed, 0);
+  assert.deepEqual(await service.readBusinessActivity('mithril-abb-information-bounty'), projection);
+  assert.deepEqual(await object.readBusinessActivity('mithril-accxia-bounty'), { state: 'unavailable' });
+  assert.equal(ctx.alarms.length, 0);
+});
+
+test('a successful tick caches exactly the independently observed business result', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  const object = new ProfileContainer(ctx, {});
+  object.token = async () => 'synthetic';
+  object.call = async () => Response.json({ exit_code: 0, business_activity: projection });
+  object.arm = async () => {};
+  await object.alarm();
+  assert.deepEqual(ctx.values.get('business_activity'), projection);
   assert.equal(ctx.alarms.length, 0);
 });
