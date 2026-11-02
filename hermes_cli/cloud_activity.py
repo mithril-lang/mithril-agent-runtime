@@ -21,7 +21,7 @@ def _observation(value, allowed, now):
         return "unavailable"
     if set(value) != {"state", "value", "observedAt"} or value["state"] != "observed" or not _timestamp(value["observedAt"]):
         raise ValueError("Invalid activity response")
-    if value["value"] not in allowed:
+    if not isinstance(value["value"], str) or value["value"] not in allowed:
         raise ValueError("Invalid activity response")
     if value["observedAt"] > now or now - value["observedAt"] > MAX_AGE_MS:
         return "unknown"
@@ -29,7 +29,7 @@ def _observation(value, allowed, now):
 
 
 def normalize(value, now):
-    if not isinstance(value, dict) or set(value) != {"schemaVersion", "placement", "container", "alarm", "cron", "checkpoint"} or value["schemaVersion"] != 1:
+    if not isinstance(value, dict) or set(value) != {"schemaVersion", "placement", "container", "alarm", "cron", "checkpoint"} or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1:
         raise ValueError("Invalid activity response")
     result = {
         "placement": _observation(value["placement"], {"local", "cloud", "unknown"}, now),
@@ -46,7 +46,7 @@ def normalize(value, now):
     if set(cron) != {"state", "observedAt", "value"} or cron["state"] != "observed" or not _timestamp(cron["observedAt"]):
         raise ValueError("Invalid activity response")
     job = cron["value"]
-    if not isinstance(job, dict) or set(job) != {"result", "lastRunAt", "nextRunAt"} or job["result"] not in {"ok", "error", "running", "unknown"} or any(job[k] is not None and not _timestamp(job[k]) for k in ("lastRunAt", "nextRunAt")):
+    if not isinstance(job, dict) or set(job) != {"result", "lastRunAt", "nextRunAt"} or not isinstance(job["result"], str) or job["result"] not in {"ok", "error", "running", "unknown"} or any(job[k] is not None and not _timestamp(job[k]) for k in ("lastRunAt", "nextRunAt")):
         raise ValueError("Invalid activity response")
     if cron["observedAt"] > now or now - cron["observedAt"] > MAX_AGE_MS:
         result["cron"] = {"result": "unknown", "lastRunAt": None, "nextRunAt": None}
