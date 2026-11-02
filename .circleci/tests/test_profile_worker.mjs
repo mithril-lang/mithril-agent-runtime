@@ -132,3 +132,19 @@ test('a successful tick caches exactly the independently observed business resul
   assert.deepEqual(JSON.parse(JSON.stringify(ctx.values.get('activity_snapshot'))), snapshot);
   assert.equal(ctx.alarms.length, 0);
 });
+
+test('a missing or corrupted runtime identity never exposes a cached result', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  const object = new ProfileContainer(ctx, {});
+  ctx.values.set('activity_snapshot', { ...snapshot, binding: { ...binding, profileIdentity: 'invalid' } });
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  ctx.values.set('activity_snapshot', { ...snapshot, privatePayload: 'must not leak' });
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  object.token = async () => 'synthetic';
+  object.call = async () => Response.json({ exit_code: 0, business_activity: projection, activity_binding: null });
+  object.arm = async () => {};
+  await object.alarm();
+  assert.equal(ctx.values.get('activity_snapshot').state, 'unavailable');
+  assert.equal(ctx.alarms.length, 0);
+});
