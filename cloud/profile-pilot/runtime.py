@@ -82,6 +82,54 @@ def adapt_paths():
     (HOME / "workspace").mkdir(exist_ok=True)
     return {"rewritten_files": changed, "mac_mcp_servers_not_started": disabled}
 
+# Exact pilot jobs captured at handoff. A smoke job or another same-named job
+# must never be mistaken for the original business cron.
+BUSINESS_JOBS = {
+    "mithril-abb-information-bounty": "e01760b1c7a3",
+    "mithril-accxia-bounty": "7c661c726ee0",
+    "mithril-adevinta-bounty": "af12a07fbe87",
+    "mithril-aelbox-bounty": "2d7dcd0e9d9c",
+    "mithril-agilepulse-bounty": "e74c23855ce1",
+    "mithril-airtable-bounty": "06e48bb11e47",
+    "mithril-akeles-bounty": "4cd06125b1a1",
+    "mithril-alohi-bounty": "a3896b32e64a",
+    "mithril-alsco-bounty": "7f96dffaa717",
+    "mithril-amoeboids-bounty": "52fb13b85d82",
+}
+
+
+def _activity_time(value):
+    if not isinstance(value, str) or len(value) > 64:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            return None
+        result = int(parsed.timestamp() * 1000)
+        return result if 0 <= result <= 253402300799999 else None
+    except (ValueError, OverflowError, OSError):
+        return None
+
+
+def business_activity(name, jobs, observed_at):
+    """Minimized observation; no names, prompts, errors or execution output."""
+    job_id = BUSINESS_JOBS.get(name)
+    if not job_id or not isinstance(jobs, list):
+        return {"state": "unavailable"}
+    matches = [job for job in jobs if isinstance(job, dict) and job.get("id") == job_id]
+    if len(matches) != 1 or not isinstance(observed_at, int) or observed_at < 0:
+        return {"state": "unavailable"}
+    job = matches[0]
+    last = _activity_time(job.get("last_run_at"))
+    status = job.get("last_status")
+    # An undated success or failure is not evidence of a completed run.
+    result = status if status in ("ok", "error") and last is not None else "unknown"
+    return {"state": "observed", "observedAt": observed_at, "value": {
+        "result": result,
+        "lastRunAt": last,
+        "nextRunAt": _activity_time(job.get("next_run_at")) if job.get("enabled") is True else None,
+    }}
+
 
 class Runtime:
     def __init__(self):
@@ -308,7 +356,7 @@ class Runtime:
                         child = await asyncio.create_subprocess_exec(PYTHON, "-c", "from cron.scheduler import tick; tick(verbose=False,sync=True)", env=self.child_env(), cwd="/opt/hermes", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
                         await child.wait()
                     await self.checkpoint()
-                    return web.json_response({"exit_code": child.returncode})
+                    return web.json_response({"exit_code": child.returncode, "business_activity": business_activity(HOME.name, self.state()["jobs"], int(time.time() * 1000))})
                 return web.Response(status=404)
             except Exception as error:
                 # Never return provider errors, archives, keys or process environment.
