@@ -148,3 +148,39 @@ test('a missing or corrupted runtime identity never exposes a cached result', as
   assert.equal(ctx.values.get('activity_snapshot').state, 'unavailable');
   assert.equal(ctx.alarms.length, 0);
 });
+
+test('instance inspection is read-only, identity bound and does not claim readiness', async () => {
+  const { ProfileContainer, PilotActivityService } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  let instance = { image: 'synthetic-image', labels: { private: 'not returned' } };
+  let inspections = 0;
+  Object.defineProperty(ctx, 'container', { get: () => ({
+    inspect: async () => { inspections++; return instance; },
+    start: () => { throw Error('must never start'); },
+  }) });
+  const object = new ProfileContainer(ctx, {});
+  const service = new PilotActivityService({}, { PROFILES: { getByName: () => object } });
+  const result = await service.readContainerActivity('mithril-abb-information-bounty');
+  assert.equal(result.state, 'observed');
+  assert.equal(result.binding.profileIdentity, binding.profileIdentity);
+  assert.equal(result.containerActivity.value, 'running');
+  assert.equal(typeof result.containerActivity.observedAt, 'number');
+  assert.equal(JSON.stringify(result).includes('synthetic-image'), false);
+  instance = null;
+  assert.equal((await object.readContainerActivity('mithril-abb-information-bounty')).containerActivity.value, 'inactive');
+  instance = { image: '', labels: {} };
+  assert.equal((await object.readContainerActivity('mithril-abb-information-bounty')).containerActivity.value, 'unknown');
+  assert.equal((await object.readContainerActivity('mithril-accxia-bounty')).state, 'unavailable');
+  assert.equal(inspections, 3);
+  assert.equal(ctx.alarms.length, 0);
+});
+
+test('failed instance inspection does not invent a state', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  Object.defineProperty(ctx, 'container', { get: () => ({ inspect: async () => { throw Error('unavailable'); } }) });
+  const object = new ProfileContainer(ctx, {});
+  assert.equal((await object.readContainerActivity('mithril-abb-information-bounty')).state, 'unavailable');
+});
