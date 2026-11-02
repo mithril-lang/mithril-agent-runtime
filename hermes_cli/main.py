@@ -3562,6 +3562,8 @@ def _build_cli_parser():
     build_uninstall_parser(subparsers, cmd_uninstall=cmd_uninstall)
     build_acp_parser(subparsers, cmd_acp=cmd_acp)
     build_profile_parser(subparsers, cmd_profile=cmd_profile)
+    from hermes_cli.posthog_analytics import build_analytics_parser
+    build_analytics_parser(subparsers)
     build_completion_parser(subparsers, cmd_completion=cmd_completion, parser=parser)
     build_dashboard_parser(
         subparsers,
@@ -3737,7 +3739,8 @@ def main():
 
     # A handler's int return code becomes the exit code (None = success).
     if hasattr(args, "func"):
-        rc = args.func(args)
+        from hermes_cli.posthog_analytics import reported_command
+        rc = args.func(args) if args.command == 'analytics' else reported_command(args.func, args)
         if isinstance(rc, int) and rc != 0:
             sys.exit(rc)
     else:
