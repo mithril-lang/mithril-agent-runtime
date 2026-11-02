@@ -12,6 +12,20 @@ async function derive(secret, context) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
   return hex(await crypto.subtle.sign('HMAC', key, encoder.encode(context)));
 }
+
+function validBusinessActivity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = (o, expected) => Object.keys(o).length === expected.length &&
+    expected.every(key => Object.hasOwn(o, key));
+  if (value.state === 'unavailable') return keys(value, ['state']);
+  if (value.state !== 'observed' || !keys(value, ['state', 'observedAt', 'value']) ||
+      !Number.isSafeInteger(value.observedAt) || value.observedAt < 0 ||
+      !value.value || typeof value.value !== 'object' || Array.isArray(value.value) ||
+      !keys(value.value, ['result', 'lastRunAt', 'nextRunAt'])) return false;
+  const time = v => v === null || (Number.isSafeInteger(v) && v >= 0 && v <= 253402300799999);
+  return ['ok', 'error', 'unknown'].includes(value.value.result) &&
+    time(value.value.lastRunAt) && time(value.value.nextRunAt);
+}
 const headers = { 'Cache-Control': 'private, no-store' };
 const entry = "import os,time; from pathlib import Path\nwhile not Path('/tmp/pilot-ready').exists(): time.sleep(.1)\nos.execv('/opt/hermes/.venv/bin/python',['python','-u','/tmp/pilot-runtime.py'])";
 
@@ -97,6 +111,11 @@ export class ProfileContainer extends DurableObject {
       const before = await this.ctx.storage.get('last_alarm');
       await this.ctx.storage.put('last_alarm', {...before, finished_at: Date.now(), exit_code: result.exit_code});
       await this.arm();
+      // Reporting is best-effort: failure must never replay the business tick.
+      if (validBusinessActivity(result.business_activity)) {
+        try { await this.ctx.storage.put('business_activity', result.business_activity); }
+        catch { /* The previous observation will age out. */ }
+      }
     } catch {
       await this.ctx.storage.setAlarm(Date.now() + 60000);
     }
@@ -124,6 +143,10 @@ print(json.dumps({'gateway_log_tail':text}))`;
       const result = await process.output();
       if (result.exitCode !== 0) return new Response('Diagnostics unavailable', {status: 503, headers});
       return new Response(result.stdout, {headers: {...headers, 'Content-Type': 'application/json'}});
+    }
+    if (path === '/activity' && request.method === 'GET') {
+      // Read only DO storage. No container startup or schedule mutation.
+      return Response.json({business_activity: await this.ctx.storage.get('business_activity') ?? {state: 'unavailable'}}, {headers});
     }
     if (path === '/control-state') {
       return Response.json({profile: await this.ctx.storage.get('profile'), location: 'container:' + this.ctx.id.toString(), container_running: this.ctx.container?.running ?? false, alarm: await this.ctx.storage.get('last_alarm') ?? null}, {headers});
@@ -185,7 +208,7 @@ export default {
       return new Response('Method not allowed', {status: 405, headers});
     }
     if (!operator) return new Response('Unauthorized', {status: 401, headers});
-    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
+    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|activity|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
     if (!route || !names.has(route[1])) return new Response('Not found', {status: 404, headers});
     const owner = env.PROFILES.getByName('scheduled-profile-pilot-v1:' + route[1]);
     await owner.bind(route[1]);
