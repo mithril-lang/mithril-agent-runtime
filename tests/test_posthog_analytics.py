@@ -59,6 +59,14 @@ class Analytics(unittest.TestCase):
             self.assertEqual(7,analytics.reported_command(lambda args:7,object()))
             with self.assertRaisesRegex(ValueError,"original"):
                 analytics.reported_command(lambda args:(_ for _ in ()).throw(ValueError("original")),object())
+    def test_system_exit_and_interrupt_keep_their_actual_command_outcome(self):
+        for error,expected in [(SystemExit(0),"completed"),(SystemExit(9),"failed"),(KeyboardInterrupt(),"held")]:
+            def callback(args):
+                raise error
+            with patch.object(analytics,"_command_receipt") as report:
+                with self.assertRaises(type(error)):
+                    analytics.reported_command(callback,object())
+                report.assert_called_once_with(expected)
     def test_enable_requires_explicit_usage_consent(self):
         parser=argparse.ArgumentParser();subs=parser.add_subparsers(dest="command")
         analytics.build_analytics_parser(subs)

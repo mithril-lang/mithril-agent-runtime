@@ -104,6 +104,12 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
 def reported_command(callback, args):
     try:
         result=callback(args)
+    except SystemExit as error:
+        _command_receipt("completed" if error.code is None or error.code == 0 else "failed")
+        raise
+    except KeyboardInterrupt:
+        _command_receipt("held")
+        raise
     except BaseException:
         _command_receipt("failed")
         raise
