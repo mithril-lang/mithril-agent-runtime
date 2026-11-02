@@ -54,7 +54,8 @@ export class ProfileContainer extends DurableObject {
     if (!names.has(expectedName) || await this.ctx.storage.get('profile') !== expectedName)
       return {state: 'unavailable'};
     const snapshot = await this.ctx.storage.get('activity_snapshot');
-    if (!snapshot || snapshot.state !== 'observed' ||
+    if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) ||
+        Object.keys(snapshot).sort().join(',') !== 'binding,businessActivity,state' || snapshot.state !== 'observed' ||
         !validActivityBinding(snapshot.binding) || !validBusinessActivity(snapshot.businessActivity))
       return {state: 'unavailable'};
     return snapshot;
