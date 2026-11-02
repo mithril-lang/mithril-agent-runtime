@@ -1,4 +1,4 @@
-import { DurableObject } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import bundle from './overlay.mjs';
 
 const names = new Set([
@@ -36,6 +36,14 @@ export class ProfileContainer extends DurableObject {
     const prior = await this.ctx.storage.get('profile');
     if (prior && prior !== name) throw new Error('Container owner is immutable');
     await this.ctx.storage.put('profile', name);
+  }
+
+  async readBusinessActivity(expectedName) {
+    // Never create a binding or start a container during a read.
+    if (!names.has(expectedName) || await this.ctx.storage.get('profile') !== expectedName)
+      return {state: 'unavailable'};
+    const value = await this.ctx.storage.get('business_activity');
+    return validBusinessActivity(value) ? value : {state: 'unavailable'};
   }
 
   async ensure() {
@@ -146,7 +154,7 @@ print(json.dumps({'gateway_log_tail':text}))`;
     }
     if (path === '/activity' && request.method === 'GET') {
       // Read only DO storage. No container startup or schedule mutation.
-      return Response.json({business_activity: await this.ctx.storage.get('business_activity') ?? {state: 'unavailable'}}, {headers});
+      return Response.json({business_activity: await this.readBusinessActivity(await this.ctx.storage.get('profile'))}, {headers});
     }
     if (path === '/control-state') {
       return Response.json({profile: await this.ctx.storage.get('profile'), location: 'container:' + this.ctx.id.toString(), container_running: this.ctx.container?.running ?? false, alarm: await this.ctx.storage.get('last_alarm') ?? null}, {headers});
@@ -179,6 +187,15 @@ print(json.dumps({'gateway_log_tail':text}))`;
     await this.ensure();
     await this.arm();
     return this.call('/status', new Request('http://container/status', {headers: {Authorization: 'Bearer ' + await this.token()}}));
+  }
+}
+
+/** Private named service entrypoint; caller must authorize the exact Profile. */
+export class PilotActivityService extends WorkerEntrypoint {
+  async readBusinessActivity(profile) {
+    if (!names.has(profile)) return {state: 'unavailable'};
+    const owner = this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile);
+    return owner.readBusinessActivity(profile);
   }
 }
 
