@@ -117,10 +117,12 @@ def business_activity(name, jobs, observed_at):
     if not job_id or not isinstance(jobs, list):
         return {"state": "unavailable"}
     matches = [job for job in jobs if isinstance(job, dict) and job.get("id") == job_id]
-    if len(matches) != 1 or not isinstance(observed_at, int) or observed_at < 0:
+    if len(matches) != 1 or not isinstance(observed_at, int) or isinstance(observed_at, bool) or not 0 <= observed_at <= 253402300799999:
         return {"state": "unavailable"}
     job = matches[0]
     last = _activity_time(job.get("last_run_at"))
+    if last is not None and last > observed_at:
+        last = None
     status = job.get("last_status")
     # An undated success or failure is not evidence of a completed run.
     result = status if status in ("ok", "error") and last is not None else "unknown"
