@@ -67,6 +67,28 @@ export class ProfileContainer extends DurableObject {
     return this.starting;
   }
 
+  /** Inspect the current instance without starting it. This does not claim readiness. */
+  async readContainerActivity(expectedName) {
+    const before = await this.readBusinessActivity(expectedName);
+    if (before.state !== 'observed') return {state: 'unavailable'};
+    try {
+      const container = this.ctx.container;
+      if (!container) return {state: 'unavailable'};
+      const instance = await container.inspect();
+      const observedAt = Date.now();
+      const after = await this.readBusinessActivity(expectedName);
+      if (after.state !== 'observed' ||
+          after.binding.profileIdentity !== before.binding.profileIdentity ||
+          after.binding.generation !== before.binding.generation) return {state: 'unavailable'};
+      const value = instance === null ? 'inactive'
+        : typeof instance?.image === 'string' && instance.image ? 'running' : 'unknown';
+      return {state: 'observed', binding: after.binding,
+        containerActivity: {state: 'observed', observedAt, value}};
+    } catch {
+      return {state: 'unavailable'};
+    }
+  }
+
   async startImpl() {
     const c = this.ctx.container;
     const name = await this.ctx.storage.get('profile');
@@ -208,6 +230,10 @@ print(json.dumps({'gateway_log_tail':text}))`;
 
 /** Private named service entrypoint; caller must authorize the exact Profile. */
 export class PilotActivityService extends WorkerEntrypoint {
+  async readContainerActivity(profile) {
+    if (!names.has(profile)) return {state: 'unavailable'};
+    return this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile).readContainerActivity(profile);
+  }
   async readBusinessActivity(profile) {
     if (!names.has(profile)) return {state: 'unavailable'};
     const owner = this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile);
