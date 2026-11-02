@@ -18,6 +18,15 @@ parameters:
     default: ''
 
 jobs:
+  scheduled-profile-worker-activity:
+    docker:
+      - image: cimg/node:24.19.0
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Verify non-waking activity reads and cache failure behavior
+          command: node --experimental-vm-modules --test .circleci/tests/test_profile_worker.mjs
   scheduled-profile-placement:
     docker:
       - image: cimg/python:3.14.7
@@ -175,6 +184,7 @@ workflows:
     when: << pipeline.parameters.scheduled_profile_pilot_validation >>
     jobs:
       - scheduled-profile-placement
+      - scheduled-profile-worker-activity
   gateway-cron-repair-validation:
     when: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
