@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "2220c33fe7d562b76944c76edc4cd1820bbaefa83ba30352b74aa4a622a09b2f",
+    "sha256": "44bf0855b9b106756d020bded4bf25189cca43dbb02242d44faea2894dc23c3d",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "98466a2bbf3743aa3c001c6c2595667d4ea6ed1512fe626d532829703a4a92ed"
+        "sha256": "49c83381297ee083887b7ede423038b55e3e14d1c4b69547d12eeb1ba48da7ce"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -49985,7 +49985,7 @@
       {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
-        "sha256": "994fe64606328b86b200ff89c24b5be136c038d68051da1f8d36bdbfd5c917f0"
+        "sha256": "979ffb2c982d1556812ada4d0892cbb1f376d2fe98c1f5beefb91b65656d4402"
       },
       {
         "path": "hermes_cli/mithril_account.py",
@@ -50195,6 +50195,21 @@
         "path": "tools/skills_sync.py",
         "baseSha256": "4167dc3d99e0abb33cae3f38822753fe24d474b45e451ccc90c7b482e7024a98",
         "sha256": "fd481cff2a9cb8ef0f291c29627ad4d068a3821b26a6f32d8e033d9174d564ab"
+      },
+      {
+        "path": "hermes_cli/posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "2d273cbab6ff79c8b7ca6bb830bc6420ef7836abfbd17a894249829129927143"
+      },
+      {
+        "path": "tests/test_posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "d1bac20f2191641878dab316b132bf8e3a2c44fc2c699daf638f3d8c843553d5"
+      },
+      {
+        "path": "docs/mithril-posthog-analytics.md",
+        "baseSha256": null,
+        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
       }
     ]
   }
