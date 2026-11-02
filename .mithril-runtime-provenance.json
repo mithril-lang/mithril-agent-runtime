@@ -49800,12 +49800,17 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "f616357a4a605eff806870bf2c54a3211d6dd640e40b5f6ac989c17cd1884232",
+    "sha256": "968dc4732f54721ff918d24a535e2c17cc17762c96e725cabd8cda23a3ceb8d0",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "3684b34e654486df6bd20b316bdc3c2d9c69cc1c6a2b29b491a8bd8797bc15a2"
+        "sha256": "1b702deff4e2c84cc435970fc18763283652dd34564b523e36b6b2ea127aa945"
+      },
+      {
+        "path": ".circleci/tests/test_cloud_activity.py",
+        "baseSha256": null,
+        "sha256": "e1422a5a568e75b1142369ead049171732210e37f12d742a31bf79a9cdb404a1"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -49943,6 +49948,11 @@
         "sha256": "09f796b3c78b1ed055e17f8d75a742424b739828dd43854542c0b1d5ba0a406f"
       },
       {
+        "path": "docs/mithril-posthog-analytics.md",
+        "baseSha256": null,
+        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
+      },
+      {
         "path": "docs/operations/google-chat-keyless.md",
         "baseSha256": null,
         "sha256": "f31b9c3f111c4b041de7f288c192e237c6b78774dadcf74e3412d47a557a54e8"
@@ -49983,6 +49993,11 @@
         "sha256": "5f9ea5d094f5cf327d50b1b3ca9937d1e8f1e2def6869df01a6839be7f116c5d"
       },
       {
+        "path": "hermes_cli/cloud_activity.py",
+        "baseSha256": null,
+        "sha256": "8c3594bcd3e79baee53c19177c2ca869a8da1fc0f222ef17dec7e2df8c00257e"
+      },
+      {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
         "sha256": "979ffb2c982d1556812ada4d0892cbb1f376d2fe98c1f5beefb91b65656d4402"
@@ -50014,6 +50029,16 @@
         "sha256": "1ef92c4408ad9f722ba8462820a62d5a3df7ab6b076a50665a8cddbdc1564574"
       },
       {
+        "path": "hermes_cli/posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "ebe649ce05619febb51ab4fe9bbe7e89c09c5c7326e60b285c2e16fdaab12c50"
+      },
+      {
+        "path": "hermes_cli/profile_cmd.py",
+        "baseSha256": "a6295d65f06cea019e52a80911962d045b78d40bbabe9ecce0f52c3e583c03eb",
+        "sha256": "afa92af33130ce778e50419eeb66d6a4a7b5418f8eee7ac312f69db19f70a274"
+      },
+      {
         "path": "hermes_cli/profile_placement.py",
         "baseSha256": null,
         "sha256": "7a832def39b55f7f4d981ef10a34ba1c4252722151a38e04787966ca9181a5e1"
@@ -50037,6 +50062,11 @@
         "path": "hermes_cli/source_releases.py",
         "baseSha256": "52657b9dbe4e20e2dcf3cb0fb59635313ff980ed747833773d0400e2aff3e65e",
         "sha256": "091c46749f8ed906c0b9508c98bc5f4c2ab0dd0a99e82e04b1cd5466992a3b77"
+      },
+      {
+        "path": "hermes_cli/subcommands/profile.py",
+        "baseSha256": "17e2b5349c307edf5fde0a698c2c7056bf687f72fd8a6267f8bf6a42fee131e9",
+        "sha256": "2be913dc8e08b81a37543c27031ec2d7162aa225acc660a3a3c752e87ce30a38"
       },
       {
         "path": "hermes_cli/tool_availability_notices.py",
@@ -50177,6 +50207,11 @@
         "sha256": "df53e650e8e52d44ae7a36322cf3bd8c4b59b068446f4d2ad7552c17201c2252"
       },
       {
+        "path": "tests/test_posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "2ee8bb7d7770c1d44a2591ada4e8ce2ce602aa9755a131591995eb359b4f7e82"
+      },
+      {
         "path": "tests/test_profile_dependency_cache.py",
         "baseSha256": null,
         "sha256": "e8905a092942b30a4979394aee9644a3b0db1b025ff6cfd879b167b938857379"
@@ -50195,21 +50230,6 @@
         "path": "tools/skills_sync.py",
         "baseSha256": "4167dc3d99e0abb33cae3f38822753fe24d474b45e451ccc90c7b482e7024a98",
         "sha256": "fd481cff2a9cb8ef0f291c29627ad4d068a3821b26a6f32d8e033d9174d564ab"
-      },
-      {
-        "path": "hermes_cli/posthog_analytics.py",
-        "baseSha256": null,
-        "sha256": "ebe649ce05619febb51ab4fe9bbe7e89c09c5c7326e60b285c2e16fdaab12c50"
-      },
-      {
-        "path": "tests/test_posthog_analytics.py",
-        "baseSha256": null,
-        "sha256": "2ee8bb7d7770c1d44a2591ada4e8ce2ce602aa9755a131591995eb359b4f7e82"
-      },
-      {
-        "path": "docs/mithril-posthog-analytics.md",
-        "baseSha256": null,
-        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
       }
     ]
   }
