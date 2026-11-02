@@ -46,6 +46,7 @@ jobs:
             .venv/bin/python .circleci/tests/test_profile_placement.py
             .venv/bin/python .circleci/tests/test_profile_overlay.py
             .venv/bin/python .circleci/tests/test_profile_checkpoint.py
+            .venv/bin/python .circleci/tests/test_cloud_activity.py
   gateway-cron-startup-regression:
     docker:
       - image: cimg/python:3.14.7
