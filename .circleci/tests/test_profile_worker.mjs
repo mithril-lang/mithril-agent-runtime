@@ -6,7 +6,7 @@ import { webcrypto } from 'node:crypto';
 
 async function loadWorker() {
   const context = vm.createContext({
-    Request, Response, URL, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer,
+    Request, Response, URL, TextEncoder, TextDecoder, Uint8Array, ArrayBuffer, AbortSignal,
     crypto: webcrypto, console, atob, btoa,
   });
   class DurableObject {
@@ -270,7 +270,7 @@ test('a tick beginning during a control mutation cannot publish after it complet
 test('operator approval is fenced, one-use and tied to the selected profile', async () => {
   const { ProfileContainer, PilotActivityService, default: worker } = await loadWorker();
   const ctx = fixture();
-  ctx.values.set('activity_snapshot', snapshot);
+  ctx.values.set('activity_snapshot', {...snapshot,businessActivity:{...projection,observedAt:Date.now()}});
   const object = new ProfileContainer(ctx, {});
   const env = {SERVICE_KEY: 'operator-secret', TRANSFER_KEY: 'transfer-secret', PROFILES: {getByName: () => object}};
   const service = new PilotActivityService({}, env);
@@ -294,7 +294,7 @@ test('operator approval is fenced, one-use and tied to the selected profile', as
 
 test('approval cannot survive expired proof or a placement mutation', async () => {
   const { ProfileContainer } = await loadWorker();
-  const ctx = fixture(); ctx.values.set('activity_snapshot', snapshot);
+  const ctx = fixture(); ctx.values.set('activity_snapshot', {...snapshot,businessActivity:{...projection,observedAt:Date.now()}});
   const object = new ProfileContainer(ctx, {}), profile = 'mithril-abb-information-bounty';
   const digest = '2'.repeat(64);
   assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() - 1), false);
@@ -307,4 +307,39 @@ test('approval cannot survive expired proof or a placement mutation', async () =
   assert.equal(await object.approveActivityEnrollment(profile, expired, Date.now() + 60000), false);
   await object.guardActivityMutation(async () => {});
   assert.equal((await object.redeemActivityEnrollment(profile, digest)).state, 'unavailable');
+});
+
+
+test('a running profile supplies current business status without starting a Container', async () => {
+  const {ProfileContainer, PilotActivityService} = await loadWorker();
+  const ctx = fixture(); ctx.id = {toString: () => 'fixture'};
+  const profile = 'mithril-abb-information-bounty', now = Date.now();
+  let starts = 0, statusCalls = 0;
+  const status = {profile,location:'container:fixture',placement:{phase:'active',owner:'container:fixture',identity:binding.profileIdentity,generation:binding.generation},
+    jobs:[{id:'e01760b1c7a3',enabled:true,last_status:'ok',last_run_at:new Date(now-60000).toISOString(),next_run_at:new Date(now+60000).toISOString()}],private:'not returned'};
+  Object.defineProperty(ctx,'container',{get:()=>({inspect:async()=>({image:'fixture'}), start:()=>{starts++;},
+    getTcpPort:()=>({fetch:async()=>{statusCalls++;return Response.json(status);}})})});
+  const object = new ProfileContainer(ctx, {}); object.token=async()=> 'fixture';
+  const service = new PilotActivityService({}, {PROFILES:{getByName:()=>object}});
+  const actual = await service.readBusinessActivity(profile);
+  assert.equal(actual.state,'observed');assert.equal(actual.businessActivity.value.result,'ok');
+  assert.equal(JSON.stringify(actual).includes('private'),false);assert.equal(starts,0);assert.equal(statusCalls,1);
+  assert.equal((await service.readBusinessActivity(profile)).state,'observed');assert.equal(statusCalls,1);
+});
+
+test('status refresh neither starts an idle Container nor publishes across a placement mutation', async () => {
+  const {ProfileContainer} = await loadWorker();
+  const ctx = fixture();ctx.id={toString:()=> 'fixture'};
+  let running=false, release, began;
+  const started=new Promise(resolve=>{began=resolve;});
+  Object.defineProperty(ctx,'container',{get:()=>({inspect:async()=>running ? {image:'fixture'} : null,
+    start:()=>{throw Error('must not start');}, getTcpPort:()=>({fetch:async()=>{began();return new Promise(resolve=>{release=resolve;});}})})});
+  const object = new ProfileContainer(ctx, {});object.token=async()=> 'fixture';
+  const profile='mithril-abb-information-bounty';
+  assert.equal((await object.refreshRunningBusinessActivity(profile)).state,'unavailable');
+  running=true;const pending=object.refreshRunningBusinessActivity(profile);await started;
+  await object.guardActivityMutation(async()=>{});
+  release(Response.json({profile,location:'container:fixture',placement:{phase:'active',owner:'container:fixture',identity:binding.profileIdentity,generation:binding.generation},
+    jobs:[{id:'e01760b1c7a3',enabled:true,last_status:'ok',last_run_at:'2026-11-03T00:00:00Z',next_run_at:null}]}));
+  assert.equal((await pending).state,'unavailable');assert.equal(ctx.values.has('activity_snapshot'),false);
 });

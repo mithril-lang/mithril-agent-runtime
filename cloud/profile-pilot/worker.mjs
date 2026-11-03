@@ -6,6 +6,49 @@ const names = new Set([
   'mithril-alohi-bounty', 'mithril-amoeboids-bounty', 'mithril-agilepulse-bounty',
   'mithril-aelbox-bounty', 'mithril-alsco-bounty', 'mithril-accxia-bounty', 'mithril-adevinta-bounty',
 ]);
+// Original business job IDs from the reviewed pilot handoff. A same-named
+// smoke or unrelated job is never evidence of business success.
+const businessJobs = Object.freeze({
+  'mithril-abb-information-bounty':'e01760b1c7a3', 'mithril-accxia-bounty':'7c661c726ee0',
+  'mithril-adevinta-bounty':'af12a07fbe87', 'mithril-aelbox-bounty':'2d7dcd0e9d9c',
+  'mithril-agilepulse-bounty':'e74c23855ce1', 'mithril-airtable-bounty':'06e48bb11e47',
+  'mithril-akeles-bounty':'4cd06125b1a1', 'mithril-alohi-bounty':'a3896b32e64a',
+  'mithril-alsco-bounty':'7f96dffaa717', 'mithril-amoeboids-bounty':'52fb13b85d82',
+});
+async function boundedJson(response, limit = 131072) {
+  if (!response.body) throw Error('No status body');
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  const chunks = []; let size = 0;
+  try {
+    for (;;) {
+      const {done,value} = await reader.read(); if (done) break;
+      size += value.byteLength; if (size > limit) { void reader.cancel(); throw Error('Status too large'); }
+      chunks.push(decoder.decode(value, {stream:true}));
+    }
+    chunks.push(decoder.decode()); return JSON.parse(chunks.join(''));
+  } finally { reader.releaseLock(); }
+}
+function jobTime(value) {
+  if (typeof value !== 'string' || value.length > 64 ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return null;
+  const parsed = Date.parse(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 253402300799999 ? parsed : null;
+}
+function projectRunningStatus(profile, location, status, observedAt) {
+  if (!status || typeof status !== 'object' || Array.isArray(status) || status.profile !== profile ||
+      status.location !== location || !status.placement || typeof status.placement !== 'object' ||
+      status.placement.phase !== 'active' || status.placement.owner !== location ||
+      !validActivityBinding({profileIdentity:status.placement.identity,generation:status.placement.generation}) ||
+      !Array.isArray(status.jobs) || status.jobs.length > 10000) return null;
+  const jobs = status.jobs.filter(job => job && typeof job === 'object' && job.id === businessJobs[profile]);
+  if (jobs.length !== 1) return null;
+  const job = jobs[0]; let last = jobTime(job.last_run_at);
+  if (last !== null && last > observedAt) last = null;
+  const result = (job.last_status === 'ok' || job.last_status === 'error') && last !== null ? job.last_status : 'unknown';
+  return {state:'observed',binding:{profileIdentity:status.placement.identity,generation:status.placement.generation},
+    businessActivity:{state:'observed',observedAt,value:{result,lastRunAt:last,
+      nextRunAt:job.enabled === true ? jobTime(job.next_run_at) : null}}};
+}
 const encoder = new TextEncoder();
 const hex = bytes => Array.from(new Uint8Array(bytes), x => x.toString(16).padStart(2, '0')).join('');
 async function derive(secret, context) {
@@ -95,6 +138,42 @@ export class ProfileContainer extends DurableObject {
     return snapshot;
   }
 
+  /** Inspect an already-running Container only. This never calls ensure/start,
+   * executes a cron, changes an alarm, or emits raw Profile state. */
+  async refreshRunningBusinessActivity(profile) {
+    if (!names.has(profile) || await this.ctx.storage.get('profile') !== profile) return {state:'unavailable'};
+    const start = await this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      return fence.pending ? null : fence.epoch;
+    });
+    if (start === null) return {state:'unavailable'};
+    const observedAt = Date.now();
+    try {
+      const container = this.ctx.container;
+      if (!container || !await container.inspect()) return {state:'unavailable'};
+      const response = await container.getTcpPort(7860).fetch(new Request('http://container/status', {
+        headers:{Authorization:'Bearer ' + await this.token()}, signal:AbortSignal.timeout(3000),
+      }));
+      if (!response.ok) { await response.body?.cancel(); return {state:'unavailable'}; }
+      const status = await boundedJson(response);
+      const projection = projectRunningStatus(profile, 'container:' + this.ctx.id.toString(), status, observedAt);
+      if (!projection || !validBusinessActivity(projection.businessActivity)) return {state:'unavailable'};
+      return await this.ctx.storage.transaction(async txn => {
+        const fence = await this.activityFence(txn);
+        if (fence.pending || fence.epoch !== start) return {state:'unavailable'};
+        const priorEpoch = await txn.get('activity_snapshot_epoch');
+        const prior = await txn.get('activity_snapshot');
+        // Never replace a concurrent, newer tick with an older status read.
+        if (priorEpoch === fence.epoch && prior?.state === 'observed' &&
+            validActivityBinding(prior.binding) && validBusinessActivity(prior.businessActivity) &&
+            prior.businessActivity.state === 'observed' && prior.businessActivity.observedAt >= observedAt) return prior;
+        await txn.put('activity_snapshot', projection);
+        await txn.put('activity_snapshot_epoch', fence.epoch);
+        return projection;
+      });
+    } catch { return {state:'unavailable'}; }
+  }
+
   /** Operator approval records only a one-use digest and the current fenced
    * placement identity. It neither starts a Container nor grants an API user. */
   async approveActivityEnrollment(profile, digest, expiresAt) {
@@ -102,8 +181,12 @@ export class ProfileContainer extends DurableObject {
     if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '') ||
         !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + 300000 ||
         await this.ctx.storage.get('profile') !== profile) return false;
-    const observation = await this.readBusinessActivity(profile);
-    if (observation.state !== 'observed') return false;
+    let observation = await this.readBusinessActivity(profile);
+    if (observation.state !== 'observed' || observation.businessActivity.state !== 'observed' ||
+        observation.businessActivity.observedAt > now || now - observation.businessActivity.observedAt > 900000)
+      observation = await this.refreshRunningBusinessActivity(profile);
+    if (observation.state !== 'observed' || observation.businessActivity.state !== 'observed' ||
+        observation.businessActivity.observedAt > Date.now() || Date.now() - observation.businessActivity.observedAt > 900000) return false;
     return this.ctx.storage.transaction(async txn => {
       const fence = await this.activityFence(txn);
       const snapshot = await txn.get('activity_snapshot');
@@ -337,7 +420,11 @@ export class PilotActivityService extends WorkerEntrypoint {
   async readBusinessActivity(profile) {
     if (!names.has(profile)) return {state: 'unavailable'};
     const owner = this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile);
-    return owner.readBusinessActivity(profile);
+    const prior = await owner.readBusinessActivity(profile);
+    if (prior.state === 'observed' && prior.businessActivity.state === 'observed' &&
+        prior.businessActivity.observedAt <= Date.now() && Date.now() - prior.businessActivity.observedAt <= 900000) return prior;
+    const refreshed = await owner.refreshRunningBusinessActivity(profile);
+    return refreshed.state === 'observed' ? refreshed : owner.readBusinessActivity(profile);
   }
 }
 
