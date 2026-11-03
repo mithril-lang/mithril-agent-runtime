@@ -95,6 +95,53 @@ export class ProfileContainer extends DurableObject {
     return snapshot;
   }
 
+  /** Operator approval records only a one-use digest and the current fenced
+   * placement identity. It neither starts a Container nor grants an API user. */
+  async approveActivityEnrollment(profile, digest, expiresAt) {
+    const now = Date.now();
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '') ||
+        !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + 300000 ||
+        await this.ctx.storage.get('profile') !== profile) return false;
+    const observation = await this.readBusinessActivity(profile);
+    if (observation.state !== 'observed') return false;
+    return this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      const snapshot = await txn.get('activity_snapshot');
+      const epoch = await txn.get('activity_snapshot_epoch');
+      const key = 'activity_enrollment:' + digest;
+      if (fence.pending || epoch !== fence.epoch || await txn.get(key) !== undefined ||
+          snapshot?.state !== 'observed' || !validActivityBinding(snapshot.binding) ||
+          snapshot.binding.profileIdentity !== observation.binding.profileIdentity ||
+          snapshot.binding.generation !== observation.binding.generation || Date.now() >= expiresAt) return false;
+      await txn.put(key, {profile, expiresAt, epoch, binding: snapshot.binding, consumed: false});
+      return true;
+    });
+  }
+
+  /** Private service redemption is atomic and never repeats an approval. The
+   * caller must independently bind the digest to an authenticated owner and
+   * recheck its own revocation epoch before creating any grant. */
+  async redeemActivityEnrollment(profile, digest) {
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '') ||
+        await this.ctx.storage.get('profile') !== profile) return {state: 'unavailable'};
+    return this.ctx.storage.transaction(async txn => {
+      const key = 'activity_enrollment:' + digest;
+      const approval = await txn.get(key);
+      const fence = await this.activityFence(txn);
+      const snapshot = await txn.get('activity_snapshot');
+      const epoch = await txn.get('activity_snapshot_epoch');
+      if (!approval || approval.profile !== profile || approval.consumed !== false ||
+          !Number.isSafeInteger(approval.expiresAt) || approval.expiresAt <= Date.now() ||
+          fence.pending || approval.epoch !== fence.epoch || epoch !== fence.epoch ||
+          snapshot?.state !== 'observed' || !validActivityBinding(snapshot.binding) ||
+          !validActivityBinding(approval.binding) ||
+          snapshot.binding.profileIdentity !== approval.binding.profileIdentity ||
+          snapshot.binding.generation !== approval.binding.generation) return {state: 'unavailable'};
+      await txn.put(key, {...approval, consumed: true});
+      return {state: 'approved', binding: approval.binding};
+    });
+  }
+
   async ensure() {
     if (this.starting) return this.starting;
     this.starting = this.startImpl().finally(() => { this.starting = null; });
@@ -279,6 +326,10 @@ print(json.dumps({'gateway_log_tail':text}))`;
 
 /** Private named service entrypoint; caller must authorize the exact Profile. */
 export class PilotActivityService extends WorkerEntrypoint {
+  async redeemActivityEnrollment(profile, digest) {
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '')) return {state: 'unavailable'};
+    return this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile).redeemActivityEnrollment(profile, digest);
+  }
   async readContainerActivity(profile) {
     if (!names.has(profile)) return {state: 'unavailable'};
     return this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile).readContainerActivity(profile);
@@ -316,9 +367,25 @@ export default {
       return new Response('Method not allowed', {status: 405, headers});
     }
     if (!operator) return new Response('Unauthorized', {status: 401, headers});
-    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|activity|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
+    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|activity|activity-approve|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
     if (!route || !names.has(route[1])) return new Response('Not found', {status: 404, headers});
     const owner = env.PROFILES.getByName('scheduled-profile-pilot-v1:' + route[1]);
+    if (route[2] === 'activity-approve') {
+      if (request.method !== 'POST') return new Response('Method not allowed', {status: 405, headers});
+      const length = Number(request.headers.get('content-length') ?? 0);
+      if (!Number.isSafeInteger(length) || length < 0 || length > 1024)
+        return new Response('Invalid request', {status: 400, headers});
+      try {
+        const text = await request.text();
+        if (text.length > 1024) return new Response('Invalid request', {status: 400, headers});
+        const body = JSON.parse(text);
+        if (!body || typeof body !== 'object' || Array.isArray(body) ||
+            Object.keys(body).sort().join(',') !== 'digest,expiresAt')
+          return new Response('Invalid request', {status: 400, headers});
+        return await owner.approveActivityEnrollment(route[1], body.digest, body.expiresAt)
+          ? new Response(null, {status: 204, headers}) : new Response('Approval unavailable', {status: 409, headers});
+      } catch { return new Response('Approval unavailable', {status: 503, headers}); }
+    }
     await owner.bind(route[1]);
     url.pathname = '/' + route[2];
     const forwardedHeaders = new Headers(request.headers);

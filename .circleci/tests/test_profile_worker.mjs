@@ -265,3 +265,41 @@ test('a tick beginning during a control mutation cannot publish after it complet
   assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
   assert.equal(ctx.alarms.length, 0);
 });
+
+
+test('operator approval is fenced, one-use and tied to the selected profile', async () => {
+  const { ProfileContainer, PilotActivityService, default: worker } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  const object = new ProfileContainer(ctx, {});
+  const env = {SERVICE_KEY: 'operator-secret', TRANSFER_KEY: 'transfer-secret', PROFILES: {getByName: () => object}};
+  const service = new PilotActivityService({}, env);
+  const profile = 'mithril-abb-information-bounty', digest = '1'.repeat(64);
+  const request = (secret, value = digest) => new Request('https://unit.invalid/profiles/' + profile + '/activity-approve', {
+    method: 'POST', headers: {Authorization: 'Bearer ' + secret, 'Content-Type': 'application/json'},
+    body: JSON.stringify({digest: value, expiresAt: Date.now() + 60000}),
+  });
+  assert.equal((await worker.fetch(request('wrong'), env)).status, 401);
+  assert.equal((await worker.fetch(request('operator-secret'), env)).status, 204);
+  assert.equal((await worker.fetch(request('operator-secret'), env)).status, 409);
+  assert.equal((await service.redeemActivityEnrollment('mithril-accxia-bounty', digest)).state, 'unavailable');
+  const [one, two] = await Promise.all([service.redeemActivityEnrollment(profile, digest), service.redeemActivityEnrollment(profile, digest)]);
+  assert.deepEqual([one.state, two.state].sort(), ['approved', 'unavailable']);
+  const approved = one.state === 'approved' ? one : two;
+  assert.equal(approved.binding.profileIdentity, binding.profileIdentity);
+  assert.equal(approved.binding.generation, binding.generation);
+  assert.equal((await worker.fetch(request('operator-secret'), env)).status, 409);
+  assert.equal(ctx.alarms.length, 0);
+});
+
+test('approval cannot survive expired proof or a placement mutation', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture(); ctx.values.set('activity_snapshot', snapshot);
+  const object = new ProfileContainer(ctx, {}), profile = 'mithril-abb-information-bounty';
+  const digest = '2'.repeat(64);
+  assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() - 1), false);
+  assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() + 300001), false);
+  assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() + 60000), true);
+  await object.guardActivityMutation(async () => {});
+  assert.equal((await object.redeemActivityEnrollment(profile, digest)).state, 'unavailable');
+});
