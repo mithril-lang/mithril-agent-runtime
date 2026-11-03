@@ -36,7 +36,8 @@ const binding = { profileIdentity: 'a'.repeat(32), generation: 1 };
 const snapshot = { state: 'observed', binding, businessActivity: projection };
 
 function fixture({ failCache = false } = {}) {
-  const values = new Map([['profile', 'mithril-abb-information-bounty']]);
+  const values = new Map([['profile', 'mithril-abb-information-bounty'], ['activity_snapshot_epoch', 0]]);
+  let chain = Promise.resolve();
   const alarms = [];
   return {
     values, alarms,
@@ -47,6 +48,11 @@ function fixture({ failCache = false } = {}) {
         values.set(key, value);
       },
       async setAlarm(value) { alarms.push(value); },
+      transaction(fn) {
+        const run = chain.then(() => fn(this));
+        chain = run.catch(() => {});
+        return run;
+      },
     },
     get container() { throw Error('activity read must not touch the container'); },
   };
@@ -183,4 +189,49 @@ test('failed instance inspection does not invent a state', async () => {
   Object.defineProperty(ctx, 'container', { get: () => ({ inspect: async () => { throw Error('unavailable'); } }) });
   const object = new ProfileContainer(ctx, {});
   assert.equal((await object.readContainerActivity('mithril-abb-information-bounty')).state, 'unavailable');
+});
+
+test('a control mutation fences an old concurrent tick and blocks reads while pending', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  const object = new ProfileContainer(ctx, {});
+  object.token = async () => 'synthetic';
+  object.arm = async () => {};
+  let finishTick, startedTick;
+  const started = new Promise(resolve => { startedTick = resolve; });
+  object.call = async () => {
+    startedTick();
+    return new Promise(resolve => { finishTick = resolve; });
+  };
+  const alarm = object.alarm();
+  await started;
+  let finishControl, startedControl;
+  const controlStarted = new Promise(resolve => { startedControl = resolve; });
+  const control = object.guardActivityMutation(() => {
+    startedControl();
+    return new Promise(resolve => { finishControl = resolve; });
+  });
+  await controlStarted;
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  finishTick(Response.json({exit_code: 0, business_activity: projection, activity_binding: binding}));
+  await alarm;
+  finishControl('done');
+  assert.equal(await control, 'done');
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  object.call = async () => Response.json({exit_code: 0, business_activity: projection, activity_binding: binding});
+  await object.alarm();
+  assert.deepEqual(await object.readBusinessActivity('mithril-abb-information-bounty'), snapshot);
+  assert.equal(ctx.alarms.length, 0);
+});
+
+test('corrupt or retained mutation holds never expose an observation', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  const object = new ProfileContainer(ctx, {});
+  ctx.values.set('activity_fence', {epoch: 1, pending: 1});
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  ctx.values.set('activity_fence', {epoch: 'bad', pending: 0});
+  await assert.rejects(object.readBusinessActivity('mithril-abb-information-bounty'));
 });
