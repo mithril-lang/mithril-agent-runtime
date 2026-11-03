@@ -300,6 +300,11 @@ test('approval cannot survive expired proof or a placement mutation', async () =
   assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() - 1), false);
   assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() + 600000), false);
   assert.equal(await object.approveActivityEnrollment(profile, digest, Date.now() + 60000), true);
+  const expired = '3'.repeat(64);
+  assert.equal(await object.approveActivityEnrollment(profile, expired, Date.now() + 60000), true);
+  ctx.values.get('activity_enrollment:' + expired).expiresAt = Date.now() - 1;
+  assert.equal((await object.redeemActivityEnrollment(profile, expired)).state, 'unavailable');
+  assert.equal(await object.approveActivityEnrollment(profile, expired, Date.now() + 60000), false);
   await object.guardActivityMutation(async () => {});
   assert.equal((await object.redeemActivityEnrollment(profile, digest)).state, 'unavailable');
 });
