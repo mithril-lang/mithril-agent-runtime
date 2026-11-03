@@ -49,11 +49,45 @@ export class ProfileContainer extends DurableObject {
     await this.ctx.storage.put('profile', name);
   }
 
+  async activityFence(store = this.ctx.storage) {
+    const fence = await store.get('activity_fence');
+    if (fence === undefined) return {epoch: 0, pending: 0};
+    if (!fence || typeof fence !== 'object' || Array.isArray(fence) ||
+        Object.keys(fence).sort().join(',') !== 'epoch,pending' ||
+        !Number.isSafeInteger(fence.epoch) || fence.epoch < 0 ||
+        !Number.isSafeInteger(fence.pending) || fence.pending < 0)
+      throw new Error('Activity fence unavailable');
+    return fence;
+  }
+
+  async guardActivityMutation(action) {
+    // A crash retains the hold: it cannot expose an observation until reviewed.
+    await this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      if (fence.epoch >= Number.MAX_SAFE_INTEGER || fence.pending >= Number.MAX_SAFE_INTEGER)
+        throw new Error('Activity fence exhausted');
+      await txn.put('activity_fence', {epoch: fence.epoch + 1, pending: fence.pending + 1});
+    });
+    try { return await action(); }
+    finally {
+      await this.ctx.storage.transaction(async txn => {
+        const fence = await this.activityFence(txn);
+        if (fence.pending < 1) throw new Error('Activity fence unavailable');
+        await txn.put('activity_fence', {epoch: fence.epoch, pending: fence.pending - 1});
+      });
+    }
+  }
+
   async readBusinessActivity(expectedName) {
     // Never create a binding or start a container during a read.
     if (!names.has(expectedName) || await this.ctx.storage.get('profile') !== expectedName)
       return {state: 'unavailable'};
-    const snapshot = await this.ctx.storage.get('activity_snapshot');
+    const snapshot = await this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      const epoch = await txn.get('activity_snapshot_epoch');
+      if (fence.pending || epoch !== fence.epoch) return null;
+      return txn.get('activity_snapshot');
+    });
     if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) ||
         Object.keys(snapshot).sort().join(',') !== 'binding,businessActivity,state' || snapshot.state !== 'observed' ||
         !validActivityBinding(snapshot.binding) || !validBusinessActivity(snapshot.businessActivity))
@@ -147,6 +181,9 @@ export class ProfileContainer extends DurableObject {
   }
 
   async alarm() {
+    // Reporting failure never suppresses an assigned business tick.
+    let activityEpoch = null;
+    try { activityEpoch = (await this.activityFence()).epoch; } catch {}
     // Wake only this profile's assigned owner. Never changes ownership or falls back locally.
     try {
       await this.ctx.storage.put('last_alarm', {started_at: Date.now(), profile: await this.ctx.storage.get('profile')});
@@ -160,14 +197,26 @@ export class ProfileContainer extends DurableObject {
       const snapshot = validActivityBinding(result.activity_binding) && validBusinessActivity(result.business_activity)
         ? {state: 'observed', binding: result.activity_binding, businessActivity: result.business_activity}
         : {state: 'unavailable'};
-      try { await this.ctx.storage.put('activity_snapshot', snapshot); }
-      catch { /* The previous observation will age out. */ }
+      try {
+        if (activityEpoch !== null) await this.ctx.storage.transaction(async txn => {
+          const fence = await this.activityFence(txn);
+          if (fence.pending || fence.epoch !== activityEpoch) return;
+          await txn.put('activity_snapshot', snapshot);
+          await txn.put('activity_snapshot_epoch', fence.epoch);
+        });
+      } catch { /* The previous observation will age out. */ }
     } catch {
       await this.ctx.storage.setAlarm(Date.now() + 60000);
     }
   }
 
   async fetch(request) {
+    if (request.method === 'POST')
+      return this.guardActivityMutation(() => this.handleRequest(request));
+    return this.handleRequest(request);
+  }
+
+  async handleRequest(request) {
     const path = new URL(request.url).pathname;
     if (path === '/diagnostics' && request.method === 'GET') {
       await this.ensure();
