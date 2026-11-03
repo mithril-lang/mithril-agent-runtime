@@ -357,3 +357,37 @@ test('running status refuses another owner and duplicate original jobs', async (
   assert.equal((await object.refreshRunningBusinessActivity(profile)).state,'unavailable');
   assert.equal(ctx.values.has('activity_snapshot'),false);
 });
+
+
+test('Worker and runtime agree on the original business job identity for every pilot Profile', async () => {
+  const worker = await readFile('cloud/profile-pilot/worker.mjs','utf8');
+  const runtime = await readFile('cloud/profile-pilot/runtime.py','utf8');
+  const js = worker.split('const businessJobs = Object.freeze({')[1]?.split('});')[0];
+  const py = runtime.split('BUSINESS_JOBS = {')[1]?.split('\n}')[0];
+  assert.ok(js);assert.ok(py);
+  const pairs = text => [...text.matchAll(/["\']([a-z0-9-]+)["\']\s*:\s*["\']([a-f0-9]{12})["\']/g)]
+    .map(match=>[match[1],match[2]]).sort(([a],[b])=>a.localeCompare(b));
+  assert.equal(pairs(js).length,10);assert.deepEqual(pairs(js),pairs(py));
+});
+
+test('a status response cannot overwrite a newer tick or leak untrusted fields', async () => {
+  const {ProfileContainer}=await loadWorker();const ctx=fixture();ctx.id={toString:()=> 'fixture'};
+  let release, began;const started=new Promise(resolve=>{began=resolve;});
+  Object.defineProperty(ctx,'container',{get:()=>({inspect:async()=>({image:'fixture'}),getTcpPort:()=>({fetch:async()=>{began();return new Promise(resolve=>{release=resolve;});}})})});
+  const object=new ProfileContainer(ctx,{});object.token=async()=> 'fixture';const profile='mithril-abb-information-bounty';
+  const pending=object.refreshRunningBusinessActivity(profile);await started;
+  const newer={...snapshot,businessActivity:{...projection,observedAt:Date.now()+1000}};
+  ctx.values.set('activity_snapshot',newer);ctx.values.set('activity_snapshot_epoch',0);
+  release(Response.json({profile,location:'container:fixture',placement:{phase:'active',owner:'container:fixture',identity:binding.profileIdentity,generation:1},
+    jobs:[{id:'e01760b1c7a3',enabled:true,last_status:'ok',last_run_at:'2026-11-03T00:00:00Z',next_run_at:null}]}));
+  assert.equal((await pending).businessActivity.observedAt,newer.businessActivity.observedAt);
+  assert.equal(ctx.values.get('activity_snapshot'),newer);
+});
+
+test('running status rejects an oversized response', async () => {
+  const {ProfileContainer}=await loadWorker();const ctx=fixture();ctx.id={toString:()=> 'fixture'};
+  Object.defineProperty(ctx,'container',{get:()=>({inspect:async()=>({image:'fixture'}),getTcpPort:()=>({fetch:async()=>new Response('x'.repeat(131073))})})});
+  const object=new ProfileContainer(ctx,{});object.token=async()=> 'fixture';
+  assert.equal((await object.refreshRunningBusinessActivity('mithril-abb-information-bounty')).state,'unavailable');
+  assert.equal(ctx.values.has('activity_snapshot'),false);
+});
