@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  release_authority_audit:
+    type: boolean
+    default: false
   scheduled_profile_pilot_validation:
     type: boolean
     default: false
@@ -18,6 +21,18 @@ parameters:
     default: ''
 
 jobs:
+  release-authority-audit:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Inspect only the original checkout token repository scope and write permission
+          command: python scripts/audit-release-authority.py
+      - store_artifacts:
+          path: /tmp/mithril-release-authority
+          destination: release-authority
   scheduled-profile-worker-activity:
     docker:
       - image: cimg/node:24.19.0
@@ -69,7 +84,9 @@ jobs:
       - checkout
       - run:
           name: Verify the runtime source inventory
-          command: python .circleci/validate-runtime-snapshot.py
+          command: |
+            python .circleci/validate-runtime-snapshot.py
+            python -m unittest discover -s tests -p test_release_authority.py -v
       - run:
           name: Validate the Python dependency lock through PM
           command: python -m pm.build_env --source . --check-lock
@@ -192,6 +209,13 @@ jobs:
           command: python3 .circleci/validate-runtime-snapshot.py
 
 workflows:
+  release-authority-audit:
+    when: << pipeline.parameters.release_authority_audit >>
+    jobs:
+      - release-authority-audit:
+          filters:
+            branches:
+              only: main
   scheduled-profile-pilot-validation:
     when: << pipeline.parameters.scheduled_profile_pilot_validation >>
     jobs:
@@ -205,6 +229,7 @@ workflows:
     when:
       and:
         - equal: ['', << pipeline.parameters.release_version >>]
+        - not: << pipeline.parameters.release_authority_audit >>
         - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
         - not: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
@@ -218,6 +243,7 @@ workflows:
   mithril-cli-release:
     when:
       and:
+        - not: << pipeline.parameters.release_authority_audit >>
         - not:
             equal: ['', << pipeline.parameters.release_version >>]
         - equal: [main, << pipeline.git.branch >>]

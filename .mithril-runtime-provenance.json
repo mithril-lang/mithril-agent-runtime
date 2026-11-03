@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "9bb9df66aa8f755ae63a4ca8b1d20c25baa3ef0db091168c35d986747459e993",
+    "sha256": "e13e4f576508525ae6c03bf1f020986e32e40cc8da354db38047914703d5701b",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "af60522555511df7944eb0091d2836f8c9fff9628f461fa5ac84c08c4d953c0b"
+        "sha256": "2916bc5b5231b2c39278eb42fcb025696f72fe256ffeab515c6e528c88ed2f74"
       },
       {
         "path": ".circleci/tests/test_cloud_activity.py",
@@ -50139,6 +50139,11 @@
         "sha256": "f1bb5bf56eb3e6e81c042ea20c68d60e4827e5d66abf944e5f2e3340f2097668"
       },
       {
+        "path": "scripts/audit-release-authority.py",
+        "baseSha256": null,
+        "sha256": "d4c4dd047063ffd4502f6764afebab18cd83a997377118bb9592d3fbb979a36a"
+      },
+      {
         "path": "scripts/build-mithril-release.py",
         "baseSha256": null,
         "sha256": "066169183c97e77ed14284458e5962a1ef577bb80a77c22fc8998135aa9cc993"
@@ -50265,6 +50270,11 @@
         "path": "tests/test_profile_skill_sync.py",
         "baseSha256": null,
         "sha256": "f69520d330bea796d9fd6cfb32a4bc6122e81e952966e7f8d6ecc1b0272856e2"
+      },
+      {
+        "path": "tests/test_release_authority.py",
+        "baseSha256": null,
+        "sha256": "d2858365deed25a869e60c73baa06e1c4fba151dda002cf9e38244ab217128da"
       },
       {
         "path": "tests/test_startup_branding.py",
