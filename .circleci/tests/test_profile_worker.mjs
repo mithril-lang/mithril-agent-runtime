@@ -343,3 +343,17 @@ test('status refresh neither starts an idle Container nor publishes across a pla
     jobs:[{id:'e01760b1c7a3',enabled:true,last_status:'ok',last_run_at:'2026-11-03T00:00:00Z',next_run_at:null}]}));
   assert.equal((await pending).state,'unavailable');assert.equal(ctx.values.has('activity_snapshot'),false);
 });
+
+
+test('running status refuses another owner and duplicate original jobs', async () => {
+  const {ProfileContainer} = await loadWorker();
+  const ctx=fixture();ctx.id={toString:()=> 'fixture'};const profile='mithril-abb-information-bounty';
+  const job={id:'e01760b1c7a3',enabled:true,last_status:'ok',last_run_at:'2026-11-03T00:00:00Z',next_run_at:null};
+  let status={profile,location:'container:fixture',placement:{phase:'active',owner:'container:other',identity:binding.profileIdentity,generation:1},jobs:[job]};
+  Object.defineProperty(ctx,'container',{get:()=>({inspect:async()=>({image:'fixture'}),getTcpPort:()=>({fetch:async()=>Response.json(status)})})});
+  const object=new ProfileContainer(ctx,{});object.token=async()=> 'fixture';
+  assert.equal((await object.refreshRunningBusinessActivity(profile)).state,'unavailable');
+  status={...status,placement:{...status.placement,owner:'container:fixture'},jobs:[job,job]};
+  assert.equal((await object.refreshRunningBusinessActivity(profile)).state,'unavailable');
+  assert.equal(ctx.values.has('activity_snapshot'),false);
+});

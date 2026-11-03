@@ -22,7 +22,7 @@ async function boundedJson(response, limit = 131072) {
   try {
     for (;;) {
       const {done,value} = await reader.read(); if (done) break;
-      size += value.byteLength; if (size > limit) { void reader.cancel(); throw Error('Status too large'); }
+      size += value.byteLength; if (size > limit) { void reader.cancel().catch(() => {}); throw Error('Status too large'); }
       chunks.push(decoder.decode(value, {stream:true}));
     }
     chunks.push(decoder.decode()); return JSON.parse(chunks.join(''));
@@ -165,6 +165,7 @@ export class ProfileContainer extends DurableObject {
         const prior = await txn.get('activity_snapshot');
         // Never replace a concurrent, newer tick with an older status read.
         if (priorEpoch === fence.epoch && prior?.state === 'observed' &&
+            Object.keys(prior).sort().join(',') === 'binding,businessActivity,state' &&
             validActivityBinding(prior.binding) && validBusinessActivity(prior.businessActivity) &&
             prior.businessActivity.state === 'observed' && prior.businessActivity.observedAt >= observedAt) return prior;
         await txn.put('activity_snapshot', projection);
