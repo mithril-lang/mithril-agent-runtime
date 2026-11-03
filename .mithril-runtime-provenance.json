@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "042be510419f50ed6f482ac3c426afc2e63e5f265a91afccb33764363606f0af",
+    "sha256": "04c9b160c8d69c44c4b33c0a18ca1198be349b4198fb19f271356f95283fddf0",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49845,7 +49845,7 @@
       {
         "path": ".circleci/tests/test_profile_placement.py",
         "baseSha256": null,
-        "sha256": "2985dc8c6173e5773ac1da8754fcc120dd0bf9659a96620299090b83db88a822"
+        "sha256": "fc0d1edf22b5f5979dc9193ea6a5c2dd23b3fa80a777741202a425cb21a6295b"
       },
       {
         "path": ".circleci/tests/test_profile_worker.mjs",
@@ -49920,7 +49920,7 @@
       {
         "path": "cloud/profile-pilot/overlay.mjs",
         "baseSha256": null,
-        "sha256": "144ec36a7b9801712515cea9d7167915d5a8b7cbfba46a42728ec5dc487d2dab"
+        "sha256": "e3737ff728c27fd1c203f0906e42f69e706ece2c6c8e56d46e19c93339dc8326"
       },
       {
         "path": "cloud/profile-pilot/release-guard.mjs",
@@ -50056,7 +50056,7 @@
       {
         "path": "hermes_cli/profile_placement.py",
         "baseSha256": null,
-        "sha256": "7a832def39b55f7f4d981ef10a34ba1c4252722151a38e04787966ca9181a5e1"
+        "sha256": "72a6166e06620dc3dae5bf6e7a6249130fe92e72aedbdb75648ef684ddaa20c2"
       },
       {
         "path": "hermes_cli/runtime_provider_custom.py",

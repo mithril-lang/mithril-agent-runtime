@@ -75,6 +75,18 @@ class PlacementTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), "admitted")
 
+    def test_first_party_profile_metadata_survives_authenticated_transfer(self):
+        # This identity belongs to the Profile manager; it is distinct from
+        # the placement fence identity and must travel unchanged when present.
+        metadata = '{"schemaVersion":1,"runtimeProfileId":"83219587-f23c-44c4-b329-13f117fae214"}'
+        (self.a / ".mithril-profile.json").write_text(metadata)
+        (self.a / ".not-in-transfer").write_text("excluded")
+        placement_identity = p.status(self.a)["identity"]
+        self.transfer()
+        self.assertEqual((self.b / ".mithril-profile.json").read_text(), metadata)
+        self.assertFalse((self.b / ".not-in-transfer").exists())
+        self.assertEqual(p.status(self.b)["identity"], placement_identity)
+
     def test_drain_blocks_new_work_but_preserves_admitted_nested_work(self):
         entered, finish = threading.Event(), threading.Event()
         errors = []
