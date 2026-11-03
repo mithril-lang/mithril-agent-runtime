@@ -235,3 +235,33 @@ test('corrupt or retained mutation holds never expose an observation', async () 
   ctx.values.set('activity_fence', {epoch: 'bad', pending: 0});
   await assert.rejects(object.readBusinessActivity('mithril-abb-information-bounty'));
 });
+
+test('a tick beginning during a control mutation cannot publish after it completes', async () => {
+  const { ProfileContainer } = await loadWorker();
+  const ctx = fixture();
+  ctx.values.set('activity_snapshot', snapshot);
+  const object = new ProfileContainer(ctx, {});
+  object.token = async () => 'synthetic';
+  object.arm = async () => {};
+  let releaseControl, controlStarted;
+  const startedControl = new Promise(resolve => { controlStarted = resolve; });
+  const control = object.guardActivityMutation(() => {
+    controlStarted();
+    return new Promise(resolve => { releaseControl = resolve; });
+  });
+  await startedControl;
+  let releaseTick, tickStarted;
+  const startedTick = new Promise(resolve => { tickStarted = resolve; });
+  object.call = async () => {
+    tickStarted();
+    return new Promise(resolve => { releaseTick = resolve; });
+  };
+  const alarm = object.alarm();
+  await startedTick;
+  releaseControl('ok');
+  await control;
+  releaseTick(Response.json({exit_code: 0, business_activity: projection, activity_binding: binding}));
+  await alarm;
+  assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
+  assert.equal(ctx.alarms.length, 0);
+});
