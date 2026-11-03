@@ -93,3 +93,45 @@ def show(args):
         except (OverflowError, OSError, ValueError):
             last = observed = "unknown"
         print(f"Last observed business cron result: {historical['result']} (stale; last run {last}; observed {observed})")
+
+
+# The operator key remains in the operator's private environment and is never
+# sent to a caller-provided URL or exposed in output.
+_PILOT_ORIGIN = "https://mithril-profile-pilot-20261101.cloud-kotoba.workers.dev"
+_PILOT_NAMES = frozenset({
+    "mithril-abb-information-bounty", "mithril-airtable-bounty", "mithril-akeles-bounty",
+    "mithril-alohi-bounty", "mithril-amoeboids-bounty", "mithril-agilepulse-bounty",
+    "mithril-aelbox-bounty", "mithril-alsco-bounty", "mithril-accxia-bounty", "mithril-adevinta-bounty",
+})
+
+
+def approve_pairing(args):
+    """Confirm one digest from stdin; only the pilot operator may run this."""
+    import getpass
+    import os
+    import re
+    import sys
+    import urllib.request
+    from urllib.error import HTTPError, URLError
+
+    name, expiry = args.profile_name, args.expires_at
+    key = os.environ.get("MITHRIL_PILOT_SERVICE_KEY", "")
+    now = int(time.time() * 1000)
+    if name not in _PILOT_NAMES or not key or type(expiry) is not int or not now < expiry <= now + 300000:
+        raise ValueError("Approval unavailable")
+    digest = getpass.getpass("Pairing digest: ") if sys.stdin.isatty() else sys.stdin.readline(128).strip()
+    if not re.fullmatch(r"[a-f0-9]{64}", digest):
+        raise ValueError("Approval unavailable")
+    payload = json.dumps({"digest": digest, "expiresAt": expiry}, separators=(",", ":")).encode()
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    request = urllib.request.Request(_PILOT_ORIGIN + "/profiles/" + name + "/activity-approve",
+        data=payload, headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=15) as response:
+            if response.status != 204:
+                raise ValueError("Approval unavailable")
+    except (HTTPError, URLError, OSError, TimeoutError) as exc:
+        raise ValueError("Approval unavailable") from None
+    print("Pairing approved. Return to the signed-in app to complete it.")

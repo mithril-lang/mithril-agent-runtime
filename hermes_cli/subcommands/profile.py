@@ -76,6 +76,9 @@ def build_profile_parser(subparsers, *, cmd_profile: Callable) -> None:
     profile_activity = profile_subparsers.add_parser("activity", help="Read Cloud Agent activity for a profile")
     profile_activity.add_argument("profile_name", help="Cloud profile name")
     profile_activity.add_argument("--json", action="store_true", help="Output a normalized JSON result")
+    approve = profile_subparsers.add_parser("activity-approve", help="Operator: approve a Cloud Agent pairing digest")
+    approve.add_argument("profile_name", help="Assigned cloud profile name")
+    approve.add_argument("--expires-at", type=int, required=True, help="Challenge expiry in Unix milliseconds")
 
     profile_show = profile_subparsers.add_parser("show", help="Show profile details")
     profile_show.add_argument("profile_name", help="Profile to show")
