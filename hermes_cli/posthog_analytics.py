@@ -1,6 +1,9 @@
 """Optional, Profile-scoped Mithril usage metadata. Never exports command arguments or content."""
 from __future__ import annotations
 import argparse
+import contextvars
+from concurrent.futures import ThreadPoolExecutor
+import threading
 import json
 import os
 from pathlib import Path
@@ -60,11 +63,13 @@ def set_consent(enabled, home=None):
     return value
 
 def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None,
-           home=None, token_reader=None, opener=None):
+           home=None, token_reader=None, opener=None, client="cli"):
     # No token lookup, queue, disk event or network request without the active Profile choice.
     consent = read_consent(home)
     if not consent or os.environ.get("MITHRIL_AGENT") != "1":
         return {"state":"disabled", "indexingVerified":False}
+    if client not in ("cli", "bot"):
+        raise ValueError("Unknown analytics client")
     if channel not in CHANNELS or outcome not in OUTCOMES or feature not in FEATURES:
         raise ValueError("Unknown analytics dimension")
     if campaign_ref is not None and not re.fullmatch(r"[a-f0-9]{64}", campaign_ref):
@@ -81,7 +86,7 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
     token = token_reader()
     if not isinstance(token, str) or not token or len(token)>4096 or re.search(r"\s",token):
         return {"state":"credential-required", "indexingVerified":False}
-    event = {"id":str(uuid.uuid4()), "client":"cli", "channel":channel, "outcome":outcome,
+    event = {"id":str(uuid.uuid4()), "client":client, "channel":channel, "outcome":outcome,
              "feature":feature, "at":int(time.time()), "profileRef":consent["profileRef"]}
     if campaign_ref: event["campaignRef"]=campaign_ref
     if evidence_digest: event["evidenceDigest"]=evidence_digest
@@ -101,6 +106,51 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
     except Exception:
         pass
     return result
+
+# The best-effort projection never delays cron delivery or persists an event for retry.
+_BOT_LIMIT = threading.BoundedSemaphore(64)
+_BOT_LOCK = threading.Lock()
+_BOT_EXECUTOR = None
+
+def queue_bot_execution(row):
+    """Queue one coarse execution result after a winning durable terminal write.
+
+    Delivery is deliberately not inferred: queued/suppressed/failed delivery can
+    coexist with a completed execution. Unknown or unstarted attempts are excluded.
+    """
+    if not isinstance(row, dict) or not row.get("started_at") or row.get("status") not in ("completed", "failed"):
+        return False
+    if row.get("delivery_outcome") not in ("delivered", "queued", "failed", "not_configured", "suppressed", "suppressed_acked"):
+        return False
+    try:
+        from hermes_constants import get_hermes_home
+        home = Path(get_hermes_home())
+        if os.environ.get("MITHRIL_AGENT") != "1" or not read_consent(home):
+            return False
+        if not _BOT_LIMIT.acquire(blocking=False):
+            return False
+        try:
+            context = contextvars.copy_context()
+            outcome = row["status"]
+            def send():
+                try:
+                    context.run(record, "bot", outcome, "schedule", home=home, client="bot")
+                except Exception:
+                    pass
+                finally:
+                    _BOT_LIMIT.release()
+            global _BOT_EXECUTOR
+            with _BOT_LOCK:
+                if _BOT_EXECUTOR is None:
+                    _BOT_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mithril-bot-analytics")
+                _BOT_EXECUTOR.submit(send)
+            return True
+        except Exception:
+            _BOT_LIMIT.release()
+            return False
+    except Exception:
+        return False
+
 
 def reported_command(callback, args):
     try:
