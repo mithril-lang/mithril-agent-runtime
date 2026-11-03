@@ -91,6 +91,9 @@ jobs:
           name: Verify Google Chat runtime dependencies are importable
           command: .venv/bin/python -c "from plugins.platforms.google_chat.adapter import check_google_chat_requirements; assert check_google_chat_requirements()"
       - run:
+          name: Verify Profile-owned Bot analytics ledger fence
+          command: .venv/bin/python .circleci/tests/test_posthog_ledger.py -v
+      - run:
           name: Verify Mithril account routing and first-launch approval
           command: >-
             HERMES_PYTHON="$PWD/.venv/bin/python" PYTHONDONTWRITEBYTECODE=1

@@ -47,6 +47,8 @@ class Analytics(unittest.TestCase):
         self.assertEqual("cli",payload["event"]["client"])
         self.assertNotIn(str(self.home),request.data.decode())
         self.assertEqual({"id","client","channel","outcome","feature","at","profileRef"},set(payload["event"]))
+        analytics.record("bot","completed","schedule",home=self.home,token_reader=lambda:"synthetic-profile-token",opener=opener,client="bot")
+        self.assertEqual("bot",json.loads(opener.calls[-1].data)["event"]["client"])
         with self.assertRaises(ValueError):
             analytics.record("bot","completed","private-prompt",home=self.home)
     def test_timeout_is_unknown_with_one_attempt(self):
@@ -73,4 +75,98 @@ class Analytics(unittest.TestCase):
         analytics.build_analytics_parser(subs)
         with self.assertRaises(SystemExit):parser.parse_args(["analytics","enable"])
         self.assertTrue(parser.parse_args(["analytics","enable","--usage-consent"]).usage_consent)
+
+    def test_bot_projection_uses_only_completed_owned_started_attempts(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def put_nowait(self, fn): self.jobs.append(fn)
+            def is_alive(self): return True
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_QUEUE",deferred), \
+             patch.object(analytics,"_BOT_WORKER",deferred), \
+             patch.object(analytics,"record") as send:
+            for row in ({"status":"unknown","started_at":"yes","delivery_outcome":"delivered"},
+                        {"status":"completed","started_at":None,"delivery_outcome":"delivered"},
+                        {"status":"completed","started_at":"yes","delivery_outcome":None}):
+                self.assertFalse(analytics.queue_bot_execution(row))
+            row={"status":"completed","started_at":"yes","delivery_outcome":"queued",
+                 "job_id":"private-job","error":"private-error"}
+            self.assertTrue(analytics.queue_bot_execution(row))
+            self.assertEqual(1,len(deferred.jobs))
+            deferred.jobs.pop()()
+            send.assert_called_once_with("bot","completed","schedule",home=self.home,client="bot")
+            self.assertNotIn("private",str(send.call_args))
+
+    def test_bot_withdraw_and_reenable_does_not_send_prior_generation(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def put_nowait(self, fn): self.jobs.append(fn)
+            def is_alive(self): return True
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_QUEUE",deferred), \
+             patch.object(analytics,"_BOT_WORKER",deferred), \
+             patch.object(analytics,"record") as send:
+            self.assertTrue(analytics.queue_bot_execution(
+                {"status":"completed","started_at":"yes","delivery_outcome":"delivered"}))
+            analytics.set_consent(False,self.home)
+            analytics.set_consent(True,self.home)
+            deferred.jobs.pop()()
+            send.assert_not_called()
+
+    def test_bot_worker_is_a_single_daemon_and_queue_is_bounded(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def put_nowait(self, fn): self.jobs.append(fn)
+        class Thread:
+            def __init__(self, *, target, name, daemon):
+                self.target=target; self.name=name; self.daemon=daemon; self.started=False
+            def start(self): self.started=True
+            def is_alive(self): return self.started
+        self.assertEqual(64,analytics._BOT_QUEUE.maxsize)
+        analytics.set_consent(True,self.home)
+        pending=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_QUEUE",pending), \
+             patch.object(analytics,"_BOT_WORKER",None), \
+             patch.object(analytics.threading,"Thread",Thread):
+            row={"status":"completed","started_at":"yes","delivery_outcome":"suppressed"}
+            self.assertTrue(analytics.queue_bot_execution(row))
+            self.assertTrue(analytics.queue_bot_execution(row))
+            self.assertTrue(analytics._BOT_WORKER.daemon)
+            self.assertEqual(2,len(pending.jobs))
+
+    def test_bot_full_queue_drops_without_sending(self):
+        class Full:
+            def is_alive(self): return True
+            def put_nowait(self, fn): raise analytics.queue.Full
+        analytics.set_consent(True,self.home)
+        full=Full()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_QUEUE",full), \
+             patch.object(analytics,"_BOT_WORKER",full), \
+             patch.object(analytics,"record") as send:
+            self.assertFalse(analytics.queue_bot_execution(
+                {"status":"completed","started_at":"yes","delivery_outcome":"delivered"}))
+            send.assert_not_called()
+
+    def test_bot_consent_withdrawal_before_async_send_prevents_request(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def put_nowait(self, fn): self.jobs.append(fn)
+            def is_alive(self): return True
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_QUEUE",deferred), \
+             patch.object(analytics,"_BOT_WORKER",deferred), \
+             patch("hermes_cli.mithril_account.read_mithril_account_token",side_effect=AssertionError("no credential after withdrawal")):
+            self.assertTrue(analytics.queue_bot_execution(
+                {"status":"completed","started_at":"yes","delivery_outcome":"delivered"}))
+            analytics.set_consent(False,self.home)
+            deferred.jobs.pop()()
+
 if __name__=="__main__":unittest.main()

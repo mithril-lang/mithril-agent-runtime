@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "f56414891c3779a40364f17569b6df7ed8736d9f8ffa4284a659639a9d93dc69",
+    "sha256": "5186256c00994cde4b9de6530a0dd6d4375dbf434f5b4dc37b6b9b0d5e990513",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "69a3e2ac75a7e2764527ae11a5d4c146676c88468f6c2c269dafc20998d9c9c5"
+        "sha256": "94fa864fdf278c7e386fe8c44f2d7a077439041ef379da4f04ee9810dcf87783"
       },
       {
         "path": ".circleci/tests/test_cloud_activity.py",
@@ -49831,6 +49831,11 @@
         "path": ".circleci/tests/test_pilot_release_guard.mjs",
         "baseSha256": null,
         "sha256": "99b26a95a9d697bfdd09ee4179a6c688e26914d9dd3a1542793fcc6b6c2b807b"
+      },
+      {
+        "path": ".circleci/tests/test_posthog_ledger.py",
+        "baseSha256": null,
+        "sha256": "2a2f8cdb1c16b8480083099016c8f048a28462c1f044dd490312b76b1732bb15"
       },
       {
         "path": ".circleci/tests/test_profile_checkpoint.py",
@@ -49943,6 +49948,11 @@
         "sha256": "af0ba159ce8e3630c8cb41a78f46cf872e3d974249f763891d50c4b5657e57c5"
       },
       {
+        "path": "cron/executions.py",
+        "baseSha256": "4b89d2fac250829b624c6ac7e87478e7aaae9c49a8b9b7b5a969cdc7b19d4322",
+        "sha256": "094b869116e3a668e9984d2fb38de93fcd9c267ce797f56031ebb56d1cad2577"
+      },
+      {
         "path": "cron/scheduler.py",
         "baseSha256": "9af9717cc8e5d36aa3737d932bc6ecb35d68621ac37d107033b38152b96a4c82",
         "sha256": "72dfea372b68e36ffb1c3af4061c374950051c9c152ed8a5702ad08cc787199e"
@@ -49965,7 +49975,7 @@
       {
         "path": "docs/mithril-posthog-analytics.md",
         "baseSha256": null,
-        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
+        "sha256": "b4b10ae210fea21e8f33d210e4ee24fc22c5c9a0c58c876c61ce578d098ae7a0"
       },
       {
         "path": "docs/operations/google-chat-keyless.md",
@@ -50046,7 +50056,7 @@
       {
         "path": "hermes_cli/posthog_analytics.py",
         "baseSha256": null,
-        "sha256": "ebe649ce05619febb51ab4fe9bbe7e89c09c5c7326e60b285c2e16fdaab12c50"
+        "sha256": "04634ca47453158315bcd7647879c285a8727c8ae75065f50522e60a4f45a4e2"
       },
       {
         "path": "hermes_cli/profile_cmd.py",
@@ -50224,7 +50234,7 @@
       {
         "path": "tests/test_posthog_analytics.py",
         "baseSha256": null,
-        "sha256": "2ee8bb7d7770c1d44a2591ada4e8ce2ce602aa9755a131591995eb359b4f7e82"
+        "sha256": "29dd222f9b4e9fcf6e30a612cdb9a46143862871e810aa427f7209e20e6fc4ee"
       },
       {
         "path": "tests/test_profile_dependency_cache.py",
