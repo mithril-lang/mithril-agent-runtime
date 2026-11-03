@@ -183,7 +183,7 @@ export class ProfileContainer extends DurableObject {
   async alarm() {
     // Reporting failure never suppresses an assigned business tick.
     let activityEpoch = null;
-    try { activityEpoch = (await this.activityFence()).epoch; } catch {}
+    try { const fence = await this.activityFence(); if (!fence.pending) activityEpoch = fence.epoch; } catch {}
     // Wake only this profile's assigned owner. Never changes ownership or falls back locally.
     try {
       await this.ctx.storage.put('last_alarm', {started_at: Date.now(), profile: await this.ctx.storage.get('profile')});
