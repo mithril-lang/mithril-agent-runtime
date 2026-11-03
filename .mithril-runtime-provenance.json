@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "921a9df23c3282bd5f109693bdc336523250c79dce92930fcf45e44784069e4c",
+    "sha256": "f079edf3ead31e95546d7f5b07f1371fdd497c8d9462f9af0fdc3fbf0f56c4c2",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "69a3e2ac75a7e2764527ae11a5d4c146676c88468f6c2c269dafc20998d9c9c5"
+        "sha256": "94fa864fdf278c7e386fe8c44f2d7a077439041ef379da4f04ee9810dcf87783"
       },
       {
         "path": ".circleci/tests/test_cloud_activity.py",
@@ -49831,6 +49831,11 @@
         "path": ".circleci/tests/test_pilot_release_guard.mjs",
         "baseSha256": null,
         "sha256": "99b26a95a9d697bfdd09ee4179a6c688e26914d9dd3a1542793fcc6b6c2b807b"
+      },
+      {
+        "path": ".circleci/tests/test_posthog_ledger.py",
+        "baseSha256": null,
+        "sha256": "2a2f8cdb1c16b8480083099016c8f048a28462c1f044dd490312b76b1732bb15"
       },
       {
         "path": ".circleci/tests/test_profile_checkpoint.py",
@@ -50229,7 +50234,7 @@
       {
         "path": "tests/test_posthog_analytics.py",
         "baseSha256": null,
-        "sha256": "d88d93dfd0e33743231a4b839aca8864573f3520f99ec223fa571f8a59ba59e4"
+        "sha256": "ebefd45353e728700df9f420178bd25528a5b700639cf804fb93abfdc9ef5de6"
       },
       {
         "path": "tests/test_profile_dependency_cache.py",
