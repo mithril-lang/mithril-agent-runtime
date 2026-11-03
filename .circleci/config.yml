@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  release_publish:
+    type: boolean
+    default: false
   release_authority_audit:
     type: boolean
     default: false
@@ -109,6 +112,7 @@ jobs:
           command: |
             .venv/bin/python -m unittest discover -s tests -p test_mithril_sentry.py -v
             .venv/bin/python -m unittest discover -s tests -p test_mithril_diagnostics.py -v
+            .venv/bin/python -m unittest discover -s tests -p test_release_publication.py -v
       - run:
           name: Verify Google Chat runtime dependencies are importable
           command: .venv/bin/python -c "from plugins.platforms.google_chat.adapter import check_google_chat_requirements; assert check_google_chat_requirements()"
@@ -158,6 +162,7 @@ jobs:
     docker:
       - image: cimg/python:3.14.7
     environment:
+      CIRCLE_PIPELINE_ID: << pipeline.id >>
       RELEASE_VERSION: << pipeline.parameters.release_version >>
       RELEASE_SEQUENCE: << pipeline.parameters.release_sequence >>
       PREVIOUS_REVISION: << pipeline.parameters.release_previous_revision >>
@@ -172,6 +177,65 @@ jobs:
       - store_artifacts:
           path: /tmp/mithril-release
           destination: mithril-release
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - mithril-release
+
+  preflight-mithril-release:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: medium
+    environment:
+      CIRCLE_PIPELINE_ID: << pipeline.id >>
+      RELEASE_VERSION: << pipeline.parameters.release_version >>
+      RELEASE_SEQUENCE: << pipeline.parameters.release_sequence >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Verify original source provenance and build the locked publication environment
+          command: |
+            python .circleci/validate-runtime-snapshot.py
+            python -m pm.build_env --source . --out .venv --group dev --group test
+      - run:
+          name: Review signed artifacts and scoped remote authority without release mutation
+          command: .venv/bin/python scripts/publish-mithril-release.py preflight --assets /tmp/mithril-release --state /tmp/mithril-cli-preflight.json --version "$RELEASE_VERSION" --sequence "$RELEASE_SEQUENCE"
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - mithril-cli-preflight.json
+      - store_artifacts:
+          path: /tmp/mithril-cli-preflight.json
+          destination: cli-publication-preflight.json
+      - store_artifacts:
+          path: /tmp/mithril-cli-publication
+          destination: cli-publication
+
+  publish-mithril-release:
+    docker:
+      - image: cimg/python:3.14.7
+    resource_class: medium
+    environment:
+      CIRCLE_PIPELINE_ID: << pipeline.id >>
+      RELEASE_VERSION: << pipeline.parameters.release_version >>
+      RELEASE_SEQUENCE: << pipeline.parameters.release_sequence >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Verify original source provenance and build the locked publication environment
+          command: |
+            python .circleci/validate-runtime-snapshot.py
+            python -m pm.build_env --source . --out .venv --group dev --group test
+      - run:
+          name: Publish the approved original source and independently verify public bytes
+          command: .venv/bin/python scripts/publish-mithril-release.py publish --assets /tmp/mithril-release --state /tmp/mithril-cli-preflight.json --version "$RELEASE_VERSION" --sequence "$RELEASE_SEQUENCE"
+      - store_artifacts:
+          path: /tmp/mithril-cli-publication
+          destination: cli-publication
 
   validate-runtime-distribution:
     docker:
@@ -229,6 +293,7 @@ workflows:
     when:
       and:
         - equal: ['', << pipeline.parameters.release_version >>]
+        - not: << pipeline.parameters.release_publish >>
         - not: << pipeline.parameters.release_authority_audit >>
         - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
         - not: << pipeline.parameters.gateway_cron_repair_validation >>
@@ -243,6 +308,7 @@ workflows:
   mithril-cli-release:
     when:
       and:
+        - not: << pipeline.parameters.release_publish >>
         - not: << pipeline.parameters.release_authority_audit >>
         - not:
             equal: ['', << pipeline.parameters.release_version >>]
@@ -260,3 +326,41 @@ workflows:
             - mithril-account-auth
             - mithril-distribution
             - mithril-fresh-install
+
+  mithril-cli-cloud-publish:
+    when:
+      and:
+        - << pipeline.parameters.release_publish >>
+        - not: << pipeline.parameters.release_authority_audit >>
+        - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
+        - not: << pipeline.parameters.gateway_cron_repair_validation >>
+        - not:
+            equal: ['', << pipeline.parameters.release_version >>]
+        - equal: [main, << pipeline.git.branch >>]
+    jobs:
+      - validate-source
+      - mithril-account-auth
+      - mithril-distribution
+      - validate-runtime-distribution
+      - mithril-fresh-install:
+          requires:
+            - validate-source
+      - sign-mithril-release:
+          requires:
+            - validate-source
+            - mithril-account-auth
+            - mithril-distribution
+            - validate-runtime-distribution
+            - mithril-fresh-install
+      - preflight-mithril-release:
+          context: mithril-cli-release-publisher
+          requires:
+            - sign-mithril-release
+      - approve-mithril-publication:
+          type: approval
+          requires:
+            - preflight-mithril-release
+      - publish-mithril-release:
+          context: mithril-cli-release-publisher
+          requires:
+            - approve-mithril-publication
