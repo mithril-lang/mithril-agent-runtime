@@ -73,7 +73,8 @@ export function verifyPilotOwner({worker, activeVersion, predecessor, applicatio
 /** Construct only a source-bound binding plan. Upload and activation require
  * a separate qualified publisher, concurrency control and live read-back. */
 export function pilotBindingPlan(owner, sourceSha) {
-  if (!owner || !uuid.test(owner.predecessor ?? '') || !sha.test(sourceSha ?? ''))
+  if (!owner || !uuid.test(owner.predecessor ?? '') || !sha.test(owner.previousSource ?? '') ||
+      owner.applicationId!==applicationId || owner.namespaceId!==namespaceId || owner.image!==image || !sha.test(sourceSha ?? ''))
     throw Error('Pinned predecessor and exact source required');
   return names.map(name=>name==='SOURCE_SHA'
     ? {name,type:'plain_text',text:sourceSha}
