@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "5186256c00994cde4b9de6530a0dd6d4375dbf434f5b4dc37b6b9b0d5e990513",
+    "sha256": "9bb9df66aa8f755ae63a4ca8b1d20c25baa3ef0db091168c35d986747459e993",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "94fa864fdf278c7e386fe8c44f2d7a077439041ef379da4f04ee9810dcf87783"
+        "sha256": "af60522555511df7944eb0091d2836f8c9fff9628f461fa5ac84c08c4d953c0b"
       },
       {
         "path": ".circleci/tests/test_cloud_activity.py",
@@ -49870,7 +49870,7 @@
       {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "2fcdfc7590addba1a8adf71f20cad68a77fb183462747192103ece8bddd461bd"
+        "sha256": "1ad0da1680f604633b7abc436a5e041ac8ec10f3dfa9709de2b76ef4b8f0041a"
       },
       {
         "path": "agent/agent_init.py",
@@ -50025,7 +50025,7 @@
       {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
-        "sha256": "979ffb2c982d1556812ada4d0892cbb1f376d2fe98c1f5beefb91b65656d4402"
+        "sha256": "91c90255d892aeb8a64eafc8a6e00ddddf290c9d7ecee444bfebd735d52d19e1"
       },
       {
         "path": "hermes_cli/mithril_account.py",
@@ -50042,6 +50042,16 @@
           "path": "services/agent/hermes_cli/mithril_auth.py",
           "blob": "b0144261048fc97da988c8756387940c399a328e"
         }
+      },
+      {
+        "path": "hermes_cli/mithril_diagnostics.py",
+        "baseSha256": null,
+        "sha256": "0d4f26bdd3ff35906f9f20ce39b95a00aee36d991d038659a1d871883d63aa4d"
+      },
+      {
+        "path": "hermes_cli/mithril_sentry.py",
+        "baseSha256": null,
+        "sha256": "cbfdefa681aff47e7da05bb7011d255f3f05dfb5a9c397d066e2c2763c65803e"
       },
       {
         "path": "hermes_cli/mithril_startup.py",
@@ -50201,6 +50211,11 @@
         "sha256": "9e74e41a85671db733032b88de7a0bac63fac6482c55a7222461debf20aad9f8"
       },
       {
+        "path": "tests/test_mithril_diagnostics.py",
+        "baseSha256": null,
+        "sha256": "64a0a287b42544013c704f4f844f8be8f3281cbb9b6fac478c083edccf43f19d"
+      },
+      {
         "path": "tests/test_mithril_distribution.py",
         "baseSha256": "28349d3f92c3264abf1deed517864cbc21b48a62331899a29b8f4917562af9dd",
         "sha256": "836e71cc978da7030df2a6ba7cb886693eb3759819dba09bee9184a787623174"
@@ -50220,6 +50235,11 @@
         "path": "tests/test_mithril_release_signer.py",
         "baseSha256": null,
         "sha256": "499d8ee39747dab4294f8c9a45ba4a9f37f15ed1bb83acfb49b19f823a9f8910"
+      },
+      {
+        "path": "tests/test_mithril_sentry.py",
+        "baseSha256": null,
+        "sha256": "669287b20bb32de624e2e907608df97ec368b3b9bf38bd5d80bd911812cacfb6"
       },
       {
         "path": "tests/test_mithril_update_bootstrap.py",

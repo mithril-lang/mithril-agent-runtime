@@ -3564,6 +3564,8 @@ def _build_cli_parser():
     build_profile_parser(subparsers, cmd_profile=cmd_profile)
     from hermes_cli.posthog_analytics import build_analytics_parser
     build_analytics_parser(subparsers)
+    from hermes_cli.mithril_diagnostics import build_parser as build_diagnostics_parser
+    build_diagnostics_parser(subparsers)
     build_completion_parser(subparsers, cmd_completion=cmd_completion, parser=parser)
     build_dashboard_parser(
         subparsers,
@@ -3625,6 +3627,13 @@ def _default_to_chat(args) -> None:
 
 def main():
     """Main entry point for hermes CLI."""
+    # Profile selection and dotenv resolution above have completed. Reporting is
+    # optional and must never alter the command's original exit/signal behavior.
+    try:
+        from hermes_cli.mithril_diagnostics import install_cli_hooks
+        install_cli_hooks()
+    except Exception:
+        pass
     _set_process_title()
     _warn_if_unsupervised_pid1()
     _advertise_agent_env()

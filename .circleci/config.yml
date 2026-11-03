@@ -88,6 +88,11 @@ jobs:
           name: Build a fresh locked test environment through PM
           command: python -m pm.build_env --source . --out .venv --group dev --group test --extra google --extra google-chat
       - run:
+          name: Verify CLI error payloads, per-Profile consent and explicit diagnostics
+          command: |
+            .venv/bin/python -m unittest discover -s tests -p test_mithril_sentry.py -v
+            .venv/bin/python -m unittest discover -s tests -p test_mithril_diagnostics.py -v
+      - run:
           name: Verify Google Chat runtime dependencies are importable
           command: .venv/bin/python -c "from plugins.platforms.google_chat.adapter import check_google_chat_requirements; assert check_google_chat_requirements()"
       - run:
