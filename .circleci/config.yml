@@ -18,6 +18,32 @@ parameters:
     default: ''
 
 jobs:
+  cloud-ci-contracts:
+    docker:
+      - image: cimg/node:24.19.0
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Verify cloud-only credential and exact-source dispatch boundaries
+          command: node --test .circleci/cloud-ci/dispatch.test.mjs
+  cloud-ci-dispatch:
+    docker:
+      - image: cimg/node:24.19.0
+    resource_class: small
+    environment:
+      MITHRIL_CIRCLE_PIPELINE_ID: << pipeline.id >>
+    steps:
+      - checkout
+      - run:
+          name: Install integrity-pinned SDK without lifecycle scripts
+          command: npm ci --ignore-scripts --prefix .circleci/cloud-ci
+      - run:
+          name: Retrieve read-only cloud credential and trigger source-bound pilot validation
+          command: node .circleci/cloud-ci/dispatch.ts
+      - store_artifacts:
+          path: /tmp/mithril-cloud-ci
+          destination: cloud-ci-dispatch
   scheduled-profile-worker-activity:
     docker:
       - image: cimg/node:24.19.0
@@ -200,6 +226,7 @@ workflows:
         - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
         - not: << pipeline.parameters.gateway_cron_repair_validation >>
     jobs:
+      - cloud-ci-contracts
       - validate-source
       - mithril-account-auth
       - mithril-distribution
@@ -226,3 +253,18 @@ workflows:
             - mithril-account-auth
             - mithril-distribution
             - mithril-fresh-install
+
+  cloud-ci-dispatch-bootstrap:
+    when:
+      and:
+        - equal: [main, << pipeline.git.branch >>]
+        - equal: ['', << pipeline.parameters.release_version >>]
+        - not: << pipeline.parameters.scheduled_profile_pilot_validation >>
+        - not: << pipeline.parameters.gateway_cron_repair_validation >>
+    jobs:
+      - cloud-ci-contracts:
+          name: cloud-ci-trusted-main-contracts
+      - cloud-ci-dispatch:
+          context: mithril-ci-cloud-dispatch
+          requires:
+            - cloud-ci-trusted-main-contracts
