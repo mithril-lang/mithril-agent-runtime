@@ -86,3 +86,16 @@ Current readiness and remaining contracts are tracked in
 [MITHRIL-450](https://linear.app/kotobalabs/issue/MITHRIL-450),
 [MITHRIL-58](https://linear.app/kotobalabs/issue/MITHRIL-58) and
 [MITHRIL-248](https://linear.app/kotobalabs/issue/MITHRIL-248).
+
+## Optional error reports candidate
+
+This source candidate adds content-free CLI error reporting; it is not evidence of a published or installed update. Automatic reports default off and follow the active Profile's explicit choice. Prompts, exception messages, tool output, credentials, request bodies, absolute paths and local variables are excluded. Delivery uses the fixed Mithril Sentry tunnel with no account credentials, cookies, user-configured proxies or redirects, a two-second timeout and at most five distinct errors per minute. Original exception, thread, exit and interrupt behavior is retained.
+
+```sh
+mithril diagnostics error-reports status
+mithril diagnostics error-reports enable --error-reports-consent
+mithril diagnostics error-reports disable
+mithril diagnostics sentry
+```
+
+The last command explicitly sends one content-free diagnostic and prints its event ID; it does not enable automatic reporting. Diagnostics and consent are independent of optional usage analytics and shared metrics. Source-bound clean hosted tests, existing distribution/signing owners, integrated-main release qualification, publication readback, real installed-command/TTY checks and a matching stored Sentry event remain required before calling this shipped.
