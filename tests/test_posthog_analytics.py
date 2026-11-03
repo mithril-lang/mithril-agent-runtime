@@ -47,6 +47,8 @@ class Analytics(unittest.TestCase):
         self.assertEqual("cli",payload["event"]["client"])
         self.assertNotIn(str(self.home),request.data.decode())
         self.assertEqual({"id","client","channel","outcome","feature","at","profileRef"},set(payload["event"]))
+        analytics.record("bot","completed","schedule",home=self.home,token_reader=lambda:"synthetic-profile-token",opener=opener,client="bot")
+        self.assertEqual("bot",json.loads(opener.calls[-1].data)["event"]["client"])
         with self.assertRaises(ValueError):
             analytics.record("bot","completed","private-prompt",home=self.home)
     def test_timeout_is_unknown_with_one_attempt(self):
@@ -73,4 +75,55 @@ class Analytics(unittest.TestCase):
         analytics.build_analytics_parser(subs)
         with self.assertRaises(SystemExit):parser.parse_args(["analytics","enable"])
         self.assertTrue(parser.parse_args(["analytics","enable","--usage-consent"]).usage_consent)
+
+    def test_bot_projection_uses_only_completed_owned_started_attempts(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def submit(self, fn): self.jobs.append(fn)
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_EXECUTOR",deferred), \
+             patch.object(analytics,"record") as send:
+            for row in ({"status":"unknown","started_at":"yes","delivery_outcome":"delivered"},
+                        {"status":"completed","started_at":None,"delivery_outcome":"delivered"},
+                        {"status":"completed","started_at":"yes","delivery_outcome":None}):
+                self.assertFalse(analytics.queue_bot_execution(row))
+            row={"status":"completed","started_at":"yes","delivery_outcome":"queued",
+                 "job_id":"private-job","error":"private-error"}
+            self.assertTrue(analytics.queue_bot_execution(row))
+            self.assertEqual(1,len(deferred.jobs))
+            deferred.jobs.pop()()
+            send.assert_called_once_with("bot","completed","schedule",home=self.home,client="bot")
+            self.assertNotIn("private",str(send.call_args))
+
+    def test_bot_consent_withdrawal_before_async_send_prevents_request(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def submit(self, fn): self.jobs.append(fn)
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_EXECUTOR",deferred), \
+             patch("hermes_cli.mithril_account.read_mithril_account_token",side_effect=AssertionError("no credential after withdrawal")):
+            self.assertTrue(analytics.queue_bot_execution(
+                {"status":"completed","started_at":"yes","delivery_outcome":"delivered"}))
+            analytics.set_consent(False,self.home)
+            deferred.jobs.pop()()
+
+    def test_ledger_projects_only_the_winning_terminal_transition(self):
+        from cron import executions
+        with patch.object(executions,"EXECUTIONS_FILE",self.home/"executions.db"), \
+             patch.object(executions,"_emit_execution_state"), \
+             patch.object(executions,"record_cron_finish"), \
+             patch.object(analytics,"queue_bot_execution") as queue:
+            attempt=executions.create_execution("fixture",source="scheduled")
+            self.assertIsNotNone(executions.mark_execution_running(attempt["id"]))
+            self.assertIsNotNone(executions.finish_execution(
+                attempt["id"],success=True,delivery_outcome="queued"))
+            self.assertIsNone(executions.finish_execution(
+                attempt["id"],success=True,delivery_outcome="delivered"))
+            self.assertEqual(1,queue.call_count)
+            self.assertEqual("queued",queue.call_args.args[0]["delivery_outcome"])
+
 if __name__=="__main__":unittest.main()
