@@ -221,7 +221,7 @@ test('a control mutation fences an old concurrent tick and blocks reads while pe
   assert.equal((await object.readBusinessActivity('mithril-abb-information-bounty')).state, 'unavailable');
   object.call = async () => Response.json({exit_code: 0, business_activity: projection, activity_binding: binding});
   await object.alarm();
-  assert.deepEqual(await object.readBusinessActivity('mithril-abb-information-bounty'), snapshot);
+  assert.deepEqual(JSON.parse(JSON.stringify(await object.readBusinessActivity('mithril-abb-information-bounty'))), snapshot);
   assert.equal(ctx.alarms.length, 0);
 });
 
