@@ -50,6 +50,11 @@ def normalize(value, now):
         raise ValueError("Invalid activity response")
     if cron["observedAt"] > now or now - cron["observedAt"] > MAX_AGE_MS:
         result["cron"] = {"result": "unknown", "lastRunAt": None, "nextRunAt": None}
+        # Preserve only dated completed history, never an old running state.
+        if (cron["observedAt"] <= now and job["result"] in {"ok", "error"}
+                and job["lastRunAt"] is not None and job["lastRunAt"] <= cron["observedAt"]):
+            result["cron"]["lastObserved"] = {"result": job["result"],
+                "lastRunAt": job["lastRunAt"], "observedAt": cron["observedAt"]}
     else:
         result["cron"] = dict(job)
     return result
@@ -80,3 +85,11 @@ def show(args):
         except (OverflowError, OSError, ValueError):
             text = "unknown"
         print(f"{label}: {text}")
+    historical = activity["cron"].get("lastObserved")
+    if historical:
+        try:
+            last = datetime.datetime.fromtimestamp(historical["lastRunAt"] / 1000, datetime.timezone.utc).isoformat()
+            observed = datetime.datetime.fromtimestamp(historical["observedAt"] / 1000, datetime.timezone.utc).isoformat()
+        except (OverflowError, OSError, ValueError):
+            last = observed = "unknown"
+        print(f"Last observed business cron result: {historical['result']} (stale; last run {last}; observed {observed})")

@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "58c2a15191fe8eb0f9f478d1cdbd675238fdd750a2dd8977a24aa96edce0d9b0",
+    "sha256": "042be510419f50ed6f482ac3c426afc2e63e5f265a91afccb33764363606f0af",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49810,7 +49810,7 @@
       {
         "path": ".circleci/tests/test_cloud_activity.py",
         "baseSha256": null,
-        "sha256": "e1422a5a568e75b1142369ead049171732210e37f12d742a31bf79a9cdb404a1"
+        "sha256": "c1b5a78555c2dd810a7b37dfeb8d6bf74564bebbd7ab92518bd368c8e7f467d4"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -50010,7 +50010,7 @@
       {
         "path": "hermes_cli/cloud_activity.py",
         "baseSha256": null,
-        "sha256": "8c3594bcd3e79baee53c19177c2ca869a8da1fc0f222ef17dec7e2df8c00257e"
+        "sha256": "d31464b5eb3f708def57f76f3e239d2698f00f3c1124321818e3eba1dbb8dd84"
       },
       {
         "path": "hermes_cli/main.py",

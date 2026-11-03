@@ -23,8 +23,15 @@ class ActivityTests(unittest.TestCase):
         self.assertEqual(result["cron"]["result"], "ok")
         self.assertEqual(result["container"], "unavailable")
         stale = normalize(self.response, 1000 + 900001)
-        self.assertEqual(stale["cron"], {"result": "unknown", "lastRunAt": None, "nextRunAt": None})
+        self.assertEqual(stale["cron"], {"result": "unknown", "lastRunAt": None, "nextRunAt": None,
+            "lastObserved": {"result": "ok", "lastRunAt": 900, "observedAt": 1000}})
         self.assertEqual(stale["placement"], "unknown")
+        self.response["cron"]["value"]["lastRunAt"] = 1001
+        self.assertNotIn("lastObserved", normalize(self.response, 1000 + 900001)["cron"])
+        self.response["cron"]["value"].update(result="running", lastRunAt=900)
+        self.assertNotIn("lastObserved", normalize(self.response, 1000 + 900001)["cron"])
+        self.response["cron"]["value"].update(result="ok")
+        self.assertNotIn("lastObserved", normalize(self.response, 999)["cron"])
 
     def test_rejects_unexpected_fields_and_malformed_values(self):
         self.response["cron"]["value"]["private"] = "must not print"
