@@ -97,6 +97,22 @@ class Analytics(unittest.TestCase):
             send.assert_called_once_with("bot","completed","schedule",home=self.home,client="bot")
             self.assertNotIn("private",str(send.call_args))
 
+    def test_bot_withdraw_and_reenable_does_not_send_prior_generation(self):
+        class Deferred:
+            def __init__(self): self.jobs=[]
+            def submit(self, fn): self.jobs.append(fn)
+        analytics.set_consent(True,self.home)
+        deferred=Deferred()
+        with patch("hermes_constants.get_hermes_home",return_value=self.home), \
+             patch.object(analytics,"_BOT_EXECUTOR",deferred), \
+             patch.object(analytics,"record") as send:
+            self.assertTrue(analytics.queue_bot_execution(
+                {"status":"completed","started_at":"yes","delivery_outcome":"delivered"}))
+            analytics.set_consent(False,self.home)
+            analytics.set_consent(True,self.home)
+            deferred.jobs.pop()()
+            send.assert_not_called()
+
     def test_bot_consent_withdrawal_before_async_send_prevents_request(self):
         class Deferred:
             def __init__(self): self.jobs=[]
