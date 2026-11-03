@@ -125,7 +125,8 @@ def queue_bot_execution(row):
     try:
         from hermes_constants import get_hermes_home
         home = Path(get_hermes_home())
-        if os.environ.get("MITHRIL_AGENT") != "1" or not read_consent(home):
+        consent = read_consent(home)
+        if os.environ.get("MITHRIL_AGENT") != "1" or not consent:
             return False
         if not _BOT_LIMIT.acquire(blocking=False):
             return False
@@ -134,6 +135,8 @@ def queue_bot_execution(row):
             outcome = row["status"]
             def send():
                 try:
+                    if read_consent(home) != consent:
+                        return
                     context.run(record, "bot", outcome, "schedule", home=home, client="bot")
                 except Exception:
                     pass
