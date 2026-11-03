@@ -25,7 +25,7 @@ import uuid
 
 STATE = ".execution-placement.json"
 LIMIT = 128 * 1024 * 1024
-FILES = {"config.yaml", "profile.yaml", "SOUL.md", ".env", "auth.json", "honcho.json",
+FILES = {"config.yaml", "profile.yaml", "SOUL.md", ".mithril-profile.json", ".env", "auth.json", "honcho.json",
          "desktop.json", "mithril-token.json", "state.db", "kanban.db", "response_store.db",
          "runs_idempotency.db"}
 DIRS = {"cron", "sessions", "memories", "skills", "assets", "workspace", "scripts", "hooks", "plugins"}

@@ -1,4 +1,4 @@
-import { DurableObject } from 'cloudflare:workers';
+import { DurableObject, WorkerEntrypoint } from 'cloudflare:workers';
 import bundle from './overlay.mjs';
 
 const names = new Set([
@@ -12,6 +12,31 @@ async function derive(secret, context) {
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
   return hex(await crypto.subtle.sign('HMAC', key, encoder.encode(context)));
 }
+
+function validBusinessActivity(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = (o, expected) => Object.keys(o).length === expected.length &&
+    expected.every(key => Object.hasOwn(o, key));
+  if (value.state === 'unavailable') return keys(value, ['state']);
+  if (value.state !== 'observed' || !keys(value, ['state', 'observedAt', 'value']) ||
+      !Number.isSafeInteger(value.observedAt) || value.observedAt < 0 ||
+      !value.value || typeof value.value !== 'object' || Array.isArray(value.value) ||
+      !keys(value.value, ['result', 'lastRunAt', 'nextRunAt'])) return false;
+  const time = v => v === null || (Number.isSafeInteger(v) && v >= 0 && v <= 253402300799999);
+  return ['ok', 'error', 'unknown'].includes(value.value.result) &&
+    time(value.value.lastRunAt) && time(value.value.nextRunAt) &&
+    (value.value.lastRunAt === null || value.value.lastRunAt <= value.observedAt) &&
+    (value.value.result === 'unknown' || value.value.lastRunAt !== null);
+}
+
+function validActivityBinding(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === 2 && Object.hasOwn(value, 'profileIdentity') &&
+    Object.hasOwn(value, 'generation') &&
+    typeof value.profileIdentity === 'string' && /^[a-f0-9]{32}$/.test(value.profileIdentity) &&
+    Number.isSafeInteger(value.generation) && value.generation >= 0;
+}
+
 const headers = { 'Cache-Control': 'private, no-store' };
 const entry = "import os,time; from pathlib import Path\nwhile not Path('/tmp/pilot-ready').exists(): time.sleep(.1)\nos.execv('/opt/hermes/.venv/bin/python',['python','-u','/tmp/pilot-runtime.py'])";
 
@@ -24,10 +49,125 @@ export class ProfileContainer extends DurableObject {
     await this.ctx.storage.put('profile', name);
   }
 
+  async activityFence(store = this.ctx.storage) {
+    const fence = await store.get('activity_fence');
+    if (fence === undefined) return {epoch: 0, pending: 0};
+    if (!fence || typeof fence !== 'object' || Array.isArray(fence) ||
+        Object.keys(fence).sort().join(',') !== 'epoch,pending' ||
+        !Number.isSafeInteger(fence.epoch) || fence.epoch < 0 ||
+        !Number.isSafeInteger(fence.pending) || fence.pending < 0)
+      throw new Error('Activity fence unavailable');
+    return fence;
+  }
+
+  async guardActivityMutation(action) {
+    // A crash retains the hold: it cannot expose an observation until reviewed.
+    await this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      if (fence.epoch >= Number.MAX_SAFE_INTEGER || fence.pending >= Number.MAX_SAFE_INTEGER)
+        throw new Error('Activity fence exhausted');
+      await txn.put('activity_fence', {epoch: fence.epoch + 1, pending: fence.pending + 1});
+    });
+    try { return await action(); }
+    finally {
+      await this.ctx.storage.transaction(async txn => {
+        const fence = await this.activityFence(txn);
+        if (fence.pending < 1) throw new Error('Activity fence unavailable');
+        await txn.put('activity_fence', {epoch: fence.epoch, pending: fence.pending - 1});
+      });
+    }
+  }
+
+  async readBusinessActivity(expectedName) {
+    // Never create a binding or start a container during a read.
+    if (!names.has(expectedName) || await this.ctx.storage.get('profile') !== expectedName)
+      return {state: 'unavailable'};
+    const snapshot = await this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      const epoch = await txn.get('activity_snapshot_epoch');
+      if (fence.pending || epoch !== fence.epoch) return null;
+      return txn.get('activity_snapshot');
+    });
+    if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) ||
+        Object.keys(snapshot).sort().join(',') !== 'binding,businessActivity,state' || snapshot.state !== 'observed' ||
+        !validActivityBinding(snapshot.binding) || !validBusinessActivity(snapshot.businessActivity))
+      return {state: 'unavailable'};
+    return snapshot;
+  }
+
+  /** Operator approval records only a one-use digest and the current fenced
+   * placement identity. It neither starts a Container nor grants an API user. */
+  async approveActivityEnrollment(profile, digest, expiresAt) {
+    const now = Date.now();
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '') ||
+        !Number.isSafeInteger(expiresAt) || expiresAt <= now || expiresAt > now + 300000 ||
+        await this.ctx.storage.get('profile') !== profile) return false;
+    const observation = await this.readBusinessActivity(profile);
+    if (observation.state !== 'observed') return false;
+    return this.ctx.storage.transaction(async txn => {
+      const fence = await this.activityFence(txn);
+      const snapshot = await txn.get('activity_snapshot');
+      const epoch = await txn.get('activity_snapshot_epoch');
+      const key = 'activity_enrollment:' + digest;
+      if (fence.pending || epoch !== fence.epoch || await txn.get(key) !== undefined ||
+          snapshot?.state !== 'observed' || !validActivityBinding(snapshot.binding) ||
+          snapshot.binding.profileIdentity !== observation.binding.profileIdentity ||
+          snapshot.binding.generation !== observation.binding.generation || Date.now() >= expiresAt) return false;
+      await txn.put(key, {profile, expiresAt, epoch, binding: snapshot.binding, consumed: false});
+      return true;
+    });
+  }
+
+  /** Private service redemption is atomic and never repeats an approval. The
+   * caller must independently bind the digest to an authenticated owner and
+   * recheck its own revocation epoch before creating any grant. */
+  async redeemActivityEnrollment(profile, digest) {
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '') ||
+        await this.ctx.storage.get('profile') !== profile) return {state: 'unavailable'};
+    return this.ctx.storage.transaction(async txn => {
+      const key = 'activity_enrollment:' + digest;
+      const approval = await txn.get(key);
+      const fence = await this.activityFence(txn);
+      const snapshot = await txn.get('activity_snapshot');
+      const epoch = await txn.get('activity_snapshot_epoch');
+      if (!approval || approval.profile !== profile || approval.consumed !== false ||
+          !Number.isSafeInteger(approval.expiresAt) || approval.expiresAt <= Date.now() ||
+          fence.pending || approval.epoch !== fence.epoch || epoch !== fence.epoch ||
+          snapshot?.state !== 'observed' || !validActivityBinding(snapshot.binding) ||
+          !validActivityBinding(approval.binding) ||
+          snapshot.binding.profileIdentity !== approval.binding.profileIdentity ||
+          snapshot.binding.generation !== approval.binding.generation) return {state: 'unavailable'};
+      await txn.put(key, {...approval, consumed: true});
+      return {state: 'approved', binding: approval.binding};
+    });
+  }
+
   async ensure() {
     if (this.starting) return this.starting;
     this.starting = this.startImpl().finally(() => { this.starting = null; });
     return this.starting;
+  }
+
+  /** Inspect the current instance without starting it. This does not claim readiness. */
+  async readContainerActivity(expectedName) {
+    const before = await this.readBusinessActivity(expectedName);
+    if (before.state !== 'observed') return {state: 'unavailable'};
+    try {
+      const container = this.ctx.container;
+      if (!container) return {state: 'unavailable'};
+      const instance = await container.inspect();
+      const observedAt = Date.now();
+      const after = await this.readBusinessActivity(expectedName);
+      if (after.state !== 'observed' ||
+          after.binding.profileIdentity !== before.binding.profileIdentity ||
+          after.binding.generation !== before.binding.generation) return {state: 'unavailable'};
+      const value = instance === null ? 'inactive'
+        : typeof instance?.image === 'string' && instance.image ? 'running' : 'unknown';
+      return {state: 'observed', binding: after.binding,
+        containerActivity: {state: 'observed', observedAt, value}};
+    } catch {
+      return {state: 'unavailable'};
+    }
   }
 
   async startImpl() {
@@ -88,6 +228,9 @@ export class ProfileContainer extends DurableObject {
   }
 
   async alarm() {
+    // Reporting failure never suppresses an assigned business tick.
+    let activityEpoch = null;
+    try { const fence = await this.activityFence(); if (!fence.pending) activityEpoch = fence.epoch; } catch {}
     // Wake only this profile's assigned owner. Never changes ownership or falls back locally.
     try {
       await this.ctx.storage.put('last_alarm', {started_at: Date.now(), profile: await this.ctx.storage.get('profile')});
@@ -97,12 +240,30 @@ export class ProfileContainer extends DurableObject {
       const before = await this.ctx.storage.get('last_alarm');
       await this.ctx.storage.put('last_alarm', {...before, finished_at: Date.now(), exit_code: result.exit_code});
       await this.arm();
+      // Reporting is best-effort: failure must never replay the business tick.
+      const snapshot = validActivityBinding(result.activity_binding) && validBusinessActivity(result.business_activity)
+        ? {state: 'observed', binding: result.activity_binding, businessActivity: result.business_activity}
+        : {state: 'unavailable'};
+      try {
+        if (activityEpoch !== null) await this.ctx.storage.transaction(async txn => {
+          const fence = await this.activityFence(txn);
+          if (fence.pending || fence.epoch !== activityEpoch) return;
+          await txn.put('activity_snapshot', snapshot);
+          await txn.put('activity_snapshot_epoch', fence.epoch);
+        });
+      } catch { /* The previous observation will age out. */ }
     } catch {
       await this.ctx.storage.setAlarm(Date.now() + 60000);
     }
   }
 
   async fetch(request) {
+    if (request.method === 'POST')
+      return this.guardActivityMutation(() => this.handleRequest(request));
+    return this.handleRequest(request);
+  }
+
+  async handleRequest(request) {
     const path = new URL(request.url).pathname;
     if (path === '/diagnostics' && request.method === 'GET') {
       await this.ensure();
@@ -124,6 +285,10 @@ print(json.dumps({'gateway_log_tail':text}))`;
       const result = await process.output();
       if (result.exitCode !== 0) return new Response('Diagnostics unavailable', {status: 503, headers});
       return new Response(result.stdout, {headers: {...headers, 'Content-Type': 'application/json'}});
+    }
+    if (path === '/activity' && request.method === 'GET') {
+      // Read only DO storage. No container startup or schedule mutation.
+      return Response.json({business_activity: await this.readBusinessActivity(await this.ctx.storage.get('profile'))}, {headers});
     }
     if (path === '/control-state') {
       return Response.json({profile: await this.ctx.storage.get('profile'), location: 'container:' + this.ctx.id.toString(), container_running: this.ctx.container?.running ?? false, alarm: await this.ctx.storage.get('last_alarm') ?? null}, {headers});
@@ -159,6 +324,23 @@ print(json.dumps({'gateway_log_tail':text}))`;
   }
 }
 
+/** Private named service entrypoint; caller must authorize the exact Profile. */
+export class PilotActivityService extends WorkerEntrypoint {
+  async redeemActivityEnrollment(profile, digest) {
+    if (!names.has(profile) || !/^[a-f0-9]{64}$/.test(digest ?? '')) return {state: 'unavailable'};
+    return this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile).redeemActivityEnrollment(profile, digest);
+  }
+  async readContainerActivity(profile) {
+    if (!names.has(profile)) return {state: 'unavailable'};
+    return this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile).readContainerActivity(profile);
+  }
+  async readBusinessActivity(profile) {
+    if (!names.has(profile)) return {state: 'unavailable'};
+    const owner = this.env.PROFILES.getByName('scheduled-profile-pilot-v1:' + profile);
+    return owner.readBusinessActivity(profile);
+  }
+}
+
 export default {
   async fetch(request, env) {
     if (!env.SERVICE_KEY || !env.TRANSFER_KEY) return new Response('Not configured', {status: 503, headers});
@@ -185,9 +367,25 @@ export default {
       return new Response('Method not allowed', {status: 405, headers});
     }
     if (!operator) return new Response('Unauthorized', {status: 401, headers});
-    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
+    const route = /^\/profiles\/([a-z0-9-]+)\/(status|control-state|activity|activity-approve|diagnostics|stage|activate|chat|cron-smoke|cron-result|cron-run|checkpoint|restart|suspend)$/.exec(url.pathname);
     if (!route || !names.has(route[1])) return new Response('Not found', {status: 404, headers});
     const owner = env.PROFILES.getByName('scheduled-profile-pilot-v1:' + route[1]);
+    if (route[2] === 'activity-approve') {
+      if (request.method !== 'POST') return new Response('Method not allowed', {status: 405, headers});
+      const length = Number(request.headers.get('content-length') ?? 0);
+      if (!Number.isSafeInteger(length) || length < 0 || length > 1024)
+        return new Response('Invalid request', {status: 400, headers});
+      try {
+        const text = await request.text();
+        if (text.length > 1024) return new Response('Invalid request', {status: 400, headers});
+        const body = JSON.parse(text);
+        if (!body || typeof body !== 'object' || Array.isArray(body) ||
+            Object.keys(body).sort().join(',') !== 'digest,expiresAt')
+          return new Response('Invalid request', {status: 400, headers});
+        return await owner.approveActivityEnrollment(route[1], body.digest, body.expiresAt)
+          ? new Response(null, {status: 204, headers}) : new Response('Approval unavailable', {status: 409, headers});
+      } catch { return new Response('Approval unavailable', {status: 503, headers}); }
+    }
     await owner.bind(route[1]);
     url.pathname = '/' + route[2];
     const forwardedHeaders = new Headers(request.headers);

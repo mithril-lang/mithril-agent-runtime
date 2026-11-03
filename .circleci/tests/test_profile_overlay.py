@@ -46,5 +46,61 @@ class OverlayTests(unittest.TestCase):
                 installer.inject(root, ["scheduler.py"], "run_one_job", "guard_job")
 
 
+class BusinessActivityTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        env = {"PILOT_PROFILE": "mithril-abb-information-bounty", "PILOT_CONTROL_KEY": "test",
+               "PILOT_TRANSFER_KEY": "00" * 32, "PILOT_ORIGIN": "https://example.invalid"}
+        with patch.dict("os.environ", env), patch.object(placement, "location", return_value="container:test"):
+            module_spec = importlib.util.spec_from_file_location("pilot_runtime_activity", ROOT / "cloud/profile-pilot/runtime.py")
+            cls.runtime = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(cls.runtime)
+
+    def test_selects_exact_original_job_and_redacts_private_fields(self):
+        job = {"id": "e01760b1c7a3", "enabled": True, "last_status": "ok",
+               "last_run_at": "2026-11-02T18:09:26+09:00", "next_run_at": "2026-11-03T00:07:00+09:00",
+               "name": "private job", "prompt": "private prompt", "last_error": "private output"}
+        result = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1793620000000)
+        self.assertEqual(result["state"], "observed")
+        self.assertEqual(result["value"]["result"], "ok")
+        self.assertEqual(set(result["value"]), {"result", "lastRunAt", "nextRunAt"})
+        self.assertNotIn("private", str(result))
+
+    def test_missing_duplicate_wrong_profile_and_undated_results_fail_closed(self):
+        job = {"id": "e01760b1c7a3", "enabled": True, "last_status": "ok",
+               "last_run_at": "2026-11-02T18:09:26", "next_run_at": None}
+        self.assertEqual(self.runtime.business_activity("unknown", [job], 1)["state"], "unavailable")
+        self.assertEqual(self.runtime.business_activity("mithril-abb-information-bounty", [], 1)["state"], "unavailable")
+        self.assertEqual(self.runtime.business_activity("mithril-abb-information-bounty", [job, job], 1)["state"], "unavailable")
+        result = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1)
+        self.assertEqual(result["value"]["result"], "unknown")
+        self.assertIsNone(result["value"]["lastRunAt"])
+
+    def test_activity_binding_requires_current_active_container_owner(self):
+        identity = "a" * 32
+        record = {"phase": "active", "owner": "container:one", "identity": identity, "generation": 2}
+        self.assertEqual(self.runtime.activity_binding(record, "container:one"),
+                         {"profileIdentity": identity, "generation": 2})
+        self.assertIsNone(self.runtime.activity_binding(record, "container:other"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "phase": "moved"}, "container:one"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "identity": "not-a-valid-identity"}, "container:one"))
+        self.assertIsNone(self.runtime.activity_binding({**record, "generation": True}, "container:one"))
+
+    def test_future_completed_timestamp_is_unknown(self):
+        job = {"id": "e01760b1c7a3", "enabled": True, "last_status": "ok",
+               "last_run_at": "2026-11-02T18:09:26+09:00", "next_run_at": None}
+        result = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1)
+        self.assertEqual(result["value"]["result"], "unknown")
+        self.assertIsNone(result["value"]["lastRunAt"])
+
+    def test_disabled_job_has_no_next_due_and_errors_stay_distinct(self):
+        job = {"id": "e01760b1c7a3", "enabled": False, "last_status": "error",
+               "last_run_at": "2026-11-02T18:09:26+09:00",
+               "next_run_at": "2026-11-03T00:07:00+09:00"}
+        value = self.runtime.business_activity("mithril-abb-information-bounty", [job], 1793620000000)["value"]
+        self.assertEqual(value["result"], "error")
+        self.assertIsNone(value["nextRunAt"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

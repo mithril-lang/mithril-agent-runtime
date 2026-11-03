@@ -599,10 +599,20 @@ def _profile_info(args):
     print()
 
 
+def _profile_activity(args):
+    from hermes_cli.cloud_activity import show
+    from hermes_cli.mithril_auth import SignInError
+    try:
+        show(args)
+    except (SignInError, ValueError):
+        _die("Cloud Agent activity is unavailable. Check sign-in and profile access.", code=1, err=True)
+
+
 # Order mirrors the original if/elif chain; None = bare ``hermes profile``.
 PROFILE_ACTIONS = {
     None: _profile_status,
     'list': _profile_list,
+    'activity': _profile_activity,
     'use': _profile_use,
     'create': _profile_create,
     'delete': _profile_delete,

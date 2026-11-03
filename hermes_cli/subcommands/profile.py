@@ -73,6 +73,10 @@ def build_profile_parser(subparsers, *, cmd_profile: Callable) -> None:
         "--all", dest="all_missing", action="store_true",
         help="With --auto, run on every profile missing a description")
 
+    profile_activity = profile_subparsers.add_parser("activity", help="Read Cloud Agent activity for a profile")
+    profile_activity.add_argument("profile_name", help="Cloud profile name")
+    profile_activity.add_argument("--json", action="store_true", help="Output a normalized JSON result")
+
     profile_show = profile_subparsers.add_parser("show", help="Show profile details")
     profile_show.add_argument("profile_name", help="Profile to show")
 

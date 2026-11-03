@@ -49800,12 +49800,17 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "7b4d5e58d60d6d379109dcbab211a8dd920808badb6f2987619c0a4640e66fde",
+    "sha256": "266ab9534ca5e8d18e6dbfbfa51826f33164e56ae16699a86f2f553148f6e512",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "49c83381297ee083887b7ede423038b55e3e14d1c4b69547d12eeb1ba48da7ce"
+        "sha256": "69a3e2ac75a7e2764527ae11a5d4c146676c88468f6c2c269dafc20998d9c9c5"
+      },
+      {
+        "path": ".circleci/tests/test_cloud_activity.py",
+        "baseSha256": null,
+        "sha256": "c1b5a78555c2dd810a7b37dfeb8d6bf74564bebbd7ab92518bd368c8e7f467d4"
       },
       {
         "path": ".circleci/tests/test_compression_main_fallback.py",
@@ -49823,6 +49828,11 @@
         "sha256": "11f35583c87605b4491d3a596d33963ea8ad213aad43ad31b4da17eb86bbc267"
       },
       {
+        "path": ".circleci/tests/test_pilot_release_guard.mjs",
+        "baseSha256": null,
+        "sha256": "99b26a95a9d697bfdd09ee4179a6c688e26914d9dd3a1542793fcc6b6c2b807b"
+      },
+      {
         "path": ".circleci/tests/test_profile_checkpoint.py",
         "baseSha256": null,
         "sha256": "1277abb99de1bb2babfd2a202f159a075a9221c1dbe806f7b334af9bccf47b2c"
@@ -49830,12 +49840,17 @@
       {
         "path": ".circleci/tests/test_profile_overlay.py",
         "baseSha256": null,
-        "sha256": "16a4d0e149cd81aad1c4f7010715ff56a5d76df180625ea94c981e85c31c85d3"
+        "sha256": "21ac73530f345a5d952e07a77ad60c7639badc44cb5df3a2168c134516c85982"
       },
       {
         "path": ".circleci/tests/test_profile_placement.py",
         "baseSha256": null,
-        "sha256": "2985dc8c6173e5773ac1da8754fcc120dd0bf9659a96620299090b83db88a822"
+        "sha256": "fc0d1edf22b5f5979dc9193ea6a5c2dd23b3fa80a777741202a425cb21a6295b"
+      },
+      {
+        "path": ".circleci/tests/test_profile_worker.mjs",
+        "baseSha256": null,
+        "sha256": "04c8083f13e983f88193966cb9adbc0a94580dee45a245a5e73efea37bd87a9e"
       },
       {
         "path": ".circleci/validate-runtime-snapshot.py",
@@ -49905,17 +49920,22 @@
       {
         "path": "cloud/profile-pilot/overlay.mjs",
         "baseSha256": null,
-        "sha256": "0e837373e0e6f1be01391bab60a1463eb7cd87f277575203c7655f430f97d77c"
+        "sha256": "1e06ebff4d85c2ec9487e03cdaf50c9fcf4ec9484589ec32a8ca0a1391fff909"
+      },
+      {
+        "path": "cloud/profile-pilot/release-guard.mjs",
+        "baseSha256": null,
+        "sha256": "2b35d8170529748158d95e598dc8334355c9378dbddef70863e31b0c6459d2a9"
       },
       {
         "path": "cloud/profile-pilot/runtime.py",
         "baseSha256": null,
-        "sha256": "2f72d5e67016739ac2d6692abd3215950d78d1e5670f92de33272db35f08c217"
+        "sha256": "621b6d4b78eab38082b30b8c70e90e00b6afc50289ac8c13092ea38a4bea4b3d"
       },
       {
         "path": "cloud/profile-pilot/worker.mjs",
         "baseSha256": null,
-        "sha256": "507c3a0a264596cc1c81ac0842e17e6f40e0b6d4614616edad7d917fb66c6e3c"
+        "sha256": "9c06846da848ede94dc697e950ea3e1b795a529bdbb11a8e6a320abca10b6ed7"
       },
       {
         "path": "cloud/profile-pilot/wrangler.jsonc",
@@ -49941,6 +49961,11 @@
         "path": "distributions/mithril/update-trust.json",
         "baseSha256": null,
         "sha256": "09f796b3c78b1ed055e17f8d75a742424b739828dd43854542c0b1d5ba0a406f"
+      },
+      {
+        "path": "docs/mithril-posthog-analytics.md",
+        "baseSha256": null,
+        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
       },
       {
         "path": "docs/operations/google-chat-keyless.md",
@@ -49983,6 +50008,11 @@
         "sha256": "5f9ea5d094f5cf327d50b1b3ca9937d1e8f1e2def6869df01a6839be7f116c5d"
       },
       {
+        "path": "hermes_cli/cloud_activity.py",
+        "baseSha256": null,
+        "sha256": "d31464b5eb3f708def57f76f3e239d2698f00f3c1124321818e3eba1dbb8dd84"
+      },
+      {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
         "sha256": "979ffb2c982d1556812ada4d0892cbb1f376d2fe98c1f5beefb91b65656d4402"
@@ -50014,9 +50044,19 @@
         "sha256": "1ef92c4408ad9f722ba8462820a62d5a3df7ab6b076a50665a8cddbdc1564574"
       },
       {
+        "path": "hermes_cli/posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "ebe649ce05619febb51ab4fe9bbe7e89c09c5c7326e60b285c2e16fdaab12c50"
+      },
+      {
+        "path": "hermes_cli/profile_cmd.py",
+        "baseSha256": "a6295d65f06cea019e52a80911962d045b78d40bbabe9ecce0f52c3e583c03eb",
+        "sha256": "afa92af33130ce778e50419eeb66d6a4a7b5418f8eee7ac312f69db19f70a274"
+      },
+      {
         "path": "hermes_cli/profile_placement.py",
         "baseSha256": null,
-        "sha256": "7a832def39b55f7f4d981ef10a34ba1c4252722151a38e04787966ca9181a5e1"
+        "sha256": "72a6166e06620dc3dae5bf6e7a6249130fe92e72aedbdb75648ef684ddaa20c2"
       },
       {
         "path": "hermes_cli/runtime_provider_custom.py",
@@ -50037,6 +50077,11 @@
         "path": "hermes_cli/source_releases.py",
         "baseSha256": "52657b9dbe4e20e2dcf3cb0fb59635313ff980ed747833773d0400e2aff3e65e",
         "sha256": "091c46749f8ed906c0b9508c98bc5f4c2ab0dd0a99e82e04b1cd5466992a3b77"
+      },
+      {
+        "path": "hermes_cli/subcommands/profile.py",
+        "baseSha256": "17e2b5349c307edf5fde0a698c2c7056bf687f72fd8a6267f8bf6a42fee131e9",
+        "sha256": "2be913dc8e08b81a37543c27031ec2d7162aa225acc660a3a3c752e87ce30a38"
       },
       {
         "path": "hermes_cli/tool_availability_notices.py",
@@ -50177,6 +50222,11 @@
         "sha256": "df53e650e8e52d44ae7a36322cf3bd8c4b59b068446f4d2ad7552c17201c2252"
       },
       {
+        "path": "tests/test_posthog_analytics.py",
+        "baseSha256": null,
+        "sha256": "2ee8bb7d7770c1d44a2591ada4e8ce2ce602aa9755a131591995eb359b4f7e82"
+      },
+      {
         "path": "tests/test_profile_dependency_cache.py",
         "baseSha256": null,
         "sha256": "e8905a092942b30a4979394aee9644a3b0db1b025ff6cfd879b167b938857379"
@@ -50195,21 +50245,6 @@
         "path": "tools/skills_sync.py",
         "baseSha256": "4167dc3d99e0abb33cae3f38822753fe24d474b45e451ccc90c7b482e7024a98",
         "sha256": "fd481cff2a9cb8ef0f291c29627ad4d068a3821b26a6f32d8e033d9174d564ab"
-      },
-      {
-        "path": "hermes_cli/posthog_analytics.py",
-        "baseSha256": null,
-        "sha256": "ebe649ce05619febb51ab4fe9bbe7e89c09c5c7326e60b285c2e16fdaab12c50"
-      },
-      {
-        "path": "tests/test_posthog_analytics.py",
-        "baseSha256": null,
-        "sha256": "2ee8bb7d7770c1d44a2591ada4e8ce2ce602aa9755a131591995eb359b4f7e82"
-      },
-      {
-        "path": "docs/mithril-posthog-analytics.md",
-        "baseSha256": null,
-        "sha256": "e4bd6f13ab781211c8ddc0341f4da0b7a8b4dde6b35afec0de78a2b16a59a2a9"
       }
     ]
   }
