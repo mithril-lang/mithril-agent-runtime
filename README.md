@@ -99,3 +99,44 @@ mithril diagnostics sentry
 ```
 
 The last command explicitly sends one content-free diagnostic and prints its event ID; it does not enable automatic reporting. Diagnostics and consent are independent of optional usage analytics and shared metrics. Source-bound clean hosted tests, existing distribution/signing owners, integrated-main release qualification, publication readback, real installed-command/TTY checks and a matching stored Sentry event remain required before calling this shipped.
+
+
+## Remote CLI publication candidate
+
+The opt-in release_publish=true workflow is a candidate for the original
+runtime project's CircleCI publisher. It preserves all five integrated-main
+checks, a real fresh-HOME installation and the existing approved Ed25519 signer.
+Signed binaries/installer metadata cross only the same-workflow private workspace.
+
+Before selecting this workflow, the original credential owner must provision
+and independently read back the mithril-cli-release-publisher Context restricted
+to runtime project47641148-9a81-471d-88dd-ee4f37a85df4, main only, no SSH reruns
+and no API-supplied configuration. Keep 1Password as the secret source of truth;
+do not project a personal or general-purpose GitHub credential into CI control.
+This candidate does not create that Context or a GitHub App.
+
+The dedicated GitHub App needs Contents-write for this runtime repository only.
+Project its existing app ID, installation ID and private key as
+MITHRIL_CLI_RELEASE_APP_ID, MITHRIL_CLI_RELEASE_INSTALLATION_ID and
+MITHRIL_CLI_RELEASE_APP_KEY in that Context. Each original cloud job mints a
+fresh installation token explicitly restricted to repository ID1418374467 and
+Contents-write. An already-provisioned MITHRIL_CLI_RELEASE_TOKEN must pass the
+same live single-repository and write-authority checks. The actual current
+CircleCI checkout token was read-only across26 repositories; it is unqualified
+for this publisher and is not a fallback.
+
+The preflight verifies the approved signed update envelope, every checksum,
+original source/pipeline/workflow evidence, live authority, exact main, absence
+of a prior tag/draft, latest public signed preview and monotonic compatible
+upgrade sequence. Store its exact context hash and inspect original provider
+job/source metadata before approving approve-mithril-publication. The original
+publisher repeats the complete preflight, journals before its first attempted
+write, creates one draft, verifies every uploaded byte before publication and
+independently reads every public byte from the ordinary updater URLs afterward.
+Unknown writes, a prior tag/draft or any existing journal hold for explicit
+reconciliation. Never overwrite a prior release or automatically retry a write.
+
+The normal full validation and signing-only workflows remain distinct. Source,
+unit tests and configuration compilation do not establish credential admission,
+a signed public release, an ordinary installed client, real TTY behavior or
+stored CLI Sentry events. Keep those acceptance states separate.

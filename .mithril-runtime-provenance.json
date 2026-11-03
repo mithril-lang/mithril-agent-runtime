@@ -49800,12 +49800,12 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "a298ec1f842432442ddb19c98829c91cbacf43866eee283d249743da86a90760",
+    "sha256": "01f1fb3e7b89f55a7861e13593c39108b7a79e7190d3b33f22fb2a9fc09f35dc",
     "files": [
       {
         "path": ".circleci/config.yml",
         "baseSha256": "c5519e4170200790f6156062e35e2fa09f039522a661801eb6ff82bc1eb19405",
-        "sha256": "2916bc5b5231b2c39278eb42fcb025696f72fe256ffeab515c6e528c88ed2f74"
+        "sha256": "6ad35c97fce58ce5d63eec76457def3b84ce0be97694d479a64fc2f1c868e3d6"
       },
       {
         "path": ".circleci/tests/test_cloud_activity.py",
@@ -49870,7 +49870,7 @@
       {
         "path": "README.md",
         "baseSha256": "88a0bacae1eda56df43ecbce7270b9254da411431c16032cecd19f9ed660d688",
-        "sha256": "1ad0da1680f604633b7abc436a5e041ac8ec10f3dfa9709de2b76ef4b8f0041a"
+        "sha256": "50db7ae7814e079bb64136a19fd9dbd24d217a28fb37b8733894c0c98b10136a"
       },
       {
         "path": "agent/agent_init.py",
@@ -50174,6 +50174,11 @@
         "sha256": "eecfd71b5af43c8e8f3ee5749a27426d725950ed3c920a33b144bc3d1eb5eca2"
       },
       {
+        "path": "scripts/publish-mithril-release.py",
+        "baseSha256": null,
+        "sha256": "cfdde021e14f32d15ac679d064b31ca1a84e992ef0470967b65e8adbb427089d"
+      },
+      {
         "path": "scripts/run_tests.sh",
         "baseSha256": "16cd6223a3b517326e023c3b716a182e2818fcc04ebf8a1855f83dc72e52743d",
         "sha256": "afda9e7a80be1d67202bd0b7e5189b9f873401520a751096ee5c52e4be30d34b",
@@ -50275,6 +50280,11 @@
         "path": "tests/test_release_authority.py",
         "baseSha256": null,
         "sha256": "d2858365deed25a869e60c73baa06e1c4fba151dda002cf9e38244ab217128da"
+      },
+      {
+        "path": "tests/test_release_publication.py",
+        "baseSha256": null,
+        "sha256": "5af8770f631e14880f5a1eb8694541ecc79ff84716feae16702d6b6968096649"
       },
       {
         "path": "tests/test_startup_branding.py",
