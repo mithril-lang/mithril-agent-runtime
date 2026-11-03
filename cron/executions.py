@@ -305,6 +305,11 @@ def finish_execution(
         record = _fetch(conn, execution_id)
     _emit_execution_state(record, delivery_outcome=delivery_outcome)
     record_cron_finish(record, delivery_outcome)
+    try:
+        from hermes_cli.posthog_analytics import queue_bot_execution
+        queue_bot_execution(record)
+    except Exception:
+        pass  # Optional analytics must never alter an owned execution result.
     return record
 
 
