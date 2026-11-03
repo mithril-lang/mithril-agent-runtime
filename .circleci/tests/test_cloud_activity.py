@@ -2,7 +2,7 @@ import argparse
 import unittest
 from unittest.mock import patch
 
-from hermes_cli.cloud_activity import normalize, show
+from hermes_cli.cloud_activity import approve_pairing, normalize, show
 
 
 class ActivityTests(unittest.TestCase):
@@ -51,6 +51,33 @@ class ActivityTests(unittest.TestCase):
             show(args)
         request.assert_called_once_with("/v1/agent/profiles/name%2Fone/activity", token="synthetic")
         self.assertNotIn("synthetic", str(output.call_args))
+
+
+    def test_operator_approval_uses_fixed_origin_and_hides_credentials(self):
+        import io
+        args = argparse.Namespace(profile_name="mithril-abb-information-bounty", expires_at=61000)
+        class Response:
+            status = 204
+            def __enter__(self): return self
+            def __exit__(self, *unused): return False
+        class Opener:
+            def open(self, request, timeout):
+                self.request = request
+                self.timeout = timeout
+                return Response()
+        opener = Opener()
+        with patch.dict("os.environ", {"MITHRIL_PILOT_SERVICE_KEY":"fixture-secret"}), \
+             patch("hermes_cli.cloud_activity.time.time", return_value=1), \
+             patch("sys.stdin", io.StringIO("a" * 64 + "\n")), \
+             patch("urllib.request.build_opener", return_value=opener), \
+             patch("builtins.print") as output:
+            approve_pairing(args)
+        self.assertEqual(opener.request.full_url, "https://mithril-profile-pilot-20261101.cloud-kotoba.workers.dev/profiles/mithril-abb-information-bounty/activity-approve")
+        self.assertEqual(opener.timeout, 15)
+        self.assertNotIn("fixture-secret", str(output.call_args))
+        self.assertNotIn("a" * 64, str(output.call_args))
+        args.profile_name = "foreign"
+        with self.assertRaises(ValueError): approve_pairing(args)
 
 
 if __name__ == "__main__":

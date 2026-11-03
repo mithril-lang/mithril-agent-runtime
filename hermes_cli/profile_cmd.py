@@ -608,11 +608,20 @@ def _profile_activity(args):
         _die("Cloud Agent activity is unavailable. Check sign-in and profile access.", code=1, err=True)
 
 
+def _profile_activity_approve(args):
+    from hermes_cli.cloud_activity import approve_pairing
+    try:
+        approve_pairing(args)
+    except ValueError:
+        _die("Cloud Agent pairing approval failed or expired.", code=1, err=True)
+
+
 # Order mirrors the original if/elif chain; None = bare ``hermes profile``.
 PROFILE_ACTIONS = {
     None: _profile_status,
     'list': _profile_list,
     'activity': _profile_activity,
+    'activity-approve': _profile_activity_approve,
     'use': _profile_use,
     'create': _profile_create,
     'delete': _profile_delete,
