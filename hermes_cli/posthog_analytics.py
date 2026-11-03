@@ -2,7 +2,7 @@
 from __future__ import annotations
 import argparse
 import contextvars
-from concurrent.futures import ThreadPoolExecutor
+import queue
 import threading
 import json
 import os
@@ -107,16 +107,26 @@ def record(channel, outcome, feature, *, campaign_ref=None, evidence_digest=None
         pass
     return result
 
-# The best-effort projection never delays cron delivery or persists an event for retry.
-_BOT_LIMIT = threading.BoundedSemaphore(64)
+# A daemon worker cannot hold shutdown open; reports are deliberately best effort.
+_BOT_QUEUE = queue.Queue(maxsize=64)
 _BOT_LOCK = threading.Lock()
-_BOT_EXECUTOR = None
+_BOT_WORKER = None
+
+def _bot_worker():
+    while True:
+        task = _BOT_QUEUE.get()
+        try:
+            task()
+        except Exception:
+            pass
+        finally:
+            _BOT_QUEUE.task_done()
 
 def queue_bot_execution(row):
-    """Queue one coarse execution result after a winning durable terminal write.
+    """Queue coarse execution status after a winning durable terminal write.
 
-    Delivery is deliberately not inferred: queued/suppressed/failed delivery can
-    coexist with a completed execution. Unknown or unstarted attempts are excluded.
+    Delivery is not inferred: queued or failed delivery can coexist with a
+    completed execution. Unknown and unstarted attempts are excluded.
     """
     if not isinstance(row, dict) or not row.get("started_at") or row.get("status") not in ("completed", "failed"):
         return False
@@ -128,30 +138,23 @@ def queue_bot_execution(row):
         consent = read_consent(home)
         if os.environ.get("MITHRIL_AGENT") != "1" or not consent:
             return False
-        if not _BOT_LIMIT.acquire(blocking=False):
-            return False
-        try:
-            context = contextvars.copy_context()
-            outcome = row["status"]
-            def send():
-                try:
-                    if read_consent(home) != consent:
-                        return
-                    context.run(record, "bot", outcome, "schedule", home=home, client="bot")
-                except Exception:
-                    pass
-                finally:
-                    _BOT_LIMIT.release()
-            global _BOT_EXECUTOR
-            with _BOT_LOCK:
-                if _BOT_EXECUTOR is None:
-                    _BOT_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mithril-bot-analytics")
-                _BOT_EXECUTOR.submit(send)
-            return True
-        except Exception:
-            _BOT_LIMIT.release()
-            return False
-    except Exception:
+        context = contextvars.copy_context()
+        outcome = row["status"]
+        def send():
+            try:
+                if read_consent(home) != consent:
+                    return
+                context.run(record, "bot", outcome, "schedule", home=home, client="bot")
+            except Exception:
+                pass
+        global _BOT_WORKER
+        with _BOT_LOCK:
+            if _BOT_WORKER is None or not _BOT_WORKER.is_alive():
+                _BOT_WORKER = threading.Thread(target=_bot_worker, name="mithril-bot-analytics", daemon=True)
+                _BOT_WORKER.start()
+            _BOT_QUEUE.put_nowait(send)
+        return True
+    except Exception:  # Full queue or unavailable profile: analytics cannot affect the run.
         return False
 
 
