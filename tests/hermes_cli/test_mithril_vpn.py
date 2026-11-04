@@ -3,6 +3,7 @@ import argparse
 import contextlib
 import datetime as dt
 import importlib.util
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -78,6 +79,13 @@ class VpnCommandTests(unittest.TestCase):
         command = vpn.native_command("linux")
         self.assertEqual(command[0:2], ["/usr/bin/python3", "-I"])
         self.assertTrue(command[2].endswith("data/vpn/linux_host.py"))
+
+    def test_bundled_linux_host_matches_its_source_receipt(self):
+        folder = Path(vpn.__file__).parent / "data/vpn"
+        source = (folder / "linux_host.py").read_bytes()
+        receipt = json.loads((folder / "SOURCE.json").read_text())
+        blob = hashlib.sha1(("blob " + str(len(source)) + chr(0)).encode() + source).hexdigest()
+        self.assertEqual(blob, receipt["gitBlob"])
 
     def test_apple_requires_the_serialized_controller_generation(self):
         value = snapshot(platform="darwin")
