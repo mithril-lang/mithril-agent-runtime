@@ -1,7 +1,7 @@
 {
   "repository": "mithril-lang/mithril-fund",
-  "commit": "ea0acf08563488ec3195c513e6b12ca432b715d7",
+  "commit": "2ebb2bad19ff69cd7f6869206e1d459268e5c5d4",
   "path": "services/vpn/desktop/linux_host.py",
-  "gitBlob": "24691e71432684db5285b6199dfca8d37d88c064",
+  "gitBlob": "89d8bd2ac1d420fa8b8ebe5af2082aaa91dea5f0",
   "license": "MIT"
 }

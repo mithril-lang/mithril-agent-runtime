@@ -21,7 +21,10 @@ FIELDS = {"version", "id", "name", "region", "egressMode", "expectedEgressIPv4",
           "transport", "wireguardConfig"}
 
 def expiry(text):
-    return dt.datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(dt.timezone.utc)
+    value = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    if value.tzinfo is None:
+        raise ValueError("Profile expiry requires a timezone")
+    return value.astimezone(dt.timezone.utc)
 
 def parse_profile(raw, fresh=True):
     if len(raw) > 32768:
@@ -36,7 +39,8 @@ def parse_profile(raw, fresh=True):
     if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", p["region"]) or p["egressMode"] not in {"shared", "dedicated"}:
         raise ValueError("Invalid profile")
     ipaddress.IPv4Address(p["expectedEgressIPv4"])
-    if fresh and expiry(p["expiresAt"]) <= dt.datetime.now(dt.timezone.utc):
+    expires = expiry(p["expiresAt"])
+    if fresh and expires <= dt.datetime.now(dt.timezone.utc):
         raise ValueError("Expired profile")
     if p["transport"] != "wireguard":
         raise ValueError("WireGuard profile required")

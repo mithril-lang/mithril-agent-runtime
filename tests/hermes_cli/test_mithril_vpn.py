@@ -1,5 +1,6 @@
 """Standalone VPN parser, output-custody and failure tests (no tunnel mutations)."""
 import argparse
+import base64
 import contextlib
 import datetime as dt
 import importlib.util
@@ -37,6 +38,21 @@ def args(*argv):
 
 
 class VpnCommandTests(unittest.TestCase):
+    def test_bundled_import_expiry_agrees_with_cli_public_state(self):
+        path = Path(vpn.__file__).parent / "data/vpn/linux_host.py"
+        spec = importlib.util.spec_from_file_location("vpn_linux_expiry", path)
+        host = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(host)
+        key = base64.b64encode(bytes(range(1, 33))).decode()
+        candidate = {**snapshot()["profiles"][0], "version": 1, "transport": "wireguard",
+                     "wireguardConfig": f"[Interface]\nPrivateKey = {key}\nAddress = 10.77.0.2/32\nDNS = 10.77.0.1\n[Peer]\nPublicKey = {key}\nEndpoint = 192.0.2.1:51820\nAllowedIPs = 0.0.0.0/0, ::/0\n"}
+        candidate["expiresAt"] = "2099-01-01T00:00:00"
+        with self.assertRaises(ValueError):
+            host.parse_profile(json.dumps(candidate).encode())
+        candidate["expiresAt"] += "Z"
+        profile = host.metadata(host.parse_profile(json.dumps(candidate).encode()))
+        self.assertEqual(vpn.public_state(snapshot(profiles=[profile]), "linux")["profiles"], [profile])
+
     def test_public_projection_drops_secrets_at_both_levels(self):
         state = snapshot(password="private", nativePath="/private/key")
         state["profiles"][0]["wireguardConfig"] = "private"
