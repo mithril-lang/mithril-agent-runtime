@@ -79,6 +79,13 @@ class VpnCommandTests(unittest.TestCase):
         self.assertEqual(command[0:2], ["/usr/bin/python3", "-I"])
         self.assertTrue(command[2].endswith("data/vpn/linux_host.py"))
 
+    def test_apple_requires_the_serialized_controller_generation(self):
+        value = snapshot(platform="darwin")
+        with self.assertRaises(ValueError):
+            vpn.public_state(value, "darwin")
+        value["controllerVersion"] = 2
+        self.assertEqual(vpn.public_state(value, "darwin")["state"], "disconnected")
+
     def test_no_shell_or_untrusted_native_error_output(self):
         with patch.object(vpn, "native_command", return_value=["/native/helper"]), patch.object(vpn.subprocess, "run", side_effect=TimeoutError("secret")) as run:
             with contextlib.redirect_stderr(io.StringIO()) as out:

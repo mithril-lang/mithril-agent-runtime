@@ -22,6 +22,8 @@ def public_state(value, platform):
     """Validate and project native output; do not print unknown fields or secrets."""
     if not isinstance(value, dict) or value.get("version") != 1:
         raise ValueError("Invalid VPN state")
+    if platform == "darwin" and value.get("controllerVersion") != 2:
+        raise ValueError("An updated Mithril VPN helper is required")
     if value.get("platform") != platform or value.get("state") not in STATES:
         raise ValueError("Invalid VPN state")
     if value.get("reason") not in REASONS or value.get("egressVerification") != "unverified":

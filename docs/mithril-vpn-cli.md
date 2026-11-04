@@ -27,10 +27,13 @@ Only validated public state is printed. Native paths, imported profile content,
 credentials and native stderr stay out of command output. Human-readable profile
 names are JSON quoted to prevent terminal escape injection. Unknown outcomes
 are never replayed automatically; connect/import/remove first reconcile OS
-state, and profile removal requires explicit confirmation. Diagnostics is a
-read-only OS-state query, not proof of public egress, DNS or leak protection.
+state, and profile removal requires explicit confirmation. Diagnostics queries
+native state; the adapter may stop an expired tunnel under its existing expiry
+policy. It does not establish public egress, DNS or leak protection.
 
 An actual non-GCP gateway, private enrollment/revocation, signed platform
 packages and independent installed traffic/lifecycle/update QA are still
 required by MITHRIL-1813. No provider purchase, tunnel activation or release is
 established by this source change.
+
+The Apple helper must report controllerVersion 2. An older signed helper without the cross-process operation lock is rejected before CLI mutation.
