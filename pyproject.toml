@@ -833,6 +833,8 @@ include = [
 hermes_cli = [
   "observability/schemas/*.json",
   "data/*.json",
+  "data/vpn/*.py",
+  "data/vpn/*.json",
   "local_runtime/*.json",
 ]
 # gateway/assets/ ships status_phrases.yaml and the Telegram BotFather
