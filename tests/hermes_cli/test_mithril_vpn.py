@@ -12,7 +12,7 @@ import subprocess
 import sys
 import os
 import tempfile
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 # Import the standalone command without bootstrapping the Agent or its renderer.
 spec = importlib.util.spec_from_file_location("mithril_vpn", Path(__file__).parents[2] / "hermes_cli/vpn.py")
@@ -104,6 +104,15 @@ class VpnCommandTests(unittest.TestCase):
                 self.assertEqual(vpn.run(args("status", "--json")), 1)
             self.assertNotIn("secret", out.getvalue())
             self.assertNotIn("shell", run.call_args.kwargs)
+
+    def test_apple_designated_requirement_is_inline_and_bound(self):
+        with patch.object(vpn.Path, "is_file", return_value=True), patch.object(vpn.subprocess, "run", return_value=Mock(returncode=0)) as check:
+            vpn.native_command("darwin")
+        command = check.call_args.args[0]
+        requirement = command[command.index("-R") + 1]
+        self.assertTrue(requirement.startswith("=anchor apple generic"))
+        self.assertIn('certificate leaf[subject.OU] = "3A5CBTEBFP"', requirement)
+        self.assertIn('identifier "fund.mithril.vpn-helper"', requirement)
 
     def test_isolated_vpn_entry_needs_no_agent_packages_or_profile_state(self):
         with tempfile.TemporaryDirectory() as home:

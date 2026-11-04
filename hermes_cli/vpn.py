@@ -87,7 +87,7 @@ def native_command(platform=None):
             helper = bundle / "Contents/MacOS/MithrilVPNHelper"
             if not helper.is_file():
                 continue
-            requirement = 'anchor apple generic and certificate leaf[subject.OU] = "3A5CBTEBFP" and identifier "fund.mithril.vpn-helper"'
+            requirement = '=anchor apple generic and certificate leaf[subject.OU] = "3A5CBTEBFP" and identifier "fund.mithril.vpn-helper"'
             checked = subprocess.run(["/usr/bin/codesign", "--verify", "--strict", "-R", requirement, str(bundle)],
                                      capture_output=True, timeout=10, check=False)
             if checked.returncode == 0:
