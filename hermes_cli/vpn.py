@@ -180,3 +180,15 @@ def run(args):
         if state["reason"]:
             print("Reason: " + state["reason"])
     return 0 if state["state"] not in {"unavailable", "unknown"} and state["reason"] not in {"operation-failed", "permission-required", "profile-expired"} else 1
+
+
+def main(argv=None):
+    """Run the VPN-only CLI without initializing Agent configuration or imports."""
+    import argparse
+    parser = argparse.ArgumentParser(prog="mithril")
+    build_parser(parser.add_subparsers(dest="command", required=True))
+    return run(parser.parse_args(argv))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -37,3 +37,5 @@ required by MITHRIL-1813. No provider purchase, tunnel activation or release is
 established by this source change.
 
 The Apple helper must report controllerVersion 2. An older signed helper without the cross-process operation lock is rejected before CLI mutation.
+
+The branded POSIX launcher dispatches `mithril vpn` directly to the standalone VPN module, as it already does for account/update operations. VPN commands do not initialize Agent configuration or require chat dependencies. The normal Agent parser retains VPN help for other entry points.

@@ -34,6 +34,7 @@ else
     runtime=hermes
 fi
 case "${1:-}" in
+    vpn) exec "$runtime" --run-module hermes_cli.vpn "$@";;
     update) exec "$runtime" --run-module hermes_cli.mithril_updates "$@";;
     login|logout|account) exec "$runtime" --run-module hermes_cli.mithril_auth "$@";;
     auth)

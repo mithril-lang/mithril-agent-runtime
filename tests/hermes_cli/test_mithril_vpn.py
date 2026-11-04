@@ -8,6 +8,10 @@ import io
 import json
 from pathlib import Path
 import unittest
+import subprocess
+import sys
+import os
+import tempfile
 from unittest.mock import patch
 
 # Import the standalone command without bootstrapping the Agent or its renderer.
@@ -100,6 +104,34 @@ class VpnCommandTests(unittest.TestCase):
                 self.assertEqual(vpn.run(args("status", "--json")), 1)
             self.assertNotIn("secret", out.getvalue())
             self.assertNotIn("shell", run.call_args.kwargs)
+
+    def test_isolated_vpn_entry_needs_no_agent_packages_or_profile_state(self):
+        with tempfile.TemporaryDirectory() as home:
+            result = subprocess.run([sys.executable, "-I", str(Path(vpn.__file__)), "vpn", "--help"],
+                                    env={"PATH": os.defpath, "HOME": home}, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("connect", result.stdout)
+            self.assertEqual(list(Path(home).iterdir()), [])
+
+    def test_mithril_launcher_dispatches_vpn_to_the_owned_module(self):
+        if os.name != "posix":
+            self.skipTest("POSIX launcher")
+        with tempfile.TemporaryDirectory() as home:
+            root = Path(home)
+            script = root / "scripts/mithril"
+            script.parent.mkdir()
+            script.write_bytes((Path(vpn.__file__).parents[1] / "scripts/mithril").read_bytes())
+            script.chmod(0o755)
+            owned = root / ".hermes/bin/hermes"
+            owned.parent.mkdir(parents=True)
+            owned.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+            owned.chmod(0o755)
+            (root / "hermes_bootstrap.py").touch()
+            result = subprocess.run([str(script), "vpn", "status", "--json"],
+                                    env={"PATH": os.defpath, "HOME": home, "HERMES_HOME": str(root / "owner")},
+                                    capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.splitlines(), ["--run-module", "hermes_cli.vpn", "vpn", "status", "--json"])
 
 
 if __name__ == "__main__":
