@@ -89,7 +89,7 @@ def native_command(platform=None):
                 continue
             requirement = '=anchor apple generic and certificate leaf[subject.OU] = "3A5CBTEBFP" and identifier "fund.mithril.vpn-helper"'
             checked = subprocess.run(["/usr/bin/codesign", "--verify", "--strict", "-R", requirement, str(bundle)],
-                                     capture_output=True, timeout=10, check=False)
+                                     capture_output=True, timeout=60, check=False)
             if checked.returncode == 0:
                 return [str(helper)]
     # Windows publisher identity and standalone Apple helper packaging remain

@@ -111,6 +111,7 @@ class VpnCommandTests(unittest.TestCase):
         command = check.call_args.args[0]
         requirement = command[command.index("-R") + 1]
         self.assertTrue(requirement.startswith("=anchor apple generic"))
+        self.assertEqual(check.call_args.kwargs["timeout"], 60)
         self.assertIn('certificate leaf[subject.OU] = "3A5CBTEBFP"', requirement)
         self.assertIn('identifier "fund.mithril.vpn-helper"', requirement)
 
