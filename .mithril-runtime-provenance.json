@@ -49800,7 +49800,7 @@
   },
   "runtimeOverrides": {
     "baseRuntimeRevision": "b278645653371c5b77286f239f0e11ac44e4a674",
-    "sha256": "01f1fb3e7b89f55a7861e13593c39108b7a79e7190d3b33f22fb2a9fc09f35dc",
+    "sha256": "42a0f007315668e7377d0d04e8561c9a2ac283b8d87479f6deea8a1e95a62339",
     "files": [
       {
         "path": ".circleci/config.yml",
@@ -49840,7 +49840,7 @@
       {
         "path": ".circleci/tests/test_profile_checkpoint.py",
         "baseSha256": null,
-        "sha256": "1277abb99de1bb2babfd2a202f159a075a9221c1dbe806f7b334af9bccf47b2c"
+        "sha256": "d7f189836c726e725a517997a80f8087e9cb8954dd844872dbf4a46c013782b0"
       },
       {
         "path": ".circleci/tests/test_profile_overlay.py",
@@ -49925,7 +49925,7 @@
       {
         "path": "cloud/profile-pilot/overlay.mjs",
         "baseSha256": null,
-        "sha256": "5db812a1967f0f9298b2b6b11f5b5ef7122199ff0f37f036e9f80392dde8117b"
+        "sha256": "21ce402d95351b8246f441e316fdaa2a8b87814327319251b51eb8cb1339a2e4"
       },
       {
         "path": "cloud/profile-pilot/release-guard.mjs",
@@ -49935,7 +49935,7 @@
       {
         "path": "cloud/profile-pilot/runtime.py",
         "baseSha256": null,
-        "sha256": "621b6d4b78eab38082b30b8c70e90e00b6afc50289ac8c13092ea38a4bea4b3d"
+        "sha256": "85d4f4cd7945d09f0316fbe3520e6147a998d2a79c6d58e1e058c50b11e38652"
       },
       {
         "path": "cloud/profile-pilot/worker.mjs",
@@ -49976,6 +49976,11 @@
         "path": "docs/mithril-posthog-analytics.md",
         "baseSha256": null,
         "sha256": "b4b10ae210fea21e8f33d210e4ee24fc22c5c9a0c58c876c61ce578d098ae7a0"
+      },
+      {
+        "path": "docs/mithril-vpn-cli.md",
+        "baseSha256": null,
+        "sha256": "816507d3e6cbaf0f4238af5b66ee7e5c6dcc0f078ee01bf5b718e36cfa08fc20"
       },
       {
         "path": "docs/operations/google-chat-keyless.md",
@@ -50023,9 +50028,19 @@
         "sha256": "2f30b8196bca0a975eb55a7fe227f51021d15b0bd5b31226b39110a38d88d78f"
       },
       {
+        "path": "hermes_cli/data/vpn/SOURCE.json",
+        "baseSha256": null,
+        "sha256": "df1a6128267eb8acbb5438c1e4f29ac69e69f51b9b4ee0ae5a4d360904b90be2"
+      },
+      {
+        "path": "hermes_cli/data/vpn/linux_host.py",
+        "baseSha256": null,
+        "sha256": "b520d0f3a5dbcab6a8a0e80bb061ce5a2982c4e32d10086f823bfe2500d58791"
+      },
+      {
         "path": "hermes_cli/main.py",
         "baseSha256": "8b06d9ee4da2025e3eeef09b1680b5420e9320f8ae96537106065e4a48e9a58b",
-        "sha256": "91c90255d892aeb8a64eafc8a6e00ddddf290c9d7ecee444bfebd735d52d19e1"
+        "sha256": "7c7a9d156c9b5187c3df9cfcd120a3c2504d9882c2fa2d8ad09c448c0e825e2e"
       },
       {
         "path": "hermes_cli/mithril_account.py",
@@ -50119,6 +50134,11 @@
         "sha256": "29e19ad53af4857ef6db142e7a7430677328e4239a69bbb4440411d394474c1a"
       },
       {
+        "path": "hermes_cli/vpn.py",
+        "baseSha256": null,
+        "sha256": "9216f9fb5af83172d82ebd18e9cf4d32749b9e2b467bb7649347bfa8c0e866cd"
+      },
+      {
         "path": "plugins/platforms/google_chat/adapter.py",
         "baseSha256": "e36d203bac2c64da9ef7dc2d1b8cc40551ce1702273994de0246b364a9117b2e",
         "sha256": "c52cc972b6a954fb3799a1a1d144512bf2edd590d0493ac79bcddd6a81f29a46"
@@ -50137,6 +50157,11 @@
         "path": "pm/runtime.py",
         "baseSha256": "cf4d72299606c3f4735595b45f13a5155edbcbbca9c05d0fcda280e43253c17b",
         "sha256": "f1bb5bf56eb3e6e81c042ea20c68d60e4827e5d66abf944e5f2e3340f2097668"
+      },
+      {
+        "path": "pyproject.toml",
+        "baseSha256": "55e4c92edf5461de9412519e79da19b48e0c799e1354bbaadae80cb6beaa743f",
+        "sha256": "c466ec861c34e1f1e3d51885ca3cfca8a7578abbb64bf7601068fdea045e16e7"
       },
       {
         "path": "scripts/audit-release-authority.py",
@@ -50161,7 +50186,7 @@
       {
         "path": "scripts/mithril",
         "baseSha256": "718fa123ad84b8b6a875de009e3b598eabc6d3f51e418532b18ba924d56860e3",
-        "sha256": "471e74a372d33b9bd7f1f3d222a026e6e4365a2e8cc3af9d435c469ad77fae64"
+        "sha256": "c000b4083ccad20bced83e43549ea62f41e8164b5d8bfc4dc3919edee0c38330"
       },
       {
         "path": "scripts/mithril-brew-launcher",
@@ -50199,6 +50224,11 @@
           "path": "services/agent/scripts/run_tests_parallel.py",
           "blob": "081690735754f1152c5c0216686524db772eb50f"
         }
+      },
+      {
+        "path": "tests/hermes_cli/test_mithril_vpn.py",
+        "baseSha256": null,
+        "sha256": "2a44222f7bb554abe5e20edfd9f1204ca1072daf2dcc0f4d449c2ed7f5bc7a18"
       },
       {
         "path": "tests/test_chat_input_character_limit.py",
